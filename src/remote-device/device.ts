@@ -112,6 +112,7 @@ export class MCPDevice {
 
             // Initialize desktop integration
             await this.desktop.initialize();
+            this.desktop.onDisconnect((reason) => void this.handleLocalMcpLoss(reason));
 
             console.log(`⏳ Connecting to Remote MCP ${this.baseServerUrl}`);
             const { supabaseUrl, anonKey } = await this.fetchSupabaseConfig();
@@ -286,9 +287,33 @@ export class MCPDevice {
     private rememberCallId(callId: string) {
         this.seenCallIds.add(callId);
         if (this.seenCallIds.size > SEEN_CALL_IDS_MAX) {
-            // Sets iterate in insertion order — drop the oldest entry.
             const oldest = this.seenCallIds.values().next().value;
             if (oldest !== undefined) this.seenCallIds.delete(oldest);
+        }
+    }
+
+    /**
+     * The local Desktop Commander child died. A healthy remote channel says
+     * nothing about the local half being alive, so mark transport status offline
+     * and proactively restore the child before advertising readiness again.
+     */
+    private async handleLocalMcpLoss(reason: string) {
+        if (this.deviceId) {
+            await this.remoteChannel.setOnlineStatus(this.deviceId, 'offline')
+                .catch((e: any) => console.error('Failed to mark device offline:', e.message));
+        }
+
+        try {
+            await this.desktop.ensureReady();
+            if (this.deviceId) {
+                await this.remoteChannel.setOnlineStatus(this.deviceId, 'online');
+            }
+            console.log('♻️  Local Desktop Commander MCP restarted; device is online again');
+        } catch (error: any) {
+            console.error(`❌ Could not restart local Desktop Commander MCP: ${error.message}`);
+            await captureRemote('remote_device_local_mcp_restart_failed', { error, reason });
+        }
+    }
         }
     }
 
