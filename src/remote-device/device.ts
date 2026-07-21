@@ -3,6 +3,7 @@
 import { RemoteChannel } from './remote-channel.js';
 import { DeviceAuthenticator } from './device-authenticator.js';
 import { DesktopCommanderIntegration } from './desktop-commander-integration.js';
+import { DeviceStatusArbiter } from './device-status-arbiter.js';
 import { fileURLToPath } from 'url';
 import os from 'os';
 import fs from 'fs/promises';
@@ -32,6 +33,10 @@ export class MCPDevice {
     private desktop: DesktopCommanderIntegration;
     /** Call ids already handled by THIS process (insertion-ordered, bounded). */
     private seenCallIds: Set<string> = new Set();
+    private statusArbiter: DeviceStatusArbiter;
+    private recoveringLocalMcp: boolean = false;
+    private localRestartAttempt: number = 0;
+    private localMcpStableSince: number = 0;
 
     constructor(options: MCPDeviceOptions = {}) {
         this.baseServerUrl = process.env.MCP_SERVER_URL || 'https://mcp.desktopcommander.app';
@@ -47,6 +52,15 @@ export class MCPDevice {
 
         // Initialize desktop integration
         this.desktop = new DesktopCommanderIntegration();
+
+        // Single writer for mcp_devices status: online iff BOTH the remote
+        // channel and the local child are healthy, written on transitions only.
+        this.statusArbiter = new DeviceStatusArbiter({
+            write: async (status) => {
+                if (!this.deviceId) return; // pre-registration reports; sync() catches up later
+                await this.remoteChannel.setOnlineStatus(this.deviceId, status);
+            },
+        });
 
         // Graceful shutdown handlers (only set once)
         this.setupShutdownHandlers();
@@ -113,6 +127,7 @@ export class MCPDevice {
             // Initialize desktop integration
             await this.desktop.initialize();
             this.desktop.onDisconnect((reason) => void this.handleLocalMcpLoss(reason));
+            this.statusArbiter.report('child', true);
 
             console.log(`⏳ Connecting to Remote MCP ${this.baseServerUrl}`);
             const { supabaseUrl, anonKey } = await this.fetchSupabaseConfig();
@@ -120,6 +135,9 @@ export class MCPDevice {
 
             // Initialize Remote Channel
             this.remoteChannel.initialize(supabaseUrl, anonKey);
+            // Route channel health through the arbiter so a channel resubscribe
+            // can't mark the device online while the local child is dead.
+            this.remoteChannel.setChannelHealthReporter((ready) => this.statusArbiter.report('channel', ready));
 
             // Load persisted configuration (deviceId, session)
             let session = await this.loadPersistedConfig();
@@ -177,6 +195,10 @@ export class MCPDevice {
                 deviceName,
                 (payload: any) => this.handleNewToolCall(payload)
             );
+
+            // Registration is done and a deviceId exists — persist the current
+            // arbiter status (earlier reports had their writes dropped).
+            this.statusArbiter.sync();
 
             console.log('✅ Device ready:');
             console.log(`   - User:         ${this.remoteChannel.user!.email}`);
@@ -298,22 +320,42 @@ export class MCPDevice {
      * and proactively restore the child before advertising readiness again.
      */
     private async handleLocalMcpLoss(reason: string) {
-        if (this.deviceId) {
-            await this.remoteChannel.setOnlineStatus(this.deviceId, 'offline')
-                .catch((e: any) => console.error('Failed to mark device offline:', e.message));
-        }
-
+        // Recover proactively rather than waiting for the next tool call to
+        // trigger the lazy restart: once the local child is unhealthy the device
+        // must stay offline until the child is actually ready again.
+        if (this.recoveringLocalMcp || this.isShuttingDown) return;
+        this.recoveringLocalMcp = true;
         try {
-            await this.desktop.ensureReady();
-            if (this.deviceId) {
-                await this.remoteChannel.setOnlineStatus(this.deviceId, 'online');
+            this.statusArbiter.report('child', false);
+
+            const baseMs = Number(process.env.DC_LOCAL_RESTART_BACKOFF_BASE_MS) || 2000;
+            const stableMs = Number(process.env.DC_LOCAL_RESTART_STABLE_UPTIME_MS) || 60000;
+            const ceilingMs = 300000;
+            if (Date.now() - this.localMcpStableSince > stableMs) {
+                this.localRestartAttempt = 0;
             }
-            console.log('♻️  Local Desktop Commander MCP restarted; device is online again');
-        } catch (error: any) {
-            console.error(`❌ Could not restart local Desktop Commander MCP: ${error.message}`);
-            await captureRemote('remote_device_local_mcp_restart_failed', { error, reason });
-        }
-    }
+
+            while (!this.isShuttingDown) {
+                const delay = Math.min(baseMs * 2 ** this.localRestartAttempt, ceilingMs);
+                this.localRestartAttempt++;
+                // Jitter so a fleet-wide trigger doesn't synchronize retries.
+                await new Promise(r => setTimeout(r, delay + Math.random() * delay * 0.15));
+                if (this.isShuttingDown) return;
+                try {
+                    await this.desktop.ensureReady();
+                    this.localMcpStableSince = Date.now();
+                    this.statusArbiter.report('child', true);
+                    console.log(`♻️  Local Desktop Commander MCP restarted (attempt ${this.localRestartAttempt}); device is online again`);
+                    return;
+                } catch (error: any) {
+                    console.error(`❌ Restart attempt ${this.localRestartAttempt} failed: ${error.message}`);
+                    await captureRemote('remote_device_local_mcp_restart_failed', {
+                        error, reason, attempt: this.localRestartAttempt,
+                    });
+                }
+            }
+        } finally {
+            this.recoveringLocalMcp = false;
         }
     }
 
