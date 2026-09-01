@@ -43,11 +43,7 @@ const macKeychain = {
     return result.code === 0 ? result.stdout.trimEnd() : null;
   },
   async save(secret: string) {
-    // `security` documents passing -w without a value as the secure prompt form.
-    // Feeding that prompt over stdin avoids leaking the token through argv.
-    await run("security", [
-      "add-generic-password", "-a", ACCOUNT, "-s", SERVICE, "-U", "-w",
-    ], { input: `${secret}\n` });
+    await saveMacKeychainSecret(secret);
   },
   async clear() {
     await run("security", [
@@ -55,6 +51,37 @@ const macKeychain = {
     ], { allowNotFound: true });
   },
 };
+
+const MAC_KEYCHAIN_EXPECT = String.raw`
+set timeout 15
+set secret [read stdin]
+regsub {\r?\n$} $secret {} secret
+set account $env(DC_KEYCHAIN_ACCOUNT)
+set service $env(DC_KEYCHAIN_SERVICE)
+spawn -noecho security add-generic-password -a $account -s $service -U -w
+expect "password data for new item:"
+send -- "$secret\r"
+expect "retype password for new item:"
+send -- "$secret\r"
+expect eof
+catch wait result
+exit [lindex $result 3]
+`;
+
+async function saveMacKeychainSecret(secret: string): Promise<void> {
+  // macOS `security ... -w` reads from a TTY and asks twice; ordinary stdin
+  // piping hangs. `expect` provides that PTY while the secret itself stays on
+  // stdin, so it never appears in argv or the environment.
+  await run("/usr/bin/expect", ["-c", MAC_KEYCHAIN_EXPECT], {
+    input: `${secret}\n`,
+    env: {
+      ...process.env,
+      DC_KEYCHAIN_ACCOUNT: ACCOUNT,
+      DC_KEYCHAIN_SERVICE: SERVICE,
+    },
+  });
+}
+
 const linuxSecretService = {
   async load() {
     const result = await run("secret-tool", [
