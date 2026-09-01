@@ -1,7 +1,7 @@
 /**
  * Single writer for the device's mcp_devices online/offline status.
  *
- * The device has two independent health signals — the Supabase Realtime
+ * The device has two independent health signals — the remote Jazz/control-plane transport
  * channel (server connectivity) and the local Desktop Commander child
  * (execution capability) — and previously each wrote status directly.
  * Independent writers contradict each other: a channel resubscribe used to
