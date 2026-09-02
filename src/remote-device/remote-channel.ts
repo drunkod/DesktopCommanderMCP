@@ -143,6 +143,10 @@ export class RemoteChannel {
             appId: jazzAppId,
             serverUrl: jazzServerUrl,
             jwtToken: registration.jazzToken,
+            // The device uses Jazz only as a transient read/subscription channel.
+            // Keep local-first persistence disabled so stale local branches cannot
+            // be replayed under the short-lived read-only device capability.
+            driver: { type: 'memory' },
         });
         this.db = db;
         this.deviceId = registration.deviceId;

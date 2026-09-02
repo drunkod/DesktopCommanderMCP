@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import fs from "node:fs/promises";
@@ -16,8 +17,18 @@ type RunOptions = {
 
 export class NativeCredentialStore implements DeviceCredentialStore {
   async load(): Promise<DeviceOAuthSession | null> {
-    const raw = await platformBackend().load();
-    return raw ? JSON.parse(raw) as DeviceOAuthSession : null;
+    const backend = platformBackend();
+    const raw = await backend.load();
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as DeviceOAuthSession;
+    } catch (error) {
+      // A partial/corrupt vault entry cannot be refreshed safely. Clear it and
+      // fall back to the normal pairing path instead of crashing startup.
+      await backend.clear();
+      console.warn(`Ignoring corrupt persisted OAuth session: ${error instanceof Error ? error.message : String(error)}`);
+      return null;
+    }
   }
 
   async save(session: DeviceOAuthSession): Promise<void> {
@@ -35,20 +46,103 @@ function platformBackend() {
   throw new Error(`No native credential backend for ${process.platform}`);
 }
 
+const MAC_KEYCHAIN_CHUNK_SIZE = 96;
+const MAC_KEYCHAIN_MANIFEST_ACCOUNT = `${ACCOUNT}:manifest`;
+
+type MacKeychainManifest = {
+  generation: string;
+  chunks: number;
+};
+
+function macChunkAccount(generation: string, index: number): string {
+  return `${ACCOUNT}:${generation}:${index.toString().padStart(3, "0")}`;
+}
+
+function parseMacManifest(value: string | null): MacKeychainManifest | null {
+  if (!value) return null;
+  const match = /^v1:([0-9a-f]{24}):(\d+)$/.exec(value);
+  if (!match) return null;
+  const chunks = Number(match[2]);
+  if (!Number.isSafeInteger(chunks) || chunks < 1 || chunks > 1000) return null;
+  return { generation: match[1], chunks };
+}
+
+async function loadMacKeychainSecret(account: string): Promise<string | null> {
+  const result = await run("security", [
+    "find-generic-password", "-a", account, "-s", SERVICE, "-w",
+  ], { allowNotFound: true });
+  return result.code === 0 ? result.stdout.trimEnd() : null;
+}
+
+async function deleteMacKeychainSecret(account: string): Promise<void> {
+  await run("security", [
+    "delete-generic-password", "-a", account, "-s", SERVICE,
+  ], { allowNotFound: true });
+}
+
+async function clearMacGeneration(manifest: MacKeychainManifest | null): Promise<void> {
+  if (!manifest) return;
+  await Promise.all(Array.from({ length: manifest.chunks }, (_, index) =>
+    deleteMacKeychainSecret(macChunkAccount(manifest.generation, index))));
+}
+
 const macKeychain = {
   async load() {
-    const result = await run("security", [
-      "find-generic-password", "-a", ACCOUNT, "-s", SERVICE, "-w",
-    ], { allowNotFound: true });
-    return result.code === 0 ? result.stdout.trimEnd() : null;
+    const manifestRaw = await loadMacKeychainSecret(MAC_KEYCHAIN_MANIFEST_ACCOUNT);
+    const manifest = parseMacManifest(manifestRaw);
+    if (manifest) {
+      const chunks: string[] = [];
+      for (let index = 0; index < manifest.chunks; index += 1) {
+        const chunk = await loadMacKeychainSecret(macChunkAccount(manifest.generation, index));
+        if (chunk === null) return null;
+        chunks.push(chunk);
+      }
+      return Buffer.from(chunks.join(""), "base64").toString("utf8");
+    }
+    // Backward compatibility for the original single-item format. Long values
+    // written through the interactive security(1) prompt may be truncated;
+    // NativeCredentialStore.load() detects and clears those safely.
+    return loadMacKeychainSecret(ACCOUNT);
   },
   async save(secret: string) {
-    await saveMacKeychainSecret(secret);
+    const previous = parseMacManifest(
+      await loadMacKeychainSecret(MAC_KEYCHAIN_MANIFEST_ACCOUNT),
+    );
+    const generation = randomBytes(12).toString("hex");
+    const encoded = Buffer.from(secret, "utf8").toString("base64");
+    const chunks = Array.from(
+      { length: Math.ceil(encoded.length / MAC_KEYCHAIN_CHUNK_SIZE) },
+      (_, index) => encoded.slice(
+        index * MAC_KEYCHAIN_CHUNK_SIZE,
+        (index + 1) * MAC_KEYCHAIN_CHUNK_SIZE,
+      ),
+    );
+    try {
+      for (let index = 0; index < chunks.length; index += 1) {
+        await saveMacKeychainSecret(macChunkAccount(generation, index), chunks[index]);
+      }
+      // Commit the new generation last so an interrupted rotation keeps the
+      // previously complete credential readable.
+      await saveMacKeychainSecret(
+        MAC_KEYCHAIN_MANIFEST_ACCOUNT,
+        `v1:${generation}:${chunks.length}`,
+      );
+    } catch (error) {
+      await clearMacGeneration({ generation, chunks: chunks.length });
+      throw error;
+    }
+    await deleteMacKeychainSecret(ACCOUNT);
+    if (previous && previous.generation !== generation) {
+      await clearMacGeneration(previous);
+    }
   },
   async clear() {
-    await run("security", [
-      "delete-generic-password", "-a", ACCOUNT, "-s", SERVICE,
-    ], { allowNotFound: true });
+    const manifest = parseMacManifest(
+      await loadMacKeychainSecret(MAC_KEYCHAIN_MANIFEST_ACCOUNT),
+    );
+    await clearMacGeneration(manifest);
+    await deleteMacKeychainSecret(MAC_KEYCHAIN_MANIFEST_ACCOUNT);
+    await deleteMacKeychainSecret(ACCOUNT);
   },
 };
 
@@ -68,15 +162,15 @@ catch wait result
 exit [lindex $result 3]
 `;
 
-async function saveMacKeychainSecret(secret: string): Promise<void> {
-  // macOS `security ... -w` reads from a TTY and asks twice; ordinary stdin
-  // piping hangs. `expect` provides that PTY while the secret itself stays on
-  // stdin, so it never appears in argv or the environment.
+async function saveMacKeychainSecret(account: string, secret: string): Promise<void> {
+  // security(1)'s interactive password reader truncates long input (128 bytes
+  // on current macOS). Store bounded chunks through a PTY so the secret never
+  // appears in argv or the environment.
   await run("/usr/bin/expect", ["-c", MAC_KEYCHAIN_EXPECT], {
     input: `${secret}\n`,
     env: {
       ...process.env,
-      DC_KEYCHAIN_ACCOUNT: ACCOUNT,
+      DC_KEYCHAIN_ACCOUNT: account,
       DC_KEYCHAIN_SERVICE: SERVICE,
     },
   });

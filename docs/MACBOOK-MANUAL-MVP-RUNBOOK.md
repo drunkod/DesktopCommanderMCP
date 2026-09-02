@@ -165,7 +165,7 @@ This validates the control-plane -> Jazz pending call -> device claim -> complet
 
 ## Step 8 — test one real Desktop Commander tool
 
-The current dashboard has no arbitrary-tool button. The real tool surface is the authenticated MCP endpoint at `/api/mcp`.
+The current dashboard has no arbitrary-tool button. The canonical authenticated MCP endpoint is `/mcp`; `/api/mcp` remains a compatibility alias. The server is modern-protocol only (`2026-07-28`), so MCP Inspector v2 must use `protocolEra: "modern"` for this server.
 
 If you already have an MCP client connected to the localhost/exposed control plane, call:
 
@@ -183,18 +183,30 @@ If no MCP client/tunnel is configured yet, mark this step **PENDING — MCP clie
 
 ## Step 9 — verify macOS Keychain persistence
 
-In **Terminal D**, check only that the Keychain item exists; do not print its secret:
+In **Terminal D**, check the current manifest-based Keychain entry without printing any secret. The OAuth session is stored as a committed manifest plus bounded generation chunks; the legacy single `device-oauth-session` item is intentionally deleted after a successful save.
+
 ```bash
 security find-generic-password \
-  -a device-oauth-session \
+  -a 'device-oauth-session:manifest' \
   -s com.desktopcommander.remote-mcp \
-  >/dev/null && echo "KEYCHAIN ITEM: PASS"
+  >/dev/null 2>&1 && echo "KEYCHAIN MANIFEST: PASS"
 ```
 
 Expected:
 
 ```text
-KEYCHAIN ITEM: PASS
+KEYCHAIN MANIFEST: PASS
+```
+
+For a stronger non-secret validation, load through the production credential store and print only PASS/FAIL:
+
+```bash
+nix develop -c node --input-type=module - <<'NODE'
+import { NativeCredentialStore } from './dist/remote-device/native-credential-store.js';
+const session = await new NativeCredentialStore().load();
+if (!session?.clientId || !session?.refreshToken) process.exit(1);
+console.log('NATIVE CREDENTIAL LOAD: PASS');
+NODE
 ```
 
 Now return to Terminal C and stop the device with **Ctrl-C**. Wait for graceful shutdown to finish.

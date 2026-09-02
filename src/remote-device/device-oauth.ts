@@ -152,6 +152,15 @@ async function pollForToken(
       interval += 5;
       continue;
     }
+    if (response.status === 429) {
+      const retryAfterValue =
+        response.headers.get("x-retry-after") ?? response.headers.get("retry-after");
+      const retryAfter = Number(retryAfterValue);
+      interval = Number.isFinite(retryAfter) && retryAfter > 0
+        ? Math.max(interval, Math.ceil(retryAfter))
+        : interval + 5;
+      continue;
+    }
     throw new Error(
       body.error_description ?? body.error ?? "Device token exchange failed",
     );
