@@ -78,6 +78,7 @@ import {
 } from './ui/contracts.js';
 import { listUiResources, readUiResource } from './ui/resources.js';
 import { shouldShowMcpUiPreviews } from './utils/mcp-ui-ab-test.js';
+import { workLifecycle } from './utils/work-lifecycle.js';
 
 // Store startup messages to send after initialization
 const deferredMessages: Array<{ level: string, message: string }> = [];
@@ -1248,7 +1249,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 import * as handlers from './handlers/index.js';
 import { ServerResult } from './types.js';
 
-server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest): Promise<ServerResult> => {
+server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest, extra): Promise<ServerResult> => {
     const args = request.params.arguments;
     // Calls fired programmatically by the widget UIs (file preview, config
     // editor) carry origin:'ui'. They are real tool executions but not agent
@@ -1260,8 +1261,58 @@ server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest)
     if (isUiOriginCall) {
         return runInUiOriginCallContext(() => handleCallToolRequest(request));
     }
-    return handleCallToolRequest(request);
+    return runWithWorkLifecycle(request, extra);
 });
+
+function getPathFromToolRequest(request: CallToolRequest): string | undefined {
+    const args = request.params.arguments;
+    if (!args || typeof args !== 'object') return undefined;
+    for (const key of ['path', 'file_path', 'source', 'destination']) {
+        const value = (args as Record<string, unknown>)[key];
+        if (typeof value === 'string') return value;
+    }
+    return undefined;
+}
+
+async function runWithWorkLifecycle(
+    request: CallToolRequest,
+    extra?: { signal?: AbortSignal; requestId?: string | number },
+): Promise<ServerResult> {
+    const tool = request.params.name;
+    const file = getPathFromToolRequest(request);
+    const signal = extra?.signal;
+    const activity = { tool, file, requestId: extra?.requestId };
+    workLifecycle.start(activity);
+
+    let aborted = false;
+    let abortListenerAttached = false;
+    let interruptionPromise: Promise<void> | undefined;
+    const onAbort = () => {
+        aborted = true;
+        interruptionPromise = workLifecycle.interrupt(
+            'mcp_cancelled',
+            `${tool}: ${String(signal?.reason ?? 'MCP request cancelled')}`,
+        );
+    };
+
+    if (signal?.aborted) {
+        onAbort();
+    } else if (signal) {
+        signal.addEventListener('abort', onAbort, { once: true });
+        abortListenerAttached = true;
+    }
+
+    try {
+        const result = await handleCallToolRequest(request);
+        if (!aborted && result.isError !== true) workLifecycle.toolCompleted(activity);
+        const notice = workLifecycle.consumePendingWarning();
+        if (!notice) return result;
+        return { ...result, content: [...(result.content ?? []), { type: 'text', text: notice }] } as ServerResult;
+    } finally {
+        if (abortListenerAttached) signal?.removeEventListener('abort', onAbort);
+        if (interruptionPromise) await interruptionPromise;
+    }
+}
 
 async function handleCallToolRequest(request: CallToolRequest): Promise<ServerResult> {
     const { name, arguments: args } = request.params;
