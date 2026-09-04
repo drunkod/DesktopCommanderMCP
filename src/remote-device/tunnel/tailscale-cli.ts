@@ -3,6 +3,8 @@ import { CommandRunner, parseJsonOutput, type CommandResult, type CommandRunnerL
 export type TailscaleStatus = { online: boolean; dnsName?: string; backendState?: string; raw: unknown };
 export type TailscaleFunnelStatus = { enabled: boolean; raw: unknown; output: string; targetMatches?: boolean };
 
+type JsonRecord = Record<string, unknown>;
+
 export class TailscaleCli {
   constructor(
     private readonly runner: CommandRunnerLike = new CommandRunner(),
@@ -32,8 +34,13 @@ export class TailscaleCli {
 
   async funnelStatus(localTarget?: string): Promise<TailscaleFunnelStatus> {
     const result = await this.runner.run(this.command, ["funnel", "status", "--json"], { timeoutMs: 10_000 });
-    const raw = parseJsonOutput(result.stdout);
-    return { enabled: isFunnelEnabled(result.stdout), raw, output: result.stdout, targetMatches: localTarget === undefined ? undefined : containsConfiguredTarget(raw, localTarget) };
+    const raw = parseJsonOutput<JsonRecord>(result.stdout);
+    return {
+      enabled: hasHttps443Funnel(raw),
+      raw,
+      output: result.stdout,
+      targetMatches: localTarget === undefined ? undefined : containsConfiguredTarget(raw, localTarget),
+    };
   }
 
   async enableFunnel(localTarget: string): Promise<CommandResult> {
@@ -59,32 +66,60 @@ export function parseTailscaleStatus(output: string): TailscaleStatus {
   return { online: Boolean(self.Online ?? self.online ?? backendState.toLowerCase() === "running"), dnsName, backendState: backendState || undefined, raw };
 }
 
+/** True only when the ServeConfig explicitly permits Funnel ingress on HTTPS 443. */
 export function isFunnelEnabled(output: string): boolean {
-  const raw = parseJsonOutput<any>(output);
-  if (typeof raw?.enabled === "boolean") return raw.enabled;
-  if (typeof raw?.Enabled === "boolean") return raw.Enabled;
-  if (raw?.Services && Object.keys(raw.Services).length > 0) return true;
-  return /https?:\/\/[^\s]+/i.test(output) && !/disabled|off|not running/i.test(output);
+  return hasHttps443Funnel(parseJsonOutput<JsonRecord>(output));
 }
 
+/**
+ * Match only the Web handler attached to a host:443 entry whose AllowFunnel
+ * value is true. A tailnet-only Serve mapping is deliberately not ownership.
+ */
 export function containsConfiguredTarget(raw: unknown, localTarget: string): boolean {
+  const config = asRecord(raw);
+  if (!config) return false;
+  const allowFunnel = asRecord(config.AllowFunnel ?? config.allowFunnel);
+  const web = asRecord(config.Web ?? config.web);
+  if (!allowFunnel || !web) return false;
+
   const expected = normalizeTarget(localTarget);
-  const visit = (value: unknown): boolean => {
-    if (typeof value === "string") {
-      try { return normalizeTarget(value) === expected; } catch { return value.includes(localTarget); }
+  for (const [hostPort, allowed] of Object.entries(allowFunnel)) {
+    if (allowed !== true || !/:443$/.test(hostPort)) continue;
+    const server = asRecord(web[hostPort]);
+    const handlers = asRecord(server?.Handlers ?? server?.handlers);
+    if (!handlers) continue;
+    for (const handlerValue of Object.values(handlers)) {
+      const handler = asRecord(handlerValue);
+      const proxy = stringField(handler, "Proxy", "proxy");
+      if (!proxy) continue;
+      try {
+        if (normalizeTarget(proxy) === expected) return true;
+      } catch {
+        // Ignore malformed unrelated handlers rather than claiming ownership.
+      }
     }
-    if (Array.isArray(value)) return value.some(visit);
-    if (value && typeof value === "object") return Object.values(value as Record<string, unknown>).some(visit);
-    return false;
-  };
-  return visit(raw);
+  }
+  return false;
 }
 
 export function extractHttpsUrl(output: string): string | undefined {
   return output.match(/https:\/\/[^\s"']+/i)?.[0]?.replace(/[),.;]+$/, "");
 }
 
-function parseJson(output: string): unknown { try { return JSON.parse(output); } catch { return null; } }
+function hasHttps443Funnel(raw: unknown): boolean {
+  const config = asRecord(raw);
+  const allowFunnel = asRecord(config?.AllowFunnel ?? config?.allowFunnel);
+  return Boolean(allowFunnel && Object.entries(allowFunnel).some(([hostPort, allowed]) => allowed === true && /:443$/.test(hostPort)));
+}
+
+function asRecord(value: unknown): JsonRecord | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as JsonRecord : null;
+}
+function stringField(record: JsonRecord | null, ...keys: string[]): string | undefined {
+  if (!record) return undefined;
+  for (const key of keys) if (typeof record[key] === "string" && record[key]) return record[key] as string;
+  return undefined;
+}
 function parseVersion(output: string): [number, number, number] | null {
   const match = output.match(/\b(\d+)\.(\d+)(?:\.(\d+))?\b/);
   return match ? [Number(match[1]), Number(match[2]), Number(match[3] ?? 0)] : null;
@@ -95,7 +130,10 @@ function compareVersions(left: [number, number, number], right: [number, number,
   }
   return 0;
 }
-function normalizeTarget(value: string): string { return new URL(value).toString().replace(/\/$/, ""); }
+function normalizeTarget(value: string): string {
+  const candidate = /^[a-z][a-z0-9+.-]*:\/\//i.test(value) ? value : `http://${value}`;
+  return new URL(candidate).toString().replace(/\/$/, "");
+}
 function validateTarget(target: string): void {
   const url = new URL(target);
   if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error(`Tunnel target must be an HTTP(S) URL: ${target}`);

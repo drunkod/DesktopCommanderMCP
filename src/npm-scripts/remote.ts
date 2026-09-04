@@ -103,7 +103,8 @@ async function runTunnelCommand(options: RemoteOptions): Promise<void> {
                 console.log(`MCP_SERVER_URL=${state.localTarget}`);
                 console.log('');
                 console.log('Restart the RemoteMCP-Jazz control plane with APP_ORIGIN and REMOTE_MCP_RESOURCE above.');
-                console.log(`Then run \`desktop-commander remote --tunnel ${options.tunnel}\` for the full OAuth/MCP/Jazz gate.`);
+                console.log('Then run the device with the same public OAuth identity:');
+                console.log(`APP_ORIGIN=${state.publicBaseUrl} REMOTE_MCP_RESOURCE=${state.publicMcpUrl} MCP_SERVER_URL=${state.localTarget} desktop-commander remote --tunnel ${options.tunnel}`);
             } catch (error) {
                 await provider.rollbackStartup?.().catch(() => undefined);
                 throw error;

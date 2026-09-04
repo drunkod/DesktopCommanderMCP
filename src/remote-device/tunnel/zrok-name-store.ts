@@ -30,9 +30,10 @@ export class ZrokNameStore {
   async save(identity: ZrokStoredIdentity): Promise<void> {
     if (!validPart(identity.namespace) || !validPart(identity.name) || (identity.publicBaseUrl !== undefined && !validHttpsUrl(identity.publicBaseUrl))) throw new Error("Invalid zrok namespace, name, or public URL");
     const directory = path.dirname(this.filePath);
+    // mkdir applies 0700 only when this call creates the directory. Never
+    // chmod an existing parent: statePath may intentionally live in a shared
+    // caller-owned directory such as /tmp or a test fixture directory.
     await fs.mkdir(directory, { recursive: true, mode: 0o700 });
-    // mkdir's mode is ignored when the directory already exists.
-    await fs.chmod(directory, 0o700);
     const temp = `${this.filePath}.tmp-${process.pid}-${crypto.randomUUID()}`;
     await fs.writeFile(temp, `${JSON.stringify(identity, null, 2)}\n`, { mode: 0o600 });
     await fs.rename(temp, this.filePath);

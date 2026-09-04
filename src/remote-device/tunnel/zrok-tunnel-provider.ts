@@ -4,7 +4,7 @@ import { checkAuthorizationServerMetadata, checkHttpEndpoint, checkProtectedReso
 import { MacosLaunchAgent } from "./macos-launch-agent.js";
 import type { TunnelDoctorCheck, TunnelProvider, TunnelProviderOptions, TunnelState } from "./types.js";
 
-type ZrokCliLike = Pick<ZrokCli, "findName" | "createName" | "agentStatus" | "startAgent" | "sharePublic" | "unshare" | "deleteName" | "console"> & { preflight?: () => Promise<void> };
+type ZrokCliLike = Pick<ZrokCli, "findName" | "createName" | "agentStatus" | "startAgent" | "sharePublic" | "releaseShare" | "deleteName" | "console"> & { preflight?: () => Promise<void> };
 
 export class ZrokTunnelProvider implements TunnelProvider {
   readonly name = "zrok" as const;
@@ -118,7 +118,7 @@ export class ZrokTunnelProvider implements TunnelProvider {
     }
     let existing = findShare(agent.shares, identity);
     if (!existing) existing = await this.waitForNamedShare(identity).catch(() => undefined);
-    if (existing) await this.cli.unshare(identity.namespace, identity.name);
+    if (existing) await this.cli.releaseShare(requireShareToken(existing, "restart"));
 
     let observed: ZrokShare;
     try {
@@ -156,7 +156,7 @@ export class ZrokTunnelProvider implements TunnelProvider {
     if (!identity) return;
     const observed = await this.cli.agentStatus().then((agent) => findShare(agent.shares, identity)).catch(() => undefined);
     if (observed && sameTarget(observed.target, validateHttpUrl(identity.localTarget))) {
-      await this.cli.unshare(identity.namespace, identity.name).catch(() => undefined);
+      await this.cli.releaseShare(requireShareToken(observed, "startup rollback")).catch(() => undefined);
       this.current = offlineState(identity.localTarget, "Share created by failed startup was removed; reserved name retained");
     }
   }
@@ -243,7 +243,7 @@ export class ZrokTunnelProvider implements TunnelProvider {
       if (share && !sameTarget(share.target, identity.localTarget) && !this.options.force) {
         throw new Error(`Refusing to stop zrok share: ${identity.namespace}:${identity.name} points at ${share.target ?? "<unknown>"}, not ${identity.localTarget}. Use --force for an explicit override.`);
       }
-      if (share) await this.cli.unshare(identity.namespace, identity.name);
+      if (share) await this.cli.releaseShare(requireShareToken(share, "stop"));
     }
     this.current = offlineState(identity?.localTarget ?? this.options.localTarget, "Share stopped; reserved name retained");
   }
@@ -251,7 +251,11 @@ export class ZrokTunnelProvider implements TunnelProvider {
   async deleteName(): Promise<void> {
     const identity = this.identity ?? await this.store.load();
     if (!identity) throw new Error("No reserved zrok identity exists");
-    await this.cli.unshare(identity.namespace, identity.name).catch(() => undefined);
+    const agent = await this.cli.agentStatus().catch((error) => {
+      throw new Error(`Refusing to delete zrok name without inspecting current agent shares: ${String(error)}`);
+    });
+    const share = findShare(agent.shares, identity);
+    if (share) await this.cli.releaseShare(requireShareToken(share, "delete-name"));
     await this.cli.deleteName(identity.namespace, identity.name);
     await this.store.remove();
     this.identity = null;
@@ -329,6 +333,10 @@ export class ZrokTunnelProvider implements TunnelProvider {
   }
 }
 
+function requireShareToken(share: ZrokShare, operation: string): string {
+  if (!share.token) throw new Error(`Cannot ${operation}: zrok agent share token is unavailable`);
+  return share.token;
+}
 function findShare(shares: ZrokShare[], identity: ZrokStoredIdentity): ZrokShare | undefined { return shares.find((share) => share.namespace === identity.namespace && share.name === identity.name); }
 function sameTarget(actual: string | undefined, expected: string): boolean { if (!actual) return false; try { return normalizeTarget(actual) === normalizeTarget(expected); } catch { return false; } }
 function normalizeTarget(value: string): string { const candidate = /^[a-z]+:\/\//i.test(value) ? value : `http://${value}`; return new URL(candidate).toString().replace(/\/$/, ""); }

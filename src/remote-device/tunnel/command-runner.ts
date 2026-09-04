@@ -127,8 +127,15 @@ export function safeCommandResult(result: CommandResult): CommandResult {
 export function parseJsonOutput<T>(output: string): T | null {
   const text = output.trim();
   if (!text) return null;
-  try { return JSON.parse(text) as T; } catch { /* try the last JSON object below */ }
-  const start = Math.max(text.lastIndexOf("{"), text.lastIndexOf("["));
-  if (start < 0) return null;
-  try { return JSON.parse(text.slice(start)) as T; } catch { return null; }
+  try { return JSON.parse(text) as T; } catch { /* scan for a complete trailing document below */ }
+
+  // Some CLIs prefix machine-readable JSON with warnings or informational
+  // text. Scan candidate *outer* delimiters from left to right instead of
+  // using lastIndexOf(), which lands on an innermost nested object.
+  for (let index = 0; index < text.length; index++) {
+    const char = text[index];
+    if (char !== "{" && char !== "[") continue;
+    try { return JSON.parse(text.slice(index)) as T; } catch { /* try the next candidate */ }
+  }
+  return null;
 }

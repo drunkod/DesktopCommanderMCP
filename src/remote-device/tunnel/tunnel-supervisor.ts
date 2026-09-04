@@ -11,6 +11,7 @@ export type TunnelSupervisorOptions = {
 /** Coalesces tunnel recovery attempts; providers remain the owner of provider-specific recovery. */
 export class TunnelSupervisor {
   private inFlight: Promise<TunnelState> | null = null;
+  private monitorInFlight: Promise<void> | null = null;
   private timer: NodeJS.Timeout | null = null;
   private stopped = false;
   private attempt = 0;
@@ -53,9 +54,13 @@ export class TunnelSupervisor {
     this.timer = null;
     for (const wake of [...this.retryWakeups]) wake();
     this.retryWakeups.clear();
-    // Wait for a provider operation that was already in progress. This keeps
-    // rollback/stop from racing an in-flight recovery attempt.
-    await this.inFlight?.catch(() => undefined);
+    // Wait for provider work that was already in progress. Monitoring status
+    // calls are tracked separately because they may be running after the timer
+    // has fired but before recovery has started.
+    await Promise.all([
+      this.inFlight?.catch(() => undefined),
+      this.monitorInFlight?.catch(() => undefined),
+    ]);
   }
 
   async teardown(): Promise<void> {
@@ -112,32 +117,43 @@ export class TunnelSupervisor {
 
   private beginMonitoring(): void {
     const interval = this.options.monitorIntervalMs ?? 15_000;
-    if (interval <= 0 || this.timer || this.stopped) return;
+    if (interval <= 0 || this.timer || this.monitorInFlight || this.stopped) return;
     this.timer = setTimeout(() => {
       this.timer = null;
-      void this.provider.status()
-        .then((state) => {
-          if (this.stopped) return;
-          this.publish(state);
-          // Application/public readiness can degrade without requiring a
-          // provider restart. Only transport loss merits recovery here.
-          if (!state.transportHealthy) {
-            void this.requestRecovery("tunnel transport degraded")
-              .catch((error) => {
-                if (!this.stopped) console.warn(`Tunnel recovery failed: ${String(error)}`);
-              });
-            return;
-          }
-          this.beginMonitoring();
-        })
-        .catch((error) => {
-          if (this.stopped) return;
-          void this.requestRecovery(`tunnel status failed: ${String(error)}`)
-            .catch((recoveryError) => {
-              if (!this.stopped) console.warn(`Tunnel recovery failed: ${String(recoveryError)}`);
-            });
-        });
+      const operation = this.monitorOnce();
+      this.monitorInFlight = operation;
+      void operation.finally(() => {
+        if (this.monitorInFlight === operation) {
+          this.monitorInFlight = null;
+          if (!this.stopped) this.beginMonitoring();
+        }
+      });
     }, interval);
+  }
+
+  private async monitorOnce(): Promise<void> {
+    try {
+      const state = await this.provider.status();
+      if (this.stopped) return;
+      this.publish(state);
+      // Application/public readiness can degrade without requiring a provider
+      // restart. Only transport loss merits recovery here.
+      if (!state.transportHealthy) {
+        try {
+          await this.requestRecovery("tunnel transport degraded");
+        } catch (error) {
+          if (!this.stopped) console.warn(`Tunnel recovery failed: ${String(error)}`);
+        }
+        return;
+      }
+    } catch (error) {
+      if (this.stopped) return;
+      try {
+        await this.requestRecovery(`tunnel status failed: ${String(error)}`);
+      } catch (recoveryError) {
+        if (!this.stopped) console.warn(`Tunnel recovery failed: ${String(recoveryError)}`);
+      }
+    }
   }
 
   private publish(state: TunnelState): void {

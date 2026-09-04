@@ -5,9 +5,9 @@ import os from 'node:os';
 import path from 'node:path';
 
 const { parseRemoteOptions } = await import('../dist/npm-scripts/remote-options.js');
-const { CommandRunner, redactSensitive, redactArgs, safeCommandResult } = await import('../dist/remote-device/tunnel/command-runner.js');
-const { TailscaleCli, parseTailscaleStatus } = await import('../dist/remote-device/tunnel/tailscale-cli.js');
-const { ZrokCli, parseZrokAgentStatus } = await import('../dist/remote-device/tunnel/zrok-cli.js');
+const { CommandRunner, redactSensitive, redactArgs, safeCommandResult, parseJsonOutput } = await import('../dist/remote-device/tunnel/command-runner.js');
+const { TailscaleCli, parseTailscaleStatus, isFunnelEnabled, containsConfiguredTarget } = await import('../dist/remote-device/tunnel/tailscale-cli.js');
+const { ZrokCli, parseZrokAgentStatus, parseZrokAgentShareTokens } = await import('../dist/remote-device/tunnel/zrok-cli.js');
 const { TailscaleTunnelProvider } = await import('../dist/remote-device/tunnel/tailscale-tunnel-provider.js');
 const { TailscaleIdentityStore } = await import('../dist/remote-device/tunnel/tailscale-identity-store.js');
 const { ZrokTunnelProvider } = await import('../dist/remote-device/tunnel/zrok-tunnel-provider.js');
@@ -98,6 +98,7 @@ assert.equal(redactSensitive('https://example.test/?token=super-secret&api_key=a
 assert.equal(redactSensitive('refresh_token=refresh-secret api-key: key-secret'), 'refresh_token=[REDACTED] api-key: [REDACTED]');
 assert.equal(redactSensitive('{"authorization":"Bearer json-secret","api_key":"json-key"}'), '{"authorization":"Bearer [REDACTED]","api_key":"[REDACTED]"}');
 assert.deepEqual(redactArgs(['agent', 'enroll', '--token', 'argv-secret', '--api-key=key-secret', '--TOKEN=upper-secret']), ['agent', 'enroll', '--token', '[REDACTED]', '--api-key=[REDACTED]', '--TOKEN=[REDACTED]']);
+assert.deepEqual(parseJsonOutput('warning before json\n{\"BackendState\":\"Running\",\"Self\":{\"Online\":true}}'), { BackendState: 'Running', Self: { Online: true } });
 const rawResult = { command: 'zrok2', args: ['--token', 'argv-secret'], stdout: 'Authorization: Bearer stdout-secret', stderr: 'token=stderr-secret', safeStdout: 'Authorization: Bearer [REDACTED]', safeStderr: 'token=[REDACTED]', code: 1 };
 const safeResult = safeCommandResult(rawResult);
 assert.equal(JSON.stringify(safeResult).includes('secret'), false, 'serialized command results must not retain secrets');
@@ -126,11 +127,11 @@ assert.deepEqual(parseTailscaleStatus(JSON.stringify({ BackendState: 'Running', 
 });
 const tailscaleRunner = fakeRunner([
   { stdout: '1.60.0\n' },
-  { stdout: JSON.stringify({ Services: {} }) },
+  { stdout: JSON.stringify({ AllowFunnel: {} }) },
   { stdout: JSON.stringify({ BackendState: 'Running', Self: { Online: true, DNSName: 'alice.tailnet.ts.net' } }) },
-  { stdout: JSON.stringify({ Services: {} }) },
+  { stdout: JSON.stringify({ AllowFunnel: {}, Web: { 'alice.tailnet.ts.net:443': { Handlers: { '/': { Proxy: 'http://127.0.0.1:3000' } } } } }) },
   { stdout: '' },
-  { stdout: JSON.stringify({ Services: { 'https:443': { Handler: 'http://127.0.0.1:3000' } } }) },
+  { stdout: JSON.stringify({ AllowFunnel: { 'alice.tailnet.ts.net:443': true }, Web: { 'alice.tailnet.ts.net:443': { Handlers: { '/': { Proxy: 'http://127.0.0.1:3000' } } } } }) },
 ]);
 const tailscaleCli = new TailscaleCli(tailscaleRunner, 'tailscale');
 await tailscaleCli.preflight();
@@ -147,21 +148,62 @@ assert.deepEqual(tailscaleRunner.calls.at(-1), ['tailscale', ['funnel', '--bg', 
 await tailscaleCli.funnelStatus();
 await tailscaleCli.disableFunnel();
 assert.deepEqual(tailscaleRunner.calls.at(-1), ['tailscale', ['funnel', '--https=443', 'off']]);
+const serveOnlyConfig = {
+  AllowFunnel: {},
+  Web: { 'alice.tailnet.ts.net:443': { Handlers: { '/': { Proxy: 'http://127.0.0.1:3000' } } } },
+  Services: { 'svc:other': { Web: { 'alice.tailnet.ts.net:443': { Handlers: { '/': { Proxy: 'http://127.0.0.1:3000' } } } } } },
+};
+assert.equal(isFunnelEnabled(JSON.stringify(serveOnlyConfig)), false, 'Serve-only config is not Funnel ownership');
+assert.equal(containsConfiguredTarget(serveOnlyConfig, 'http://127.0.0.1:3000'), false, 'Serve handlers are ignored without AllowFunnel');
+const funnelConfig = { AllowFunnel: { 'alice.tailnet.ts.net:443': true }, Web: serveOnlyConfig.Web };
+assert.equal(isFunnelEnabled(JSON.stringify(funnelConfig)), true);
+assert.equal(containsConfiguredTarget(funnelConfig, 'http://127.0.0.1:3000'), true);
+assert.equal(parseTailscaleStatus('notice\n' + JSON.stringify({ BackendState: 'Running', Self: { Online: true, DNSName: 'nested.tailnet.ts.net.' } })).dnsName, 'nested.tailnet.ts.net');
+
+const zrokAgentTable = `
+SHARES
+╭─────────────┬────────────┬──────────────┬──────────────────────────────────────┬───────────────────────────┬────────╮
+│ SHARE TOKEN │ SHARE MODE │ BACKEND MODE │ FRONTEND ENDPOINTS                   │ TARGET                    │ STATUS │
+├─────────────┼────────────┼──────────────┼──────────────────────────────────────┼───────────────────────────┼────────┤
+│ shr_tok_1   │ public     │ proxy        │ https://machine-name.share.zrok.io   │ http://127.0.0.1:3000     │ active │
+╰─────────────┴────────────┴──────────────┴──────────────────────────────────────┴───────────────────────────┴────────╯
+1 active, 0 retrying, 0 failed
+`;
+assert.deepEqual(parseZrokAgentShareTokens(zrokAgentTable), ['shr_tok_1']);
+const zrokNamesFixture = [{ namespaceToken: 'ns', namespaceName: 'share.zrok.io', name: 'machine-name', shareToken: 'shr_tok_1', reserved: true, createdAt: 1 }];
+const zrokSharesFixture = { shares: [{ shareToken: 'shr_tok_1', shareMode: 'public', backendMode: 'proxy', frontendEndpoints: ['https://machine-name.share.zrok.io'], target: 'http://127.0.0.1:3000' }] };
+const parsedAgent = parseZrokAgentStatus(zrokAgentTable, [{ token: 'shr_tok_1', frontendEndpoints: ['https://machine-name.share.zrok.io'], target: 'http://127.0.0.1:3000', shareMode: 'public', backendMode: 'proxy' }], [{ namespace: 'ns', namespaceName: 'share.zrok.io', name: 'machine-name', shareToken: 'shr_tok_1', reserved: true }]);
+assert.equal(parsedAgent.shares[0].token, 'shr_tok_1');
+assert.equal(parsedAgent.shares[0].namespace, 'ns');
+assert.equal(parsedAgent.shares[0].name, 'machine-name');
 
 const zrokMachineRunner = fakeRunner([
-  { stdout: JSON.stringify({ namespaces: [{ name: 'ns' }] }) },
-  { stdout: JSON.stringify({ names: [{ namespace: 'ns', name: 'machine-name', publicUrl: 'https://machine-name.share.zrok.io', reserved: true }] }) },
-  { stdout: JSON.stringify({ running: true, shares: [{ namespace: 'ns', name: 'machine-name', target: 'http://127.0.0.1:3000', publicUrl: 'https://machine-name.share.zrok.io' }] }) },
+  { stdout: JSON.stringify({ namespaces: [{ namespaceToken: 'ns', name: 'share.zrok.io' }] }) },
+  { stdout: JSON.stringify(zrokNamesFixture) },
+  { stdout: zrokAgentTable },
+  { stdout: JSON.stringify(zrokSharesFixture) },
+  { stdout: JSON.stringify(zrokNamesFixture) },
   { stdout: 'Name created\n' },
-  { stdout: JSON.stringify({ names: [{ namespace: 'ns', name: 'created-name', reserved: true }] }) },
+  { stdout: JSON.stringify([{ namespaceToken: 'ns', namespaceName: 'share.zrok.io', name: 'created-name', shareToken: '', reserved: true, createdAt: 2 }]) },
 ]);
 const zrokCliAdapter = new ZrokCli(zrokMachineRunner, 'zrok2');
 assert.equal((await zrokCliAdapter.listNamespaces()).length, 1);
 assert.equal((await zrokCliAdapter.findName('ns', 'machine-name')).publicUrl, 'https://machine-name.share.zrok.io');
-assert.equal((await zrokCliAdapter.agentStatus()).running, true);
+const agentStatus = await zrokCliAdapter.agentStatus();
+assert.equal(agentStatus.running, true);
+assert.equal(agentStatus.shares[0].token, 'shr_tok_1');
+assert.deepEqual(zrokMachineRunner.calls[2], ['zrok2', ['agent', 'status']]);
 const createdName = await zrokCliAdapter.createName('ns', 'created-name');
 assert.deepEqual({ namespace: createdName.namespace, name: createdName.name }, { namespace: 'ns', name: 'created-name' });
 assert.deepEqual(zrokMachineRunner.calls.at(-2), ['zrok2', ['create', 'name', '-n', 'ns', 'created-name']]);
+const zrokShareRunner = fakeRunner([{ stdout: 'token:"shr_created" frontendEndpoints:"https://created-name.share.zrok.io"' }]);
+const zrokShareCli = new ZrokCli(zrokShareRunner, 'zrok2');
+const createdShare = await zrokShareCli.sharePublic('http://127.0.0.1:3000', 'ns', 'created-name');
+assert.equal(createdShare.token, 'shr_created');
+assert.equal(createdShare.publicUrl, 'https://created-name.share.zrok.io');
+assert.deepEqual(zrokShareRunner.calls[0], ['zrok2', ['share', 'public', 'http://127.0.0.1:3000', '--force-agent', '-n', 'ns:created-name']]);
+await zrokShareCli.releaseShare('shr_created');
+assert.deepEqual(zrokShareRunner.calls.at(-1), ['zrok2', ['agent', 'release', 'share', 'shr_created']]);
 
 let funnelEnabled = false;
 let disableCalls = 0;
@@ -235,10 +277,10 @@ const zrokCli = {
   async startAgent() { zrokCalls.push(['agent-start']); agentRunning = true; return 123; },
   async sharePublic(target, namespace, name) {
     zrokCalls.push(['share', target, namespace, name]);
-    shares = [{ namespace, name, target, publicUrl: `https://${name}.share.zrok.io` }];
+    shares = [{ token: `share-${name}`, namespace, name, target, publicUrl: `https://${name}.share.zrok.io` }];
     return { result: {}, publicUrl: `https://${name}.share.zrok.io` };
   },
-  async unshare(namespace, name) { zrokCalls.push(['unshare', namespace, name]); shares = shares.filter((share) => share.namespace !== namespace || share.name !== name); },
+  async releaseShare(token) { zrokCalls.push(['release-share', token]); shares = shares.filter((share) => share.token !== token); },
   async deleteName(namespace, name) { zrokCalls.push(['delete-name', namespace, name]); },
   async console() { return 'zrok console'; },
 };
@@ -249,7 +291,7 @@ assert.equal(zrokState.healthy, true);
 assert.equal((await zrokStore.load()).name, 'dc-test');
 assert.equal(zrokCalls.filter(([name]) => name === 'create').length, 1);
 await zrok.restart();
-assert.equal(zrokCalls.filter(([name]) => name === 'unshare').length, 1, 'zrok restart must mutate the runtime share');
+assert.equal(zrokCalls.filter(([name]) => name === 'release-share').length, 1, 'zrok restart must release the runtime share by token');
 assert.equal(zrokCalls.filter(([name]) => name === 'share').length, 2, 'zrok restart must reapply the share');
 const zrokStateAgain = await zrok.status();
 assert.equal(zrokStateAgain.publicMcpUrl, zrokState.publicMcpUrl);
@@ -297,12 +339,15 @@ const forcedProvider = new TailscaleTunnelProvider(
 await forcedProvider.stop();
 assert.equal(mismatchedDisableCalls, 1);
 
-// State-directory permissions are enforced even when the directory existed.
+// Caller-supplied parent directories are never chmodded; only the state file
+// itself is private. This keeps shared parents such as /tmp usable.
 const insecureDir = path.join(tempDir, 'insecure');
 await fs.mkdir(insecureDir, { mode: 0o755 });
+await fs.chmod(insecureDir, 0o755);
 const permissionStore = new ZrokNameStore(path.join(insecureDir, 'identity.json'));
 await permissionStore.save({ provider: 'zrok', namespace: 'ns', name: 'permission-test', localTarget: 'http://127.0.0.1:3000' });
-assert.equal((await fs.stat(insecureDir)).mode & 0o777, 0o700);
+assert.equal((await fs.stat(insecureDir)).mode & 0o777, 0o755);
+assert.equal((await fs.stat(permissionStore.path)).mode & 0o777, 0o600);
 
 // A persisted non-default target wins over today's default target when the
 // user did not explicitly override it.
@@ -310,10 +355,10 @@ const persistedTargetStore = new ZrokNameStore(path.join(tempDir, 'persisted-tar
 await persistedTargetStore.save({ provider: 'zrok', namespace: 'ns', name: 'persisted-target', localTarget: 'http://127.0.0.1:4000', publicBaseUrl: 'https://persisted-target.share.zrok.io' });
 let persistedShareCalls = 0;
 const persistedTargetCli = {
-  async agentStatus() { return { running: true, shares: [{ namespace: 'ns', name: 'persisted-target', target: 'http://127.0.0.1:4000', publicUrl: 'https://persisted-target.share.zrok.io' }], raw: {} }; },
+  async agentStatus() { return { running: true, shares: [{ token: 'persisted-token', namespace: 'ns', name: 'persisted-target', target: 'http://127.0.0.1:4000', publicUrl: 'https://persisted-target.share.zrok.io' }], raw: {} }; },
   async sharePublic() { persistedShareCalls++; throw new Error('must not create a replacement share'); },
   async findName(namespace, name) { return { namespace, name, reserved: true, publicUrl: 'https://persisted-target.share.zrok.io' }; },
-  async startAgent() { return 1; }, async unshare() {}, async console() { return ''; },
+  async startAgent() { return 1; }, async releaseShare() {}, async console() { return ''; },
 };
 const persistedTargetProvider = new ZrokTunnelProvider({ localTarget: 'http://127.0.0.1:3000', localTargetExplicit: false, healthPath }, persistedTargetCli, persistedTargetStore);
 const persistedTargetState = await persistedTargetProvider.start();
@@ -329,10 +374,10 @@ let discoveredAgentRunning = true;
 const discoveredCli = {
   async findName(namespace, name) { return { namespace, name, publicUrl: 'https://recovered.share.zrok.io', reserved: true }; },
   async createName() { discoveredCreateCalls++; throw new Error('must not create a duplicate name'); },
-  async agentStatus() { return { running: discoveredAgentRunning, shares: [{ namespace: 'ns', name: 'recovered', target: 'http://127.0.0.1:3000', publicUrl: 'https://recovered.share.zrok.io' }], raw: {} }; },
+  async agentStatus() { return { running: discoveredAgentRunning, shares: [{ token: 'recovered-token', namespace: 'ns', name: 'recovered', target: 'http://127.0.0.1:3000', publicUrl: 'https://recovered.share.zrok.io' }], raw: {} }; },
   async startAgent() { discoveredAgentRunning = true; return 1; },
   async sharePublic() { throw new Error('must reuse existing share'); },
-  async unshare() {},
+  async releaseShare() {},
   async console() { return ''; },
 };
 const discovered = new ZrokTunnelProvider({ localTarget: 'http://127.0.0.1:3000', healthPath, name: 'recovered', namespace: 'ns' }, discoveredCli, discoveredStore);
@@ -350,7 +395,7 @@ await assert.rejects(() => unknownReservation.start(), /reserved status cannot b
 const driftStore = new ZrokNameStore(path.join(tempDir, 'drift.json'));
 await driftStore.save({ provider: 'zrok', namespace: 'ns', name: 'stable', localTarget: 'http://127.0.0.1:3000', publicBaseUrl: 'https://old.share.zrok.io' });
 const driftCli = {
-  async agentStatus() { return { running: true, shares: [{ namespace: 'ns', name: 'stable', target: 'http://127.0.0.1:3000', publicUrl: 'https://new.share.zrok.io' }], raw: {} }; },
+  async agentStatus() { return { running: true, shares: [{ token: 'drift-token', namespace: 'ns', name: 'stable', target: 'http://127.0.0.1:3000', publicUrl: 'https://new.share.zrok.io' }], raw: {} }; },
 };
 const driftProvider = new ZrokTunnelProvider({ localTarget: 'http://127.0.0.1:3000', healthPath }, driftCli, driftStore);
 const driftState = await driftProvider.status();
@@ -364,10 +409,10 @@ assert.match(driftState.detail, /identity drift/i);
 let wrongNamespaceShareCalls = 0;
 const wrongNamespaceCli = {
   async findName(namespace, name) { return { namespace, name, publicUrl: 'https://exact.share.zrok.io', reserved: true }; },
-  async agentStatus() { return { running: true, shares: [{ namespace: 'other', name: 'exact', target: 'http://127.0.0.1:3000', publicUrl: 'https://wrong.share.zrok.io' }], raw: {} }; },
+  async agentStatus() { return { running: true, shares: [{ token: 'wrong-namespace-token', namespace: 'other', name: 'exact', target: 'http://127.0.0.1:3000', publicUrl: 'https://wrong.share.zrok.io' }], raw: {} }; },
   async startAgent() { return 1; },
   async sharePublic(target, namespace, name) { wrongNamespaceShareCalls++; return { result: {}, publicUrl: `https://${name}.share.zrok.io` }; },
-  async unshare() {},
+  async releaseShare() {},
   async console() { return ''; },
 };
 const exactStore = new ZrokNameStore(path.join(tempDir, 'exact.json'));
@@ -379,24 +424,26 @@ assert.equal(wrongNamespaceShareCalls, 1, 'same-name share from another namespac
 const wrongTargetStore = new ZrokNameStore(path.join(tempDir, 'wrong-target.json'));
 await wrongTargetStore.save({ provider: 'zrok', namespace: 'ns', name: 'wrong-target', localTarget: 'http://127.0.0.1:3000', publicBaseUrl: 'https://wrong-target.share.zrok.io' });
 const wrongTargetCli = {
-  async agentStatus() { return { running: true, shares: [{ namespace: 'ns', name: 'wrong-target', target: 'http://127.0.0.1:9999', publicUrl: 'https://wrong-target.share.zrok.io' }], raw: {} }; },
+  async agentStatus() { return { running: true, shares: [{ token: 'wrong-target-token', namespace: 'ns', name: 'wrong-target', target: 'http://127.0.0.1:9999', publicUrl: 'https://wrong-target.share.zrok.io' }], raw: {} }; },
   async startAgent() { return 1; },
-  async unshare() {}, async sharePublic() { throw new Error('repair belongs to explicit restart'); }, async console() { return ''; },
+  async releaseShare() {}, async sharePublic() { throw new Error('repair belongs to explicit restart'); }, async console() { return ''; },
 };
 const wrongTarget = new ZrokTunnelProvider({ localTarget: 'http://127.0.0.1:3000', healthPath }, wrongTargetCli, wrongTargetStore);
 await assert.rejects(() => wrongTarget.start(), /points at http:\/\/127.0.0.1:9999/);
 
 // A running provider with a dead backend is degraded, not restarted.
 let providerStarts = 0;
+let providerStatusCalls = 0;
 const supervisor = new TunnelSupervisor({
   name: 'zrok',
   async start() { providerStarts++; return { provider: 'zrok', status: 'online', healthy: true, transportHealthy: true, backendHealthy: true, publicHealthy: true, localTarget: 'http://127.0.0.1:1' }; },
-  async status() { return { provider: 'zrok', status: 'degraded', healthy: false, transportHealthy: true, backendHealthy: false, publicHealthy: false, localTarget: 'http://127.0.0.1:1' }; },
+  async status() { providerStatusCalls++; return { provider: 'zrok', status: 'degraded', healthy: false, transportHealthy: true, backendHealthy: false, publicHealthy: false, localTarget: 'http://127.0.0.1:1' }; },
   async restart() {}, async stop() {}, async doctor() { return { provider: 'zrok', ok: false, checks: [] }; }, async console() { return ''; },
 }, { monitorIntervalMs: 10 });
 await supervisor.start();
 await new Promise((resolve) => setTimeout(resolve, 40));
 assert.equal(providerStarts, 1, 'backend degradation must not reconfigure the tunnel');
+assert.ok(providerStatusCalls >= 2, 'monitoring must continue after each completed status probe');
 await supervisor.close();
 
 // Closing a backoff wakes recovery as a normal cancellation, not a rejected
@@ -413,6 +460,29 @@ await new Promise((resolve) => setTimeout(resolve, 20));
 await cancellingSupervisor.close();
 await recovery;
 assert.equal(recoveryAttempts, 1);
+
+// teardown waits for a monitor status() that has already started before stop().
+let releaseMonitorStatus;
+let monitorStatusStarted;
+const monitorStarted = new Promise((resolve) => { monitorStatusStarted = resolve; });
+const monitorGate = new Promise((resolve) => { releaseMonitorStatus = resolve; });
+let stopCalls = 0;
+const monitorRaceSupervisor = new TunnelSupervisor({
+  name: 'tailscale',
+  async start() { return { provider: 'tailscale', status: 'online', healthy: true, transportHealthy: true, backendHealthy: true, publicHealthy: true, localTarget: 'http://127.0.0.1:3000' }; },
+  async status() { monitorStatusStarted(); await monitorGate; return { provider: 'tailscale', status: 'online', healthy: true, transportHealthy: true, backendHealthy: true, publicHealthy: true, localTarget: 'http://127.0.0.1:3000' }; },
+  async restart() {},
+  async stop() { stopCalls++; },
+  async doctor() { return { provider: 'tailscale', ok: true, checks: [] }; },
+}, { monitorIntervalMs: 5 });
+await monitorRaceSupervisor.start();
+await monitorStarted;
+const teardownPromise = monitorRaceSupervisor.teardown();
+await new Promise((resolve) => setTimeout(resolve, 10));
+assert.equal(stopCalls, 0, 'stop must wait for the active monitor status call');
+releaseMonitorStatus();
+await teardownPromise;
+assert.equal(stopCalls, 1);
 
 const launchPath = path.join(tempDir, 'agent.plist');
 const launchRunner = fakeRunner();

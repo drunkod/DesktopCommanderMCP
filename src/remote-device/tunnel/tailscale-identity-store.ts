@@ -29,8 +29,10 @@ export class TailscaleIdentityStore {
   async save(identity: TailscaleStoredIdentity): Promise<void> {
     if (!validPart(identity.dnsName) || !validHttpsUrl(identity.publicBaseUrl)) throw new Error("Invalid Tailscale identity");
     const directory = path.dirname(this.filePath);
+    // mkdir applies 0700 only when this call creates the directory. Never
+    // chmod an existing parent: statePath may intentionally live in a shared
+    // caller-owned directory such as /tmp or a test fixture directory.
     await fs.mkdir(directory, { recursive: true, mode: 0o700 });
-    await fs.chmod(directory, 0o700);
     const temporary = `${this.filePath}.tmp-${process.pid}-${crypto.randomUUID()}`;
     await fs.writeFile(temporary, `${JSON.stringify(identity, null, 2)}\n`, { mode: 0o600 });
     await fs.rename(temporary, this.filePath);
