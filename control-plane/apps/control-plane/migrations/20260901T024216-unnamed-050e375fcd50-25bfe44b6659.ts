@@ -1,0 +1,106 @@
+import { schema as s } from "jazz-tools";
+
+export default s.defineMigration({
+  migrate: {
+    "auditEvents": {
+      "ownerId": s.add.string({ default: "__legacy_unowned__" }),
+    },
+
+    "remoteCalls": {
+      "ownerId": s.add.string({ default: "__legacy_unowned__" }),
+    },
+
+    "devices": {
+      "ownerId": s.add.string({ default: "__legacy_unowned__" }),
+    },
+  },
+  fromHash: "050e375fcd50",
+  toHash: "25bfe44b6659",
+  from: {
+  "auditEvents": s.table({
+    "kind": s.string(),
+    "deviceId": s.ref("devices").optional(),
+    "remoteCallId": s.ref("remoteCalls").optional(),
+    "summary": s.string(),
+    "details": s.json(),
+    "occurredAt": s.timestamp(),
+  }),
+  "devices": s.table({
+    "stableId": s.string(),
+    "oauthClientId": s.string(),
+    "name": s.string(),
+    "platform": s.string(),
+    "appVersion": s.string(),
+    "capabilities": s.json(),
+    "status": s.string(),
+    "lastSeenAt": s.timestamp(),
+    "lastError": s.string().optional(),
+    "reconnectGeneration": s.int(),
+    "reconnectRequestedAt": s.timestamp().optional(),
+    "revokedAt": s.timestamp().optional(),
+    "authRevocationState": s.string().optional(),
+    "authRevocationLastAttemptAt": s.timestamp().optional(),
+    "authRevocationError": s.string().optional(),
+  }),
+  "remoteCalls": s.table({
+    "requestId": s.string(),
+    "requestFingerprint": s.string(),
+    "deviceId": s.ref("devices"),
+    "toolName": s.string(),
+    "toolArgs": s.json(),
+    "metadata": s.json(),
+    "status": s.string(),
+    "result": s.json().optional(),
+    "error": s.string().optional(),
+    "claimedByClientId": s.string().optional(),
+    "claimedAt": s.timestamp().optional(),
+    "completedAt": s.timestamp().optional(),
+    "expiresAt": s.timestamp(),
+  })
+},
+  to: {
+  "auditEvents": s.table({
+    "ownerId": s.string(),
+    "kind": s.string(),
+    "deviceId": s.ref("devices").optional(),
+    "remoteCallId": s.ref("remoteCalls").optional(),
+    "summary": s.string(),
+    "details": s.json(),
+    "occurredAt": s.timestamp(),
+  }),
+  "devices": s.table({
+    "ownerId": s.string(),
+    "stableId": s.string(),
+    "oauthClientId": s.string(),
+    "name": s.string(),
+    "platform": s.string(),
+    "appVersion": s.string(),
+    "capabilities": s.json(),
+    "status": s.string(),
+    "lastSeenAt": s.timestamp(),
+    "lastError": s.string().optional(),
+    "reconnectGeneration": s.int(),
+    "reconnectRequestedAt": s.timestamp().optional(),
+    "revokedAt": s.timestamp().optional(),
+    "authRevocationState": s.string().optional(),
+    "authRevocationLastAttemptAt": s.timestamp().optional(),
+    "authRevocationError": s.string().optional(),
+  }),
+  "remoteCalls": s.table({
+    "ownerId": s.string(),
+    "requestId": s.string(),
+    "requestFingerprint": s.string(),
+    "deviceId": s.ref("devices"),
+    "toolName": s.string(),
+    "toolArgs": s.json(),
+    "metadata": s.json(),
+    "status": s.string(),
+    "result": s.json().optional(),
+    "error": s.string().optional(),
+    "claimedByClientId": s.string().optional(),
+    "claimedAt": s.timestamp().optional(),
+    "completedAt": s.timestamp().optional(),
+    "expiresAt": s.timestamp(),
+  })
+},
+});

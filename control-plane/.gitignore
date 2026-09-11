@@ -1,0 +1,17 @@
+node_modules/
+.pnpm-home/
+.next/
+.next-*/
+result
+result-*
+.direnv/
+.env
+.env.local
+.env.*.local
+!.env.example
+.DS_Store
+.data/
+coverage/
+*.log
+*.tsbuildinfo
+.codegraph/

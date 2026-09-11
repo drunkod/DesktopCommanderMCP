@@ -1,0 +1,51 @@
+diff --git a/dist/index.mjs b/dist/index.mjs
+index e466644..15b5eb4 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -175,8 +175,8 @@ const generatePasskeyRegistrationOptions = (opts, { maxAgeInSeconds }) => {
+ 				transports: passkey.transports?.split(",")
+ 			})),
+ 			authenticatorSelection: {
+-				residentKey: "preferred",
+-				userVerification: "preferred",
++				residentKey: "required",
++				userVerification: "required",
+ 				...opts.authenticatorSelection || {},
+ 				...ctx.query?.authenticatorAttachment ? { authenticatorAttachment: ctx.query.authenticatorAttachment } : {}
+ 			},
+@@ -275,7 +275,7 @@ const generatePasskeyAuthenticationOptions = (opts, { maxAgeInSeconds }) => crea
+ 	const authenticationExtensions = await resolveExtensions(opts.authentication?.extensions, ctx);
+ 	const options = await generateAuthenticationOptions({
+ 		rpID: getRpID(opts, baseURLString),
+-		userVerification: "preferred",
++		userVerification: "required",
+ 		extensions: authenticationExtensions,
+ 		...userPasskeys.length ? { allowCredentials: userPasskeys.map((passkey) => ({
+ 			id: passkey.credentialID,
+@@ -352,7 +352,7 @@ const verifyPasskeyRegistration = (options) => {
+ 				expectedChallenge,
+ 				expectedOrigin: origin,
+ 				expectedRPID: getRpID(options, typeof ctx.context.options.baseURL === "string" ? ctx.context.options.baseURL : void 0),
+-				requireUserVerification: false
++				requireUserVerification: true
+ 			});
+ 			const { verified, registrationInfo } = verification;
+ 			if (!verified || !registrationInfo) throw APIError.from("BAD_REQUEST", PASSKEY_ERROR_CODES.FAILED_TO_VERIFY_REGISTRATION);
+@@ -480,7 +480,7 @@ const verifyPasskeyAuthentication = (options) => createAuthEndpoint("/passkey/ve
+ 				counter: passkey.counter,
+ 				transports: passkey.transports?.split(",")
+ 			},
+-			requireUserVerification: false
++			requireUserVerification: true
+ 		});
+ 		const { verified } = verification;
+ 		if (!verified) throw APIError.from("UNAUTHORIZED", PASSKEY_ERROR_CODES.AUTHENTICATION_FAILED);
+@@ -424,7 +424,7 @@ const verifyPasskeyRegistration = (options) => {
+ 		} catch (e) {
+ 			if (e instanceof APIError) throw e;
+ 			ctx.context.logger.error("Failed to verify registration", e);
+-			throw APIError.from("INTERNAL_SERVER_ERROR", PASSKEY_ERROR_CODES.FAILED_TO_VERIFY_REGISTRATION);
++			throw APIError.from("BAD_REQUEST", PASSKEY_ERROR_CODES.FAILED_TO_VERIFY_REGISTRATION);
+ 		}
+ 	});
+ };
