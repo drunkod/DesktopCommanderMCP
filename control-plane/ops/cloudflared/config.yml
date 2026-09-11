@@ -1,0 +1,9 @@
+tunnel: REPLACE_WITH_TUNNEL_UUID
+credentials-file: /etc/cloudflared/REPLACE_WITH_TUNNEL_UUID.json
+
+ingress:
+  - hostname: remote.example.com
+    service: http://web:3000
+  - hostname: sync.remote.example.com
+    service: http://jazz:1625
+  - service: http_status:404
