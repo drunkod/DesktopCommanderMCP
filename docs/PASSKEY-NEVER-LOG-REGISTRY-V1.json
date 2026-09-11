@@ -1,0 +1,257 @@
+{
+  "version": 1,
+  "requiredSinks": [
+    "application_logs",
+    "structured_traces",
+    "analytics",
+    "error_reporting",
+    "operator_diagnostics",
+    "ingress_access_logs",
+    "reverse_proxy_cdn_waf_access_logs",
+    "audit_outbox_dead_letter_diagnostics"
+  ],
+  "ruleSelectorSchema": [
+    "keys",
+    "headerNames",
+    "urlQueryKeys",
+    "requestTargetQueryKeys",
+    "urlBearingHeaderNames"
+  ],
+  "rules": [
+    {
+      "id": "oauth_access_token",
+      "keys": [
+        "access_token",
+        "accessToken"
+      ]
+    },
+    {
+      "id": "oauth_refresh_token",
+      "keys": [
+        "refresh_token",
+        "refreshToken"
+      ]
+    },
+    {
+      "id": "oauth_authorization_code",
+      "keys": [
+        "authorization_code",
+        "authorizationCode",
+        "oauthAuthorizationCode"
+      ]
+    },
+    {
+      "id": "oauth_device_code",
+      "keys": [
+        "device_code",
+        "deviceCode"
+      ]
+    },
+    {
+      "id": "oauth_user_code",
+      "keys": [
+        "user_code",
+        "userCode"
+      ]
+    },
+    {
+      "id": "oauth_pkce_verifier",
+      "keys": [
+        "code_verifier",
+        "codeVerifier"
+      ]
+    },
+    {
+      "id": "oauth_state",
+      "keys": [
+        "oauth_state",
+        "oauthState"
+      ]
+    },
+    {
+      "id": "oauth_client_secret",
+      "keys": [
+        "client_secret",
+        "clientSecret"
+      ]
+    },
+    {
+      "id": "http_authorization_headers",
+      "headerNames": [
+        "authorization",
+        "proxy-authorization"
+      ]
+    },
+    {
+      "id": "http_cookie_headers",
+      "headerNames": [
+        "cookie",
+        "set-cookie"
+      ]
+    },
+    {
+      "id": "oauth_request_target_query",
+      "requestTargetQueryKeys": [
+        "code",
+        "state",
+        "device_code",
+        "user_code",
+        "code_verifier",
+        "access_token",
+        "refresh_token"
+      ]
+    },
+    {
+      "id": "oauth_url_bearing_headers",
+      "urlBearingHeaderNames": [
+        "location",
+        "referer",
+        "referrer"
+      ],
+      "urlQueryKeys": [
+        "code",
+        "state",
+        "device_code",
+        "user_code",
+        "code_verifier",
+        "access_token",
+        "refresh_token"
+      ]
+    },
+    {
+      "id": "better_auth_secret",
+      "keys": [
+        "BETTER_AUTH_SECRET",
+        "betterAuthSecret"
+      ]
+    },
+    {
+      "id": "session_cookie_secret",
+      "keys": [
+        "session_secret",
+        "sessionSecret",
+        "cookie_secret",
+        "cookieSecret"
+      ]
+    },
+    {
+      "id": "webauthn_challenge",
+      "keys": [
+        "webauthn_challenge",
+        "webauthnChallenge",
+        "challenge"
+      ]
+    },
+    {
+      "id": "webauthn_attestation_object",
+      "keys": [
+        "attestationObject",
+        "attestation_object"
+      ]
+    },
+    {
+      "id": "webauthn_client_data_json",
+      "keys": [
+        "clientDataJSON",
+        "client_data_json"
+      ]
+    },
+    {
+      "id": "webauthn_authenticator_data",
+      "keys": [
+        "authenticatorData",
+        "authenticator_data"
+      ]
+    },
+    {
+      "id": "webauthn_assertion_signature",
+      "keys": [
+        "signature",
+        "webauthnSignature"
+      ]
+    },
+    {
+      "id": "webauthn_user_handle",
+      "keys": [
+        "userHandle",
+        "user_handle"
+      ]
+    },
+    {
+      "id": "webauthn_raw_id",
+      "keys": [
+        "rawId",
+        "raw_id"
+      ]
+    },
+    {
+      "id": "credential_public_key",
+      "keys": [
+        "publicKey",
+        "credentialPublicKey"
+      ]
+    },
+    {
+      "id": "credential_id_full",
+      "keys": [
+        "credentialId",
+        "credentialID"
+      ]
+    },
+    {
+      "id": "private_jwk",
+      "keys": [
+        "privateJwk",
+        "private_jwk"
+      ]
+    },
+    {
+      "id": "bootstrap_capability",
+      "keys": [
+        "bootstrapCapability",
+        "bootstrap_capability"
+      ]
+    },
+    {
+      "id": "bootstrap_device_signature",
+      "keys": [
+        "deviceKeySignature",
+        "device_key_signature"
+      ]
+    },
+    {
+      "id": "provisioning_receipt_secret",
+      "keys": [
+        "receiptSecret",
+        "receipt_secret"
+      ]
+    },
+    {
+      "id": "callback_oauth_query",
+      "urlQueryKeys": [
+        "code",
+        "state",
+        "device_code",
+        "user_code",
+        "code_verifier",
+        "access_token",
+        "refresh_token"
+      ]
+    },
+    {
+      "id": "verification_uri_complete",
+      "keys": [
+        "verification_uri_complete",
+        "verificationUriComplete"
+      ]
+    },
+    {
+      "id": "biometric_pin_material",
+      "keys": [
+        "pin",
+        "biometric",
+        "biometricData"
+      ]
+    }
+  ]
+}
