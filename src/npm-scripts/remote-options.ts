@@ -1,10 +1,12 @@
 import type { TunnelProviderName } from "../remote-device/tunnel/types.js";
 
 export type RemoteTunnelCommand = "run" | "prepare" | "status" | "doctor" | "console" | "stop" | "disable" | "restart" | "install-agent" | "uninstall-agent" | "delete-name";
+export type RemoteCredentialCommand = "clear" | "repair";
 
 export type RemoteOptions = {
   tunnel?: TunnelProviderName;
   tunnelCommand: RemoteTunnelCommand;
+  credentialCommand?: RemoteCredentialCommand;
   tunnelTarget: string;
   tunnelTargetExplicit: boolean;
   tunnelName?: string;
@@ -36,6 +38,8 @@ export function parseRemoteOptions(argv: string[] = process.argv.slice(3)): Remo
   let confirm = false;
   let force = false;
   let tunnelKeywordPending = false;
+  let credentialKeywordPending = false;
+  let credentialCommand: RemoteCredentialCommand | undefined;
 
   const valueFor = (arg: string, index: number): [string, number] => {
     const equals = arg.indexOf("=");
@@ -56,6 +60,15 @@ export function parseRemoteOptions(argv: string[] = process.argv.slice(3)): Remo
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
+    if (arg === "credentials") {
+      if (credentialKeywordPending || credentialCommand) throw new Error("Duplicate credentials command");
+      credentialKeywordPending = true;
+      continue;
+    }
+    if (credentialKeywordPending) {
+      if (arg === "clear" || arg === "repair") { credentialCommand = arg; credentialKeywordPending = false; continue; }
+      throw new Error(`Expected clear or repair after "credentials", got: ${arg}`);
+    }
     if (arg === "tunnel") {
       if (tunnelKeywordPending) throw new Error("Duplicate tunnel command");
       tunnelKeywordPending = true;
@@ -109,7 +122,9 @@ export function parseRemoteOptions(argv: string[] = process.argv.slice(3)): Remo
   }
 
   if (tunnelKeywordPending) throw new Error('"remote tunnel" requires a provider or operator command');
+  if (credentialKeywordPending) throw new Error('"remote credentials" requires clear or repair');
+  if (credentialCommand && tunnelCommand !== "run") throw new Error("Credentials and tunnel operator commands cannot be combined");
   if (tunnelCommand !== "run" && !tunnel) throw new Error("Tunnel provider is required for operator commands");
 
-  return { tunnel, tunnelCommand, tunnelTarget, tunnelTargetExplicit, tunnelName, tunnelNamespace, tunnelHealthPath, installTunnelAgent, disableNoSleep, debug, persistSession, confirm, force };
+  return { tunnel, tunnelCommand, credentialCommand, tunnelTarget, tunnelTargetExplicit, tunnelName, tunnelNamespace, tunnelHealthPath, installTunnelAgent, disableNoSleep, debug, persistSession, confirm, force };
 }

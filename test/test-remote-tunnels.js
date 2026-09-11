@@ -16,9 +16,23 @@ const { TunnelSupervisor } = await import('../dist/remote-device/tunnel/tunnel-s
 const { MacosLaunchAgent } = await import('../dist/remote-device/tunnel/macos-launch-agent.js');
 const { publicMcpUrl } = await import('../dist/remote-device/tunnel/tunnel-health.js');
 const { registerDeviceClient, pairDevice, refreshDeviceSession } = await import('../dist/remote-device/device-oauth.js');
+const { installOAuthHttpTransportForTests, resetOAuthHttpTransportForTests } = await import('../dist/remote-device/oauth-http.js');
+installOAuthHttpTransportForTests(async (url, init) => globalThis.fetch(url, init));
 
 const healthPath = '/.well-known/oauth-protected-resource/mcp';
 const publicOrigin = 'https://alice.tailnet.ts.net';
+const tailscaleRemoteIdentity = {
+  runtimeProfile: 'test',
+  authorizationServerIssuer: `${publicOrigin}/api/auth`,
+  publicMcpResource: `${publicOrigin}/mcp`,
+  internalDeviceApiOrigin: 'http://127.0.0.1:3000',
+};
+const zrokRemoteIdentity = {
+  runtimeProfile: 'test',
+  authorizationServerIssuer: 'https://dc-test.share.zrok.io/api/auth',
+  publicMcpResource: 'https://dc-test.share.zrok.io/mcp',
+  internalDeviceApiOrigin: 'http://127.0.0.1:3000',
+};
 
 function fakeRunner(responses = []) {
   const calls = [];
@@ -51,9 +65,11 @@ function publicMetadataResponse(url) {
     return new Response(JSON.stringify({
       resource: `${origin}/mcp`,
       authorization_servers: [`${origin}/api/auth`],
+      bearer_methods_supported: ['header'],
+      scopes_supported: ['mcp:tools', 'device:sync'],
     }), { status: 200, headers: { 'content-type': 'application/json' } });
   }
-  if (url.includes('/api/auth/.well-known/oauth-authorization-server')) {
+  if (url.includes('/.well-known/oauth-authorization-server')) {
     const endpoint = `${origin}/api/auth`;
     return new Response(JSON.stringify({
       issuer: endpoint,
@@ -62,6 +78,12 @@ function publicMetadataResponse(url) {
       device_authorization_endpoint: `${endpoint}/oauth2/device-authorization`,
       token_endpoint: `${endpoint}/oauth2/token`,
       jwks_uri: `${endpoint}/jwks`,
+      revocation_endpoint: `${endpoint}/oauth2/revoke`,
+      grant_types_supported: ['authorization_code', 'urn:ietf:params:oauth:grant-type:device_code', 'refresh_token'],
+      token_endpoint_auth_methods_supported: ['none'],
+      response_types_supported: ['code'],
+      code_challenge_methods_supported: ['S256'],
+      scopes_supported: ['mcp:tools', 'device:sync', 'offline_access'],
     }), { status: 200, headers: { 'content-type': 'application/json' } });
   }
   return new Response('', { status: 200 });
@@ -73,6 +95,7 @@ assert.deepEqual(parseRemoteOptions([
 ]), {
   tunnel: 'tailscale',
   tunnelCommand: 'run',
+  credentialCommand: undefined,
   tunnelTarget: 'http://127.0.0.1:4000',
   tunnelTargetExplicit: true,
   tunnelName: undefined,
@@ -85,6 +108,10 @@ assert.deepEqual(parseRemoteOptions([
   confirm: false,
   force: false,
 });
+assert.equal(parseRemoteOptions(['credentials', 'clear']).credentialCommand, 'clear');
+assert.equal(parseRemoteOptions(['credentials', 'repair', '--confirm', '--force']).credentialCommand, 'repair');
+assert.throws(() => parseRemoteOptions(['credentials']), /requires clear or repair/);
+assert.throws(() => parseRemoteOptions(['credentials', 'clear', 'doctor', '--tunnel', 'zrok']), /cannot be combined/);
 assert.equal(parseRemoteOptions(['tunnel', 'zrok', 'doctor', '--tunnel-health-path=/ready']).tunnelCommand, 'doctor');
 assert.equal(parseRemoteOptions(['tunnel', 'zrok', 'restart']).tunnelCommand, 'restart');
 assert.equal(parseRemoteOptions(['tunnel', 'zrok', 'delete-name', '--confirm']).confirm, true);
@@ -217,7 +244,7 @@ const tailscaleCliFake = {
 };
 const tailscaleIdentityPath = path.join(os.tmpdir(), `desktop-commander-tailscale-${process.pid}.json`);
 const tailscale = new TailscaleTunnelProvider(
-  { localTarget: 'http://127.0.0.1:3000', healthPath },
+  { localTarget: 'http://127.0.0.1:3000', healthPath, remoteIdentity: tailscaleRemoteIdentity },
   tailscaleCliFake,
   new TailscaleIdentityStore(tailscaleIdentityPath),
 );
@@ -284,7 +311,7 @@ const zrokCli = {
   async deleteName(namespace, name) { zrokCalls.push(['delete-name', namespace, name]); },
   async console() { return 'zrok console'; },
 };
-const zrok = new ZrokTunnelProvider({ localTarget: 'http://127.0.0.1:3000', healthPath, name: 'dc-test', namespace: 'ns' }, zrokCli, zrokStore);
+const zrok = new ZrokTunnelProvider({ localTarget: 'http://127.0.0.1:3000', healthPath, name: 'dc-test', namespace: 'ns', remoteIdentity: zrokRemoteIdentity }, zrokCli, zrokStore);
 const zrokState = await zrok.start();
 assert.equal(zrokState.publicMcpUrl, 'https://dc-test.share.zrok.io/mcp');
 assert.equal(zrokState.healthy, true);
@@ -499,13 +526,17 @@ if (process.platform === 'darwin') {
   await launchAgent.uninstall();
 }
 
-// OAuth discovery and token registration use localhost for HTTP transport,
-// while the issuer/resource identity remains public.
+// OAuth discovery and token registration use the configured issuer endpoints;
+// the local MCP origin is separate internal device API identity.
 const savedOAuthEnv = {
   MCP_SERVER_URL: process.env.MCP_SERVER_URL,
   APP_ORIGIN: process.env.APP_ORIGIN,
   REMOTE_MCP_RESOURCE: process.env.REMOTE_MCP_RESOURCE,
+  DC_REMOTE_RUNTIME_PROFILE: process.env.DC_REMOTE_RUNTIME_PROFILE,
+  DC_REMOTE_AUTH_ISSUER: process.env.DC_REMOTE_AUTH_ISSUER,
 };
+process.env.DC_REMOTE_RUNTIME_PROFILE = 'test';
+process.env.DC_REMOTE_AUTH_ISSUER = 'https://public.example.test/api/auth';
 process.env.MCP_SERVER_URL = 'http://127.0.0.1:3000';
 process.env.APP_ORIGIN = 'https://public.example.test';
 process.env.REMOTE_MCP_RESOURCE = 'https://public.example.test/mcp';
@@ -513,44 +544,58 @@ const oauthCalls = [];
 globalThis.fetch = async (url, init = {}) => {
   const value = String(url);
   oauthCalls.push({ url: value, body: init.body?.toString() });
-  if (value === 'http://127.0.0.1:3000/api/auth/.well-known/oauth-authorization-server') {
+  if (value === 'https://public.example.test/.well-known/oauth-authorization-server/api/auth') {
     return new Response(JSON.stringify({
       issuer: 'https://public.example.test/api/auth',
+      authorization_endpoint: 'https://public.example.test/api/auth/authorize',
       registration_endpoint: 'https://public.example.test/api/auth/oauth2/register',
       device_authorization_endpoint: 'https://public.example.test/api/auth/oauth2/device-authorization',
       token_endpoint: 'https://public.example.test/api/auth/oauth2/token',
       jwks_uri: 'https://public.example.test/api/auth/jwks',
+      revocation_endpoint: 'https://public.example.test/api/auth/oauth2/revoke',
+      grant_types_supported: ['authorization_code', 'urn:ietf:params:oauth:grant-type:device_code', 'refresh_token'],
+      token_endpoint_auth_methods_supported: ['none'],
+      response_types_supported: ['code'],
+      code_challenge_methods_supported: ['S256'],
+      scopes_supported: ['mcp:tools', 'device:sync', 'offline_access'],
     }), { status: 200, headers: { 'content-type': 'application/json' } });
   }
-  if (value === 'http://127.0.0.1:3000/api/auth/oauth2/register') {
-    return new Response(JSON.stringify({ client_id: 'device-client-test' }), { status: 200, headers: { 'content-type': 'application/json' } });
+  if (value === 'https://public.example.test/api/auth/oauth2/register') {
+    return new Response(JSON.stringify({ ok: true, client_id: 'device-client-test' }), { status: 200, headers: { 'content-type': 'application/json' } });
   }
   throw new Error(`Unexpected OAuth request ${value}`);
 };
 assert.equal(await registerDeviceClient(), 'device-client-test');
 assert.deepEqual(oauthCalls.map(({ url }) => url), [
-  'http://127.0.0.1:3000/api/auth/.well-known/oauth-authorization-server',
-  'http://127.0.0.1:3000/api/auth/oauth2/register',
+  'https://public.example.test/.well-known/oauth-authorization-server/api/auth',
+  'https://public.example.test/api/auth/oauth2/register',
 ]);
 assert.deepEqual(JSON.parse(oauthCalls[1].body).resources, ['https://public.example.test/mcp']);
 const flowCalls = [];
 globalThis.fetch = async (url, init = {}) => {
   const value = String(url);
   flowCalls.push({ url: value, body: init.body?.toString() ?? '' });
-  if (value === 'http://127.0.0.1:3000/api/auth/.well-known/oauth-authorization-server') {
+  if (value === 'https://public.example.test/.well-known/oauth-authorization-server/api/auth') {
     return new Response(JSON.stringify({
       issuer: 'https://public.example.test/api/auth',
+      authorization_endpoint: 'https://public.example.test/api/auth/authorize',
       registration_endpoint: 'https://public.example.test/api/auth/oauth2/register',
       device_authorization_endpoint: 'https://public.example.test/api/auth/oauth2/device-authorization',
       token_endpoint: 'https://public.example.test/api/auth/oauth2/token',
       jwks_uri: 'https://public.example.test/api/auth/jwks',
-    }), { status: 200 });
+      revocation_endpoint: 'https://public.example.test/api/auth/oauth2/revoke',
+      grant_types_supported: ['authorization_code', 'urn:ietf:params:oauth:grant-type:device_code', 'refresh_token'],
+      token_endpoint_auth_methods_supported: ['none'],
+      response_types_supported: ['code'],
+      code_challenge_methods_supported: ['S256'],
+      scopes_supported: ['mcp:tools', 'device:sync', 'offline_access'],
+    }), { status: 200, headers: { 'content-type': 'application/json' } });
   }
-  if (value === 'http://127.0.0.1:3000/api/auth/oauth2/device-authorization') {
-    return new Response(JSON.stringify({ device_code: 'device-code', user_code: 'ABCD', verification_uri: 'https://public.example.test/device', expires_in: 30, interval: 0 }), { status: 200 });
+  if (value === 'https://public.example.test/api/auth/oauth2/device-authorization') {
+    return new Response(JSON.stringify({ device_code: 'device-code', user_code: 'ABCD', verification_uri: 'https://public.example.test/device', expires_in: 30, interval: 1 }), { status: 200, headers: { 'content-type': 'application/json' } });
   }
-  if (value === 'http://127.0.0.1:3000/api/auth/oauth2/token') {
-    return new Response(JSON.stringify({ access_token: 'access', refresh_token: 'refresh', expires_in: 300, scope: 'device:sync offline_access', token_type: 'Bearer' }), { status: 200 });
+  if (value === 'https://public.example.test/api/auth/oauth2/token') {
+    return new Response(JSON.stringify({ access_token: 'access', refresh_token: 'refresh', expires_in: 300, scope: 'device:sync offline_access', token_type: 'Bearer' }), { status: 200, headers: { 'content-type': 'application/json' } });
   }
   throw new Error(`Unexpected OAuth flow request ${value}`);
 };
@@ -559,11 +604,11 @@ process.env.DC_DEVICE_NO_BROWSER = '1';
 const session = await pairDevice('device-client-test');
 await refreshDeviceSession(session);
 assert.deepEqual(flowCalls.map(({ url }) => url), [
-  'http://127.0.0.1:3000/api/auth/.well-known/oauth-authorization-server',
-  'http://127.0.0.1:3000/api/auth/oauth2/device-authorization',
-  'http://127.0.0.1:3000/api/auth/oauth2/token',
-  'http://127.0.0.1:3000/api/auth/.well-known/oauth-authorization-server',
-  'http://127.0.0.1:3000/api/auth/oauth2/token',
+  'https://public.example.test/.well-known/oauth-authorization-server/api/auth',
+  'https://public.example.test/api/auth/oauth2/device-authorization',
+  'https://public.example.test/api/auth/oauth2/token',
+  'https://public.example.test/.well-known/oauth-authorization-server/api/auth',
+  'https://public.example.test/api/auth/oauth2/token',
 ]);
 for (const call of flowCalls.filter(({ body }) => body)) assert.match(call.body, /public\.example\.test%2Fmcp|public\.example\.test\/mcp/);
 if (oldNoBrowser === undefined) delete process.env.DC_DEVICE_NO_BROWSER;
@@ -575,14 +620,19 @@ globalThis.fetch = async () => new Response(JSON.stringify({
   device_authorization_endpoint: 'https://evil.example.test/device',
   token_endpoint: 'https://evil.example.test/token',
   jwks_uri: 'https://evil.example.test/jwks',
-}), { status: 200 });
-await assert.rejects(() => registerDeviceClient(), /Unexpected OAuth issuer/);
+}), { status: 200, headers: { 'content-type': 'application/json' } });
+await assert.rejects(() => registerDeviceClient(), /OAuth issuer does not match configured identity/);
 assert.equal(publicMcpUrl('https://stable.example.test'), 'https://stable.example.test/mcp');
 process.env.MCP_SERVER_URL = savedOAuthEnv.MCP_SERVER_URL;
 process.env.APP_ORIGIN = savedOAuthEnv.APP_ORIGIN;
 process.env.REMOTE_MCP_RESOURCE = savedOAuthEnv.REMOTE_MCP_RESOURCE;
+if (savedOAuthEnv.DC_REMOTE_RUNTIME_PROFILE === undefined) delete process.env.DC_REMOTE_RUNTIME_PROFILE;
+else process.env.DC_REMOTE_RUNTIME_PROFILE = savedOAuthEnv.DC_REMOTE_RUNTIME_PROFILE;
+if (savedOAuthEnv.DC_REMOTE_AUTH_ISSUER === undefined) delete process.env.DC_REMOTE_AUTH_ISSUER;
+else process.env.DC_REMOTE_AUTH_ISSUER = savedOAuthEnv.DC_REMOTE_AUTH_ISSUER;
 
 globalThis.fetch = originalFetch;
 await fs.rm(tempDir, { recursive: true, force: true });
 await fs.rm(tailscaleIdentityPath, { force: true });
 console.log('✓ remote tunnel unit cases passed');
+resetOAuthHttpTransportForTests();

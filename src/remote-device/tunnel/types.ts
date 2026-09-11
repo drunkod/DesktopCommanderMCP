@@ -52,8 +52,12 @@ export interface TunnelProvider {
   deleteName?(): Promise<void>;
 }
 
+import type { RemoteIdentityConfig } from "../remote-identity.js";
+
 export type TunnelProviderOptions = {
   localTarget: string;
+  /** Immutable central issuer/resource identity; absent only for pre-auth tunnel preparation. */
+  remoteIdentity?: RemoteIdentityConfig;
   localTargetExplicit?: boolean;
   healthPath?: string;
   name?: string;

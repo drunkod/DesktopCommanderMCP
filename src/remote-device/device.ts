@@ -6,6 +6,9 @@ import { DeviceStatusArbiter } from './device-status-arbiter.js';
 import { DeviceTokenManager } from './token-manager.js';
 import { MemoryCredentialStore } from './credential-store.js';
 import { NativeCredentialStore } from './native-credential-store.js';
+import { HttpDeviceControlPlaneClient } from './control-plane-client.js';
+import { loadRemoteIdentityFromEnv, type RemoteIdentityConfig } from './remote-identity.js';
+import { JwksProviderTokenVerifier, type ProviderTokenVerifier } from './device-oauth.js';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import os from 'os';
@@ -15,6 +18,8 @@ import { captureRemote } from '../utils/capture.js';
 
 export interface MCPDeviceOptions {
     persistSession?: boolean;
+    identity?: RemoteIdentityConfig;
+    providerTokenVerifier?: ProviderTokenVerifier;
 }
 
 const SEEN_CALL_IDS_MAX = 2000;
@@ -35,15 +40,20 @@ export class MCPDevice {
     private seenCallIds: Set<string> = new Set();
 
     constructor(options: MCPDeviceOptions = {}) {
-        this.baseServerUrl = (process.env.MCP_SERVER_URL || 'http://127.0.0.1:3000').replace(/\/$/, '');
-        process.env.MCP_SERVER_URL = this.baseServerUrl;
-        process.env.REMOTE_MCP_RESOURCE ||= `${this.baseServerUrl}/mcp`;
+        const identity = options.identity ?? loadRemoteIdentityFromEnv();
+        this.baseServerUrl = identity.internalDeviceApiOrigin;
         this.persistSession = options.persistSession ?? true;
         const credentialStore = this.persistSession
-            ? new NativeCredentialStore()
-            : new MemoryCredentialStore();
-        this.tokens = new DeviceTokenManager(credentialStore);
-        this.remoteChannel = new RemoteChannel(this.tokens);
+            ? new NativeCredentialStore(identity)
+            : new MemoryCredentialStore(identity);
+        const verifier = options.providerTokenVerifier
+            ?? (identity.runtimeProfile === 'test' ? undefined : new JwksProviderTokenVerifier());
+        this.tokens = new DeviceTokenManager(credentialStore, identity, verifier);
+        const controlPlane = new HttpDeviceControlPlaneClient(
+            identity.internalDeviceApiOrigin,
+            identity.runtimeProfile,
+        );
+        this.remoteChannel = new RemoteChannel(this.tokens, controlPlane);
         this.configPath = path.join(os.homedir(), '.desktop-commander-device', 'device.json');
         this.desktop = new DesktopCommanderIntegration();
         this.statusArbiter = new DeviceStatusArbiter({

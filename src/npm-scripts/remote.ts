@@ -4,13 +4,22 @@ import { parseRemoteOptions, type RemoteOptions } from './remote-options.js';
 import { createTunnelProvider } from '../remote-device/tunnel/create-tunnel-provider.js';
 import { TunnelSupervisor } from '../remote-device/tunnel/tunnel-provider.js';
 import { checkAuthorizationServerMetadata, checkProtectedResourceMetadata } from '../remote-device/tunnel/tunnel-health.js';
+import { loadRemoteIdentityFromEnv } from '../remote-device/remote-identity.js';
+import { NativeCredentialStore } from '../remote-device/native-credential-store.js';
+import { DeviceTokenManager } from '../remote-device/token-manager.js';
+import { JwksProviderTokenVerifier } from '../remote-device/device-oauth.js';
 
 export async function runRemote() {
     const options = parseRemoteOptions();
+    if (options.credentialCommand) {
+        await runCredentialCommand(options);
+        return;
+    }
     if (options.tunnelCommand !== 'run') {
         await runTunnelCommand(options);
         return;
     }
+    const remoteIdentity = loadRemoteIdentityFromEnv();
 
     if (!options.persistSession) {
         console.log('🔓 Session persistence disabled — re-authorization required on every start');
@@ -36,6 +45,7 @@ export async function runRemote() {
                 namespace: options.tunnelNamespace,
                 localTargetExplicit: options.tunnelTargetExplicit,
                 force: options.force,
+                remoteIdentity,
             });
             tunnel = new TunnelSupervisor(provider, {
                 onState: (state) => console.debug('[DEBUG] Tunnel state:', JSON.stringify(state)),
@@ -50,8 +60,8 @@ export async function runRemote() {
             // origin. The already-running control plane must have been started
             // with APP_ORIGIN and REMOTE_MCP_RESOURCE; changing this process's
             // environment cannot reconfigure that separate server.
-            const resourceCheck = await checkProtectedResourceMetadata(state.publicBaseUrl, state.publicMcpUrl);
-            const authorizationCheck = await checkAuthorizationServerMetadata(state.publicBaseUrl);
+            const resourceCheck = await checkProtectedResourceMetadata(state.publicBaseUrl, remoteIdentity);
+            const authorizationCheck = await checkAuthorizationServerMetadata(remoteIdentity);
             if (!resourceCheck.ok || !authorizationCheck.ok) {
                 throw new Error(`Public MCP/OAuth identity is not ready: ${resourceCheck.ok ? authorizationCheck.detail : resourceCheck.detail}`);
             }
@@ -78,6 +88,26 @@ export async function runRemote() {
     }
 }
 
+async function runCredentialCommand(options: RemoteOptions): Promise<void> {
+    const identity = loadRemoteIdentityFromEnv();
+    const store = new NativeCredentialStore(identity);
+    if (options.credentialCommand === 'clear') {
+        const manager = new DeviceTokenManager(store, identity, new JwksProviderTokenVerifier());
+        await manager.clearExplicitly();
+        console.log('✅ Device OAuth credential cleared; refresh authority was revoked or cleanup was durably queued');
+        return;
+    }
+    if (options.credentialCommand === 'repair') {
+        if (!options.confirm || !options.force) {
+            throw new Error('Legacy credential repair requires --confirm --force after server-side/operator revocation');
+        }
+        const result = await store.repairLegacyCredential(true);
+        console.log(`✅ Legacy credential repair result: ${result}`);
+        return;
+    }
+    throw new Error(`Unsupported credentials command: ${options.credentialCommand}`);
+}
+
 async function runTunnelCommand(options: RemoteOptions): Promise<void> {
     if (!options.tunnel) throw new Error('Tunnel provider is required (use --tunnel tailscale or --tunnel zrok)');
     const provider = createTunnelProvider(options.tunnel, {
@@ -87,6 +117,9 @@ async function runTunnelCommand(options: RemoteOptions): Promise<void> {
         namespace: options.tunnelNamespace,
         localTargetExplicit: options.tunnelTargetExplicit,
         force: options.force,
+        ...(["status", "doctor", "restart"].includes(options.tunnelCommand)
+            ? { remoteIdentity: loadRemoteIdentityFromEnv() }
+            : {}),
     });
     switch (options.tunnelCommand) {
         case 'prepare': {

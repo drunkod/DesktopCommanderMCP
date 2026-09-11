@@ -3,13 +3,7 @@ import { app } from './jazz-schema.js';
 import type { DeviceTokenManager } from './token-manager.js';
 import { DeviceHeartbeat } from './heartbeat.js';
 import { ReconnectSupervisor } from './reconnect-supervisor.js';
-import {
-    claimRemoteCall,
-    completeRemoteCall,
-    getJazzDeviceToken,
-    registerDeviceWithControlPlane,
-    sendDeviceHeartbeat,
-} from './control-plane-client.js';
+import type { DeviceControlPlaneClient } from './control-plane-client.js';
 import { toJsonValue } from './json.js';
 import { VERSION } from '../version.js';
 
@@ -67,12 +61,15 @@ export class RemoteChannel {
     private heartbeat: DeviceHeartbeat;
     private reconnect: ReconnectSupervisor;
 
-    constructor(private readonly tokens: DeviceTokenManager) {
+    constructor(
+        private readonly tokens: DeviceTokenManager,
+        private readonly controlPlane: DeviceControlPlaneClient,
+    ) {
         this.heartbeat = new DeviceHeartbeat(
             async () => {
                 if (!this.deviceId) throw new Error('Device is not registered');
                 const accessToken = await this.tokens.getAccessToken();
-                await sendDeviceHeartbeat(accessToken, {
+                await this.controlPlane.heartbeat(accessToken, {
                     deviceId: this.deviceId,
                     status: 'online',
                 });
@@ -125,7 +122,7 @@ export class RemoteChannel {
             throw new Error('Remote channel registration parameters are missing');
         }
         const accessToken = await this.tokens.getAccessToken();
-        const registration = await registerDeviceWithControlPlane(accessToken, {
+        const registration = await this.controlPlane.register(accessToken, {
             stableId: this.stableId,
             name: this.deviceName,
             platform: process.platform,
@@ -155,7 +152,7 @@ export class RemoteChannel {
             if (state.error !== 'expired' || this.shuttingDown || !this.deviceId) return;
             const id = this.deviceId;
             void this.tokens.getAccessToken()
-                .then((oauthToken) => getJazzDeviceToken(oauthToken, id))
+                .then((oauthToken) => this.controlPlane.getJazzToken(oauthToken, id))
                 .then((jazzToken) => db.updateAuthToken(jazzToken))
                 .catch((error) => void this.reconnect.request(`Jazz capability refresh failed: ${String(error)}`));
         });
@@ -212,7 +209,7 @@ export class RemoteChannel {
     async markCallExecuting(callId: string): Promise<boolean> {
         if (!this.deviceId) throw new Error('Device is not registered');
         const accessToken = await this.tokens.getAccessToken();
-        return claimRemoteCall(accessToken, { callId, deviceId: this.deviceId });
+        return this.controlPlane.claim(accessToken, { callId, deviceId: this.deviceId });
     }
 
     async updateCallResult(
@@ -227,7 +224,7 @@ export class RemoteChannel {
         }
         const accessToken = await this.tokens.getAccessToken();
         if (status === 'completed') {
-            await completeRemoteCall(accessToken, {
+            await this.controlPlane.complete(accessToken, {
                 callId,
                 deviceId: this.deviceId,
                 status: 'completed',
@@ -235,7 +232,7 @@ export class RemoteChannel {
             });
             return;
         }
-        await completeRemoteCall(accessToken, {
+        await this.controlPlane.complete(accessToken, {
             callId,
             deviceId: this.deviceId,
             status: 'failed',
@@ -256,7 +253,7 @@ export class RemoteChannel {
 
     async setOnlineStatus(deviceId: string, status: 'online' | 'offline'): Promise<void> {
         const accessToken = await this.tokens.getAccessToken();
-        await sendDeviceHeartbeat(accessToken, { deviceId, status });
+        await this.controlPlane.heartbeat(accessToken, { deviceId, status });
     }
 
     async setOffline(deviceId?: string): Promise<void> {

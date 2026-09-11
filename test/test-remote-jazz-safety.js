@@ -2,6 +2,7 @@
 import assert from 'node:assert';
 
 process.env.DESKTOP_COMMANDER_DISABLE_TELEMETRY = '1';
+process.env.DC_REMOTE_RUNTIME_PROFILE = 'test';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 

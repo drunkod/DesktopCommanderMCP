@@ -139,12 +139,12 @@ export class TailscaleTunnelProvider implements TunnelProvider {
       const publicCheck = publicBaseUrl
         ? await checkHttpEndpoint(joinHttpUrl(publicBaseUrl, healthPath(this.options.healthPath)), "public-target")
         : failedCheck("public-target", "No stable public DNS identity");
-      const metadataCheck = publicBaseUrl && expectedMcpUrl
-        ? await checkProtectedResourceMetadata(publicBaseUrl, expectedMcpUrl)
-        : failedCheck("public-oauth-resource", "No stable public DNS identity");
-      const authorizationCheck = publicBaseUrl
-        ? await checkAuthorizationServerMetadata(publicBaseUrl)
-        : failedCheck("public-oauth-authorization-server", "No stable public DNS identity");
+      const metadataCheck = publicBaseUrl && expectedMcpUrl && this.options.remoteIdentity
+        ? await checkProtectedResourceMetadata(publicBaseUrl, this.options.remoteIdentity)
+        : failedCheck("public-oauth-resource", this.options.remoteIdentity ? "No stable public DNS identity" : "No immutable remote identity configured");
+      const authorizationCheck = publicBaseUrl && this.options.remoteIdentity
+        ? await checkAuthorizationServerMetadata(this.options.remoteIdentity)
+        : failedCheck("public-oauth-authorization-server", this.options.remoteIdentity ? "No stable public DNS identity" : "No immutable remote identity configured");
       const publicHealthy = !identityDrift && publicCheck.ok && metadataCheck.ok && authorizationCheck.ok;
       const healthy = transportHealthy && backendCheck.ok && publicHealthy;
       const detail = identityDrift
@@ -245,8 +245,13 @@ export class TailscaleTunnelProvider implements TunnelProvider {
     checks.push(await checkHttpEndpoint(joinHttpUrl(state.localTarget, healthPath(this.options.healthPath)), "local-backend"));
     if (state.publicBaseUrl && state.publicMcpUrl) {
       checks.push(await checkHttpEndpoint(joinHttpUrl(state.publicBaseUrl, healthPath(this.options.healthPath)), "public-http"));
-      checks.push(await checkProtectedResourceMetadata(state.publicBaseUrl, state.publicMcpUrl));
-      checks.push(await checkAuthorizationServerMetadata(state.publicBaseUrl));
+      if (this.options.remoteIdentity) {
+        checks.push(await checkProtectedResourceMetadata(state.publicBaseUrl, this.options.remoteIdentity));
+        checks.push(await checkAuthorizationServerMetadata(this.options.remoteIdentity));
+      } else {
+        checks.push(failedCheck("public-oauth-resource", "No immutable remote identity configured"));
+        checks.push(failedCheck("public-oauth-authorization-server", "No immutable remote identity configured"));
+      }
     } else {
       checks.push(failedCheck("public-http", "No stable public identity"));
       checks.push(failedCheck("public-oauth-resource", "No stable public identity"));

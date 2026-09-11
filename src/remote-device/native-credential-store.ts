@@ -3,11 +3,22 @@ import { randomBytes } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import fs from "node:fs/promises";
-import type { DeviceOAuthSession } from "./device-oauth.js";
-import type { DeviceCredentialStore } from "./credential-store.js";
+import type { DeviceOAuthSession } from "./device-oauth-session.js";
+import { parseDeviceOAuthSessionStructure } from "./device-oauth-session.js";
+import type { DeviceCredentialSnapshot, DeviceCredentialStore, LockedDeviceCredentialStore, PairingLease, RefreshLease } from "./credential-store.js";
+import { loadRemoteIdentityFromEnv, type RemoteIdentityConfig } from "./remote-identity.js";
 
 const SERVICE = "com.desktopcommander.remote-mcp";
 const ACCOUNT = "device-oauth-session";
+const VAULT_LOCK_PATH = process.env.DC_DEVICE_VAULT_LOCK_PATH ?? path.join(os.homedir(), ".desktop-commander-device", "device-oauth.lock");
+const PAIRING_LOCK_PATH = process.env.DC_DEVICE_PAIRING_LOCK_PATH ?? path.join(os.homedir(), ".desktop-commander-device", "device-oauth-pairing.lock");
+const REFRESH_LOCK_PATH = process.env.DC_DEVICE_REFRESH_LOCK_PATH ?? path.join(os.homedir(), ".desktop-commander-device", "device-oauth-refresh.lock");
+const VAULT_LOCK_TIMEOUT_MS = 15_000;
+const VAULT_LOCK_RETRY_MS = 50;
+const PAIRING_LEASE_TTL_MS = 30_000;
+const PAIRING_LEASE_RENEW_MS = 10_000;
+const REFRESH_LEASE_TTL_MS = 30_000;
+const REFRESH_LEASE_RENEW_MS = 10_000;
 
 type RunOptions = {
   input?: string;
@@ -15,30 +26,346 @@ type RunOptions = {
   allowNotFound?: boolean;
 };
 
+type PersistedCredentialStateV1 = {
+  version: 1;
+  clearGeneration: number;
+  session: unknown | null;
+  cleanupObligations?: unknown;
+};
+
+function isPersistedCredentialStateV1(value: unknown): value is PersistedCredentialStateV1 {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+  const record = value as Record<string, unknown>;
+  return record.version === 1
+    && typeof record.clearGeneration === "number"
+    && Number.isSafeInteger(record.clearGeneration)
+    && record.clearGeneration >= 0
+    && record.clearGeneration < Number.MAX_SAFE_INTEGER
+    && Object.prototype.hasOwnProperty.call(record, "session");
+}
+
+export function parsePersistedCredentialPayload(raw: string): { snapshot: DeviceCredentialSnapshot; needsEnvelopeMigration: boolean } {
+  let value: unknown;
+  try { value = JSON.parse(raw); }
+  catch { throw new Error("Device credential vault requires explicit repair; encrypted payload was preserved"); }
+
+  if (isPersistedCredentialStateV1(value)) {
+    const session = value.session === null ? null : parseDeviceOAuthSessionStructure(value.session);
+    if (value.session !== null && session === null) {
+      throw new Error("Device credential vault contains an unsupported session; encrypted payload was preserved for repair");
+    }
+    const rawObligations = value.cleanupObligations === undefined ? [] : value.cleanupObligations;
+    if (!Array.isArray(rawObligations)) {
+      throw new Error("Device credential vault contains invalid cleanup obligations; encrypted payload was preserved for repair");
+    }
+    const cleanupObligations: DeviceOAuthSession[] = [];
+    for (const item of rawObligations) {
+      const obligation = parseDeviceOAuthSessionStructure(item);
+      if (!obligation) {
+        throw new Error("Device credential vault contains a malformed cleanup obligation; encrypted payload was preserved for repair");
+      }
+      cleanupObligations.push(obligation);
+    }
+    return { snapshot: { clearGeneration: value.clearGeneration, session, cleanupObligations }, needsEnvelopeMigration: false };
+  }
+
+  const rawV2 = parseDeviceOAuthSessionStructure(value);
+  if (rawV2) {
+    return { snapshot: { clearGeneration: 0, session: rawV2, cleanupObligations: [] }, needsEnvelopeMigration: true };
+  }
+  throw new Error("Device credential vault contains a legacy credential that requires explicit repair; encrypted payload was preserved");
+}
+
+export function recoverCorruptCredentialGeneration(raw: string): number {
+  let parsed: { clearGeneration?: unknown };
+  try {
+    parsed = JSON.parse(raw) as { clearGeneration?: unknown };
+  } catch {
+    throw new Error("Device credential vault requires explicit repair; its clear-generation tombstone is unavailable");
+  }
+  if (typeof parsed?.clearGeneration !== "number"
+    || !Number.isSafeInteger(parsed.clearGeneration)
+    || parsed.clearGeneration < 0
+    || parsed.clearGeneration >= Number.MAX_SAFE_INTEGER) {
+    throw new Error("Device credential vault requires explicit repair; its clear-generation tombstone is unavailable");
+  }
+  return parsed.clearGeneration + 1;
+}
+
 export class NativeCredentialStore implements DeviceCredentialStore {
-  async load(): Promise<DeviceOAuthSession | null> {
-    const backend = platformBackend();
-    const raw = await backend.load();
-    if (!raw) return null;
+  private tail: Promise<void> = Promise.resolve();
+
+  constructor(private readonly identity: RemoteIdentityConfig = loadRemoteIdentityFromEnv()) {}
+
+  async runPairingExclusive<T>(operation: (lease: PairingLease) => Promise<T>): Promise<T> {
+    const lease = await acquireRenewableLease(PAIRING_LOCK_PATH, "Pairing", PAIRING_LEASE_TTL_MS);
+    const renewal = setInterval(() => { void lease.renew().catch(() => undefined); }, PAIRING_LEASE_RENEW_MS);
     try {
-      return JSON.parse(raw) as DeviceOAuthSession;
-    } catch (error) {
-      // A partial/corrupt vault entry cannot be refreshed safely. Clear it and
-      // fall back to the normal pairing path instead of crashing startup.
-      await backend.clear();
-      console.warn(`Ignoring corrupt persisted OAuth session: ${error instanceof Error ? error.message : String(error)}`);
-      return null;
+      await lease.assertHeld();
+      return await operation(lease);
+    } finally {
+      clearInterval(renewal);
+      await lease.release().catch(() => undefined);
     }
   }
 
-  async save(session: DeviceOAuthSession): Promise<void> {
-    await platformBackend().save(JSON.stringify(session));
+  async runRefreshExclusive<T>(operation: (lease: RefreshLease) => Promise<T>): Promise<T> {
+    const lease = await acquireRenewableLease(REFRESH_LOCK_PATH, "Refresh", REFRESH_LEASE_TTL_MS);
+    const renewal = setInterval(() => { void lease.renew().catch(() => undefined); }, REFRESH_LEASE_RENEW_MS);
+    try {
+      await lease.assertHeld();
+      return await operation(lease);
+    } finally {
+      clearInterval(renewal);
+      await lease.release().catch(() => undefined);
+    }
   }
 
-  async clear(): Promise<void> {
-    await platformBackend().clear();
+  async repairLegacyCredential(operatorRevocationConfirmed: boolean): Promise<"empty" | "migrated-v2" | "reset-legacy"> {
+    if (!operatorRevocationConfirmed) throw new Error("Legacy credential repair requires confirmed server-side/operator revocation");
+    let release!: () => void;
+    const previous = this.tail;
+    this.tail = new Promise<void>((resolve) => { release = resolve; });
+    await previous;
+    let releaseProcessLock: (() => Promise<void>) | undefined;
+    try {
+      releaseProcessLock = await acquireVaultProcessLock();
+      const backend = platformBackend();
+      const raw = await backend.load();
+      if (raw === null) return "empty";
+      try {
+        const parsed = parsePersistedCredentialPayload(raw);
+        if (parsed.needsEnvelopeMigration) {
+          await this.writeSnapshot(backend, parsed.snapshot);
+          return "migrated-v2";
+        }
+        throw new Error("Credential vault is already structurally valid; use `remote credentials clear` instead");
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("already structurally valid")) throw error;
+        await this.writeSnapshot(backend, { clearGeneration: 1, session: null, cleanupObligations: [] });
+        return "reset-legacy";
+      }
+    } finally {
+      await releaseProcessLock?.().catch(() => undefined);
+      release();
+    }
+  }
+
+  async runExclusive<T>(operation: (locked: LockedDeviceCredentialStore) => Promise<T>): Promise<T> {
+    let release!: () => void;
+    const previous = this.tail;
+    this.tail = new Promise<void>((resolve) => { release = resolve; });
+    await previous;
+    let releaseProcessLock: (() => Promise<void>) | undefined;
+    try {
+      releaseProcessLock = await acquireVaultProcessLock();
+      const backend = platformBackend();
+      const locked: LockedDeviceCredentialStore = {
+        load: async () => this.readSnapshot(backend),
+        saveExpected: async ({ session, expectedClearGeneration, expectedSessionGeneration }) => {
+          if (session.issuer !== this.identity.authorizationServerIssuer || session.resource !== this.identity.publicMcpResource) return false;
+          const current = await this.readSnapshot(backend);
+          if (current.clearGeneration !== expectedClearGeneration || (current.session?.generation ?? null) !== expectedSessionGeneration) return false;
+          await this.writeSnapshot(backend, { clearGeneration: current.clearGeneration, session, cleanupObligations: current.cleanupObligations });
+          return true;
+        },
+        clearExpected: async ({ expectedClearGeneration, expectedSessionGeneration }) => {
+          const current = await this.readSnapshot(backend);
+          if (current.clearGeneration !== expectedClearGeneration || current.session?.generation !== expectedSessionGeneration) return false;
+          await this.writeSnapshot(backend, { clearGeneration: current.clearGeneration + 1, session: null, cleanupObligations: current.cleanupObligations });
+          return true;
+        },
+        clearExplicitly: async () => {
+          const current = await this.readSnapshot(backend);
+          const clearGeneration = current.clearGeneration + 1;
+          await this.writeSnapshot(backend, { clearGeneration, session: null, cleanupObligations: current.cleanupObligations });
+          return clearGeneration;
+        },
+        addCleanupObligation: async (session) => {
+          const current = await this.readSnapshot(backend);
+          if (current.cleanupObligations.some((item) => item.refreshToken === session.refreshToken && item.clientId === session.clientId && item.issuer === session.issuer && item.resource === session.resource)) return;
+          await this.writeSnapshot(backend, {
+            clearGeneration: current.clearGeneration,
+            session: current.session,
+            cleanupObligations: [...current.cleanupObligations, session],
+          });
+        },
+        removeCleanupObligation: async (session) => {
+          const current = await this.readSnapshot(backend);
+          const next = current.cleanupObligations.filter((item) => item.refreshToken !== session.refreshToken || item.clientId !== session.clientId || item.issuer !== session.issuer || item.resource !== session.resource);
+          if (next.length === current.cleanupObligations.length) return false;
+          await this.writeSnapshot(backend, { clearGeneration: current.clearGeneration, session: current.session, cleanupObligations: next });
+          return true;
+        },
+      };
+      return await operation(locked);
+    } finally {
+      await releaseProcessLock?.().catch(() => undefined);
+      release();
+    }
+  }
+
+  private async readSnapshot(backend: VaultBackend): Promise<DeviceCredentialSnapshot> {
+    const raw = await backend.load();
+    if (raw === null) return { clearGeneration: 0, session: null, cleanupObligations: [] };
+    const parsed = parsePersistedCredentialPayload(raw);
+    if (parsed.needsEnvelopeMigration) await this.writeSnapshot(backend, parsed.snapshot);
+    return parsed.snapshot;
+  }
+
+  private async writeSnapshot(backend: VaultBackend, snapshot: DeviceCredentialSnapshot): Promise<void> {
+    const envelope: PersistedCredentialStateV1 = {
+      version: 1,
+      clearGeneration: snapshot.clearGeneration,
+      session: snapshot.session,
+      cleanupObligations: snapshot.cleanupObligations,
+    };
+    await backend.save(JSON.stringify(envelope));
   }
 }
+
+type VaultBackend = {
+  load(): Promise<string | null>;
+  save(secret: string): Promise<void>;
+  clear(): Promise<void>;
+};
+
+type LeaseRecord = { nonce: string; pid: number; revision: number; expiresAt: number };
+
+function parseLeaseRecord(raw: string): LeaseRecord | null {
+  try {
+    const value = JSON.parse(raw) as Partial<LeaseRecord>;
+    if (typeof value.nonce !== "string" || !/^[0-9a-f]{32}$/.test(value.nonce)) return null;
+    if (typeof value.pid !== "number" || !Number.isSafeInteger(value.pid) || value.pid <= 0) return null;
+    if (typeof value.revision !== "number" || !Number.isSafeInteger(value.revision) || value.revision < 1) return null;
+    if (typeof value.expiresAt !== "number" || !Number.isFinite(value.expiresAt)) return null;
+    return value as LeaseRecord;
+  } catch { return null; }
+}
+
+async function acquireRenewableLease(lockPath: string, leaseLabel: string, ttlMs: number): Promise<PairingLease> {
+  await fs.mkdir(path.dirname(lockPath), { recursive: true, mode: 0o700 });
+  const deadline = Date.now() + VAULT_LOCK_TIMEOUT_MS;
+  const nonce = randomBytes(16).toString("hex");
+  while (Date.now() < deadline) {
+    const record: LeaseRecord = { nonce, pid: process.pid, revision: 1, expiresAt: Date.now() + ttlMs };
+    try {
+      const handle = await fs.open(lockPath, "wx", 0o600);
+      const initial = Buffer.from(JSON.stringify(record), "utf8");
+      await handle.write(initial, 0, initial.length, 0);
+      await handle.truncate(initial.length);
+      const ownedStat = await handle.stat();
+      let released = false;
+
+      const pathStillOwned = async (): Promise<boolean> => {
+        try {
+          const pathStat = await fs.stat(lockPath);
+          return pathStat.dev === ownedStat.dev && pathStat.ino === ownedStat.ino;
+        } catch (error: any) {
+          if (error?.code === "ENOENT") return false;
+          throw error;
+        }
+      };
+      const readOwned = async (): Promise<LeaseRecord> => {
+        if (released || !(await pathStillOwned())) throw new Error(`${leaseLabel} lease ownership was lost`);
+        const current = parseLeaseRecord(await fs.readFile(lockPath, "utf8"));
+        if (!current || current.nonce !== nonce || current.pid !== process.pid || current.expiresAt <= Date.now()) {
+          throw new Error(`${leaseLabel} lease ownership was lost`);
+        }
+        return current;
+      };
+      return {
+        assertHeld: async () => { await readOwned(); },
+        renew: async () => {
+          const current = await readOwned();
+          const next = { ...current, revision: current.revision + 1, expiresAt: Date.now() + ttlMs };
+          const bytes = Buffer.from(JSON.stringify(next), "utf8");
+          await handle.write(bytes, 0, bytes.length, 0);
+          await handle.truncate(bytes.length);
+          const after = await readOwned();
+          if (after.revision !== next.revision) throw new Error(`${leaseLabel} lease ownership was lost during renewal`);
+        },
+        release: async () => {
+          if (released) return;
+          try {
+            if (await pathStillOwned()) {
+              const current = parseLeaseRecord(await fs.readFile(lockPath, "utf8"));
+              if (current?.nonce === nonce && current.pid === process.pid) await fs.rm(lockPath);
+            }
+          } finally {
+            released = true;
+            await handle.close().catch(() => undefined);
+          }
+        },
+      };
+    } catch (error: any) {
+      if (error?.code !== "EEXIST") throw error;
+      let stale = false;
+      let staleStat: Awaited<ReturnType<typeof fs.stat>> | null = null;
+      try {
+        staleStat = await fs.stat(lockPath);
+        const current = parseLeaseRecord(await fs.readFile(lockPath, "utf8"));
+        stale = !current || current.expiresAt <= Date.now();
+      } catch (readError: any) {
+        if (readError?.code === "ENOENT") continue;
+        throw readError;
+      }
+      if (stale && staleStat) {
+        try {
+          const now = await fs.stat(lockPath);
+          if (now.dev === staleStat.dev && now.ino === staleStat.ino) await fs.rm(lockPath);
+        } catch (removeError: any) {
+          if (removeError?.code !== "ENOENT") throw removeError;
+        }
+        continue;
+      }
+      await new Promise((resolve) => setTimeout(resolve, VAULT_LOCK_RETRY_MS));
+    }
+  }
+  throw new Error(`Timed out acquiring the device ${leaseLabel.toLowerCase()} lease`);
+}
+
+async function acquireVaultProcessLock(lockPath = VAULT_LOCK_PATH): Promise<() => Promise<void>> {
+  await fs.mkdir(path.dirname(lockPath), { recursive: true, mode: 0o700 });
+  const deadline = Date.now() + VAULT_LOCK_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    try {
+      const handle = await fs.open(lockPath, "wx", 0o600);
+      await handle.writeFile(JSON.stringify({ pid: process.pid, createdAt: Date.now() }));
+      await handle.close();
+      return async () => { await fs.rm(lockPath, { force: true }); };
+    } catch (error: any) {
+      if (error?.code !== "EEXIST") throw error;
+      if (await isStaleVaultLock(lockPath)) {
+        await fs.rm(lockPath, { force: true }).catch(() => undefined);
+        continue;
+      }
+      await new Promise((resolve) => setTimeout(resolve, VAULT_LOCK_RETRY_MS));
+    }
+  }
+  throw new Error("Timed out acquiring the device credential vault lock");
+}
+
+async function isStaleVaultLock(lockPath: string): Promise<boolean> {
+  try {
+    const raw = await fs.readFile(lockPath, "utf8");
+    const value = JSON.parse(raw) as { pid?: unknown; createdAt?: unknown };
+    if (typeof value.pid === "number" && Number.isSafeInteger(value.pid) && value.pid > 0) {
+      try {
+        process.kill(value.pid, 0);
+        return false;
+      } catch (error: any) {
+        if (error?.code !== "ESRCH") return false;
+        return true;
+      }
+    }
+    const stat = await fs.stat(lockPath);
+    return Date.now() - stat.mtimeMs > VAULT_LOCK_TIMEOUT_MS;
+  } catch (error: any) {
+    return error?.code === "ENOENT";
+  }
+}
+
 function platformBackend() {
   if (process.platform === "darwin") return macKeychain;
   if (process.platform === "linux") return linuxSecretService;
@@ -89,15 +416,20 @@ async function clearMacGeneration(manifest: MacKeychainManifest | null): Promise
 const macKeychain = {
   async load() {
     const manifestRaw = await loadMacKeychainSecret(MAC_KEYCHAIN_MANIFEST_ACCOUNT);
-    const manifest = parseMacManifest(manifestRaw);
-    if (manifest) {
+    if (manifestRaw !== null) {
+      const manifest = parseMacManifest(manifestRaw);
+      if (!manifest) throw new Error("Device credential keychain manifest is corrupt");
       const chunks: string[] = [];
-      for (let index = 0; index < manifest.chunks; index += 1) {
+      for (let index = 0; index < manifest.chunks; index++) {
         const chunk = await loadMacKeychainSecret(macChunkAccount(manifest.generation, index));
-        if (chunk === null) return null;
+        if (chunk === null) throw new Error("Device credential keychain chunks are incomplete");
         chunks.push(chunk);
       }
-      return Buffer.from(chunks.join(""), "base64").toString("utf8");
+      const encoded = chunks.join("");
+      if (!/^[A-Za-z0-9+/]*={0,2}$/.test(encoded) || encoded.length % 4 !== 0) {
+        throw new Error("Device credential keychain chunks are corrupt");
+      }
+      return Buffer.from(encoded, "base64").toString("utf8");
     }
     // Backward compatibility for the original single-item format. Long values
     // written through the interactive security(1) prompt may be truncated;
@@ -206,8 +538,9 @@ const windowsDpapi = {
   async load() {
     try {
       await fs.access(dpapiPath);
-    } catch {
-      return null;
+    } catch (error: any) {
+      if (error?.code === "ENOENT") return null;
+      throw new Error(`Device credential DPAPI file is not accessible: ${error?.code ?? "unknown"}`);
     }
     const result = await runPowerShell(`
       $raw = [IO.File]::ReadAllText($env:DC_CRED_PATH)
