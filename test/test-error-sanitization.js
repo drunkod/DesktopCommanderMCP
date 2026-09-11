@@ -166,10 +166,15 @@ const runAllTests = async () => {
 };
 
 // Run tests if this file is executed directly
-if (process.argv[1] === import.meta.url) {
-    runAllTests().then(success => {
-        process.exit(success ? 0 : 1);
-    });
+if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+    runAllTests()
+        .then((success) => {
+            if (!success) process.exitCode = 1;
+        })
+        .catch((error) => {
+            console.error('Unhandled error:', error);
+            process.exitCode = 1;
+        });
 }
 
 // Export the test function for the test runner

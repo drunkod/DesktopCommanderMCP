@@ -26,6 +26,16 @@ const TEST_DIR = path.join(__dirname, 'test_edit_occurrences');
 const MULTI_OCCURRENCE_FILE = path.join(TEST_DIR, 'multiple_occurrences.txt');
 const CONTEXT_TEST_FILE = path.join(TEST_DIR, 'context_test.txt');
 
+
+/** Assert the current exact-match success contract: preview text + disk verification. */
+function assertEditBlockSuccess(result, message) {
+  assert.strictEqual(result.content[0].type, 'text', `${message} (should return text content)`);
+  assert.ok(
+    /\[Reading \d+ lines? from/.test(result.content[0].text),
+    `${message} (text should contain file-preview status line)`
+  );
+}
+
 /**
  * Setup function to prepare the test environment
  */
@@ -153,12 +163,8 @@ async function testExactNumberOfOccurrences() {
       expected_replacements: 4
     });
     
-    // Check that the operation succeeded
-    assert.strictEqual(result.content[0].type, 'text', 'Result should be text');
-    assert.ok(
-      result.content[0].text.includes('Successfully applied 4 edits'),
-      'Should report success with the correct number of edits'
-    );
+    // Exact-match success now returns a file preview; disk content is verified below.
+    assertEditBlockSuccess(result, 'Should report success with the correct number of edits');
     
     // Verify the file content
     const fileContent = await fs.readFile(MULTI_OCCURRENCE_FILE, 'utf8');
@@ -197,12 +203,8 @@ This is a MODIFIED target line in the header.`,
       expected_replacements: 1
     });
     
-    // Check that the operation succeeded
-    assert.strictEqual(result.content[0].type, 'text', 'Result should be text');
-    assert.ok(
-      result.content[0].text.includes('Successfully applied 1 edit'),
-      'Should report success with the header edit'
-    );
+    // Exact-match success now returns a file preview; disk content is verified below.
+    assertEditBlockSuccess(result, 'Should report success with the header edit');
     
     // Target the occurrence in the footer section using context
     result = await handleEditBlock({
@@ -214,12 +216,8 @@ This is a MODIFIED target line in the footer.`,
       expected_replacements: 1
     });
     
-    // Check that the operation succeeded
-    assert.strictEqual(result.content[0].type, 'text', 'Result should be text');
-    assert.ok(
-      result.content[0].text.includes('Successfully applied 1 edit'),
-      'Should report success with the footer edit'
-    );
+    // Exact-match success now returns a file preview; disk content is verified below.
+    assertEditBlockSuccess(result, 'Should report success with the footer edit');
     
     // Verify the file content
     const fileContent = await fs.readFile(CONTEXT_TEST_FILE, 'utf8');
@@ -283,19 +281,22 @@ async function testEmptySearchString() {
   console.log('\nTest 6: Empty search string');
   
   try {
-    // Try to use an empty search string
-    const result = await handleEditBlock({
-      file_path: CONTEXT_TEST_FILE,
-      old_string: '',
-      new_string: 'This replacement should not be applied.',
-      expected_replacements: 1
-    });
-    
-    // Check that we got the appropriate error message
-    assert.strictEqual(result.content[0].type, 'text', 'Result should be text');
-    assert.ok(
-      result.content[0].text.includes('Empty search strings are not allowed'),
-      'Should report that empty search strings are not allowed'
+    // Empty old_string is rejected by the public input schema before edit execution.
+    await assert.rejects(
+      () => handleEditBlock({
+        file_path: CONTEXT_TEST_FILE,
+        old_string: '',
+        new_string: 'This replacement should not be applied.',
+        expected_replacements: 1
+      }),
+      (error) => {
+        assert.match(
+          error.message,
+          /Must provide either \(old_string \+ new_string\) or \(range \+ content\)/,
+          'Should reject empty old_string at schema validation'
+        );
+        return true;
+      }
     );
     
     console.log('✓ Test correctly rejected empty search string');
@@ -351,8 +352,12 @@ export default async function runTests() {
 
 // If this file is run directly (not imported), execute the test
 if (import.meta.url === `file://${process.argv[1]}`) {
-  runTests().catch(error => {
-    console.error('❌ Unhandled error:', error);
-    process.exit(1);
-  });
+  runTests()
+    .then((ok) => {
+      if (!ok) process.exitCode = 1;
+    })
+    .catch(error => {
+      console.error('❌ Unhandled error:', error);
+      process.exitCode = 1;
+    });
 }

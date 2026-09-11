@@ -13,6 +13,11 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const OPT_IN_TEST_ENV = new Map([
+  ['tailscale-funnel-e2e.js', 'DC_TUNNEL_E2E'],
+  ['zrok-remote-mcp-e2e.js', 'DC_TUNNEL_E2E'],
+]);
+
 function runTestFile(testFile) {
   return new Promise((resolve) => {
     console.log(`\nRunning integration test: ${testFile}`);
@@ -62,7 +67,14 @@ async function main() {
   }
 
   const results = [];
+  const skipped = [];
   for (const file of files) {
+    const requiredEnv = OPT_IN_TEST_ENV.get(file);
+    if (requiredEnv && process.env[requiredEnv] !== '1') {
+      console.log(`SKIP ./${file} (${requiredEnv}=1 required for external tunnel E2E)`);
+      skipped.push({ file: `./${file}`, requiredEnv });
+      continue;
+    }
     results.push(await runTestFile(`./${file}`));
   }
 
@@ -75,7 +87,14 @@ async function main() {
     console.log(`  ${status} ${result.file}: ${formatDuration(result.duration)}`);
   }
 
-  console.log(`\nIntegration test summary: ${results.length - failed.length}/${results.length} passed (${formatDuration(totalDuration)})`);
+  console.log(
+    `\nIntegration test summary: ${results.length - failed.length}/${results.length} runnable passed, ${skipped.length} skipped (${formatDuration(totalDuration)})`
+  );
+  if (skipped.length > 0) {
+    for (const result of skipped) {
+      console.log(`  SKIP ${result.file}: set ${result.requiredEnv}=1 to enable`);
+    }
+  }
   if (failed.length > 0) {
     for (const result of failed) {
       console.error(`  - ${result.file}`);

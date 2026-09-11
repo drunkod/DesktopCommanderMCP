@@ -1,36 +1,25 @@
 /**
- * Test Results: Negative Offset Analysis for read_file
- * 
- * FINDINGS:
- * ❌ Negative offsets DO NOT work correctly in the current implementation
- * ❌ They return empty content due to invalid slice() range calculations
- * ⚠️  The implementation has a bug when handling negative offsets
- * 
- * CURRENT BEHAVIOR:
- * - offset: -2, length: 5 → slice(-2, 3) → returns empty []
- * - offset: -100, length: undefined → slice(-100, undefined) → works by accident
- * 
- * RECOMMENDATION: 
- * Either fix the implementation to properly support negative offsets,
- * or add validation to reject them with a clear error message.
+ * Legacy negative-offset regression entrypoint.
+ *
+ * This file used to document a historical read_file bug by returning false
+ * without setting a failing process exit code. Negative offsets are now
+ * supported, so keep the filename for suite compatibility but delegate to the
+ * executable behavior test and propagate its result correctly.
  */
 
-console.log("🔍 NEGATIVE OFFSET BEHAVIOR ANALYSIS");
-console.log("====================================");
-console.log("");
-console.log("❌ CONCLUSION: Negative offsets are BROKEN in current implementation");
-console.log("");
-console.log("🐛 BUG DETAILS:");
-console.log("   Current code: Math.min(offset, totalLines) creates invalid ranges");
-console.log("   Example: offset=-2, totalLines=6 → slice(-2, 3) → empty result");
-console.log("");
-console.log("✅ ACCIDENTAL SUCCESS:");
-console.log("   My original attempt worked because length was undefined");
-console.log("   slice(-100, undefined) → slice(-100) → works correctly");
-console.log("");
-console.log("🔧 NEEDS FIX:");
-console.log("   Either implement proper negative offset support or reject them");
+import runNegativeOffsetTests from './test-negative-offset-readfile.js';
 
 export default async function runTests() {
-  return false; // Test documents that negative offsets are broken
+  return runNegativeOffsetTests();
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  runTests()
+    .then((success) => {
+      if (!success) process.exitCode = 1;
+    })
+    .catch((error) => {
+      console.error('❌ Unhandled error:', error);
+      process.exitCode = 1;
+    });
 }
