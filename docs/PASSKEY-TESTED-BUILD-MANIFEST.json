@@ -1,0 +1,2975 @@
+{
+  "schemaVersion": "passkey-tested-build-state/v1",
+  "purpose": "Exact source/runtime fingerprint for passkey and Remote MCP validation",
+  "validationWindow": {
+    "startedAtUtc": "2026-09-08T14:02:51.846Z",
+    "endedAtUtc": "2026-09-08T14:03:23.753Z"
+  },
+  "evidencePolicy": {
+    "excludedContentPaths": {
+      "desktopCommander": [
+        "TODO.md",
+        "docs/PASSKEY-TESTED-BUILD-MANIFEST.json"
+      ],
+      "controlPlaneWorkspace": []
+    },
+    "note": "Evidence-file contents are excluded so recording results cannot mutate the tested source fingerprint; git status entries remain recorded."
+  },
+  "repositories": {
+    "desktopCommander": {
+      "path": "/Users/test/Documents/RemoteMCP-Jazz/repositories/DesktopCommanderMCP",
+      "branch": "docs/local-mac-mcp-chat-plan",
+      "head": "19addf3c7fb5af82bb36424ccca3c003030c4832",
+      "headState": "committed",
+      "statusShort": [
+        "M Justfile",
+        "A  docs/ONE-CLICK-REGISTRATION-LOCAL-FIRST-RESEARCH.md",
+        "AM docs/PASSKEY-BRANCH-HUMAN-TEST-RUNBOOK.md",
+        "A  docs/PASSKEY-NEVER-LOG-REGISTRY-V1.json",
+        "A  docs/PASSKEY-ONLY-REGISTRATION-FULL-SNIPPETS.md",
+        "A  docs/PASSKEY-ONLY-REGISTRATION-PLAN-AUDIT.md",
+        "A  docs/PASSKEY-ONLY-REGISTRATION-RESEARCH-AND-IMPLEMENTATION-PLAN.md",
+        "A  docs/PASSKEY-ONLY-REGISTRATION-TASK-INDEX.md",
+        "A  docs/PASSKEY-ONLY-REGISTRATION-TASK-PACK-REVIEW.md",
+        "A  docs/PASSKEY-P0-PRODUCT-AND-SECURITY-ADR.md",
+        "A  docs/PASSKEY-P8A-CROSS-STORE-CONSISTENCY-ADR.md",
+        "A  docs/PASSKEY-P9A-DEPLOYMENT-STATE-CONTRACT.md",
+        "A  docs/PASSKEY-TASK-P0-PRODUCT-CONTRACT.md",
+        "A  docs/PASSKEY-TASK-P1-BETTER-AUTH-COMPATIBILITY-GATE.md",
+        "A  docs/PASSKEY-TASK-P10-VERIFICATION-AND-SECURITY-MATRIX.md",
+        "A  docs/PASSKEY-TASK-P11-ROLLOUT-OBSERVABILITY-AND-ROLLBACK.md",
+        "A  docs/PASSKEY-TASK-P2-SCHEMA-AUTH-AND-OAUTH-CONFIG.md",
+        "A  docs/PASSKEY-TASK-P3-REGISTRATION-INTENTS-AND-ACCOUNT-CREATION.md",
+        "A  docs/PASSKEY-TASK-P4-PASSKEY-ONLY-SIGN-IN.md",
+        "A  docs/PASSKEY-TASK-P5-DEVICE-APPROVAL-INTEGRATION.md",
+        "A  docs/PASSKEY-TASK-P6-CREDENTIAL-MANAGEMENT-AND-RECOVERY.md",
+        "A  docs/PASSKEY-TASK-P7-CENTRAL-ISSUER-RESOURCE-SEPARATION.md",
+        "A  docs/PASSKEY-TASK-P7A-PROTOCOL-BOOTSTRAP-AND-RESOURCE-CONTRACT.md",
+        "A  docs/PASSKEY-TASK-P7B-DEVICE-RESOURCE-IMPLEMENTATION.md",
+        "A  docs/PASSKEY-TASK-P8-DURABLE-AUTH-AND-SERVERLESS-SPLIT.md",
+        "A  docs/PASSKEY-TASK-P8A-DATASTORE-AND-TRANSACTION-FOUNDATION.md",
+        "A  docs/PASSKEY-TASK-P8B-SERVERLESS-DEPLOYMENT-AND-OPERATIONS-VALIDATION.md",
+        "A  docs/PASSKEY-TASK-P9-DEVELOPMENT-ACCOUNT-MIGRATION.md",
+        "A  docs/PASSKEY-TASK-P9A-DEPLOYMENT-STATE-FOUNDATION.md",
+        " M src/npm-scripts/remote-options.ts",
+        "MM src/npm-scripts/remote.ts",
+        "M  src/remote-device/control-plane-client.ts",
+        "MM src/remote-device/credential-store.ts",
+        "AM src/remote-device/device-oauth-session.ts",
+        "MM src/remote-device/device-oauth.ts",
+        "M  src/remote-device/device.ts",
+        "MM src/remote-device/native-credential-store.ts",
+        "M  src/remote-device/remote-channel.ts",
+        "A  src/remote-device/remote-identity.ts",
+        "MM src/remote-device/token-manager.ts",
+        "A  src/remote-device/trusted-http-url.ts",
+        "M  src/remote-device/tunnel/tailscale-tunnel-provider.ts",
+        "M  src/remote-device/tunnel/tunnel-health.ts",
+        "M  src/remote-device/tunnel/types.ts",
+        "M  src/remote-device/tunnel/zrok-tunnel-provider.ts",
+        " M test/integration/run-all-integration-tests.js",
+        " M test/test-allowed-directories.js",
+        " M test/test-blocked-commands.js",
+        " M test/test-default-shell.js",
+        " M test/test-directory-creation.js",
+        " M test/test-edit-block-occurrences.js",
+        " M test/test-error-sanitization.js",
+        " M test/test-home-directory.js",
+        " M test/test-negative-offset-analysis.js",
+        "AM test/test-passkey-device-mvp.js",
+        "M  test/test-remote-jazz-safety.js",
+        "MM test/test-remote-tunnels.js",
+        " M test/test-repl-interaction.js",
+        " M test/test.js",
+        "?? TODO.md",
+        "?? docs/LOCAL-MAC-FAMILY-CHAT-JAZZ-ARCHITECTURE.md",
+        "?? docs/LOCAL-ONLY-NO-SERVER-ARCHITECTURE-RESEARCH.md",
+        "?? docs/PASSKEY-TESTED-BUILD-MANIFEST.json",
+        "?? docs/SERVERLESS-FAMILY-CHAT-JAZZ-ARCHITECTURE.md",
+        "?? docs/STATIC-TUNNEL-CHATGPT-ARCHITECTURE-OPTIONS.md",
+        "?? docs/architecture/LOCAL-MAC-FAMILY-CHAT-JAZZ-OPTIONS.mmd",
+        "?? docs/architecture/LOCAL-MAC-FAMILY-CHAT-JAZZ-SEQUENCE.mmd",
+        "?? docs/architecture/LOCAL-MAC-FAMILY-CHAT-JAZZ.mmd",
+        "?? docs/architecture/SERVERLESS-FAMILY-CHAT-JAZZ-SEQUENCE.mmd",
+        "?? docs/architecture/SERVERLESS-FAMILY-CHAT-JAZZ.mmd",
+        "?? docs/architecture/STATIC-TUNNEL-BOOT-AND-CALL-SEQUENCE.mmd",
+        "?? docs/architecture/STATIC-TUNNEL-CLOUDFLARE.mmd",
+        "?? docs/architecture/STATIC-TUNNEL-DIRECT-MCP.mmd",
+        "?? docs/architecture/STATIC-TUNNEL-IMPLEMENTATION-CHOICES.mmd",
+        "?? docs/architecture/STATIC-TUNNEL-STDIO-SIDECAR.mmd",
+        "?? docs/architecture/STATIC-TUNNEL-TAILSCALE-ZROK.mmd",
+        "?? docs/local-mac-mcp-chat/02-REFERENCE-AND-UI-TASKS.md",
+        "?? scripts/capture-tested-build-state.mjs",
+        "?? src/remote-device/oauth-http.ts",
+        "?? test/test-passkey-expiry-window.js",
+        "?? test/test-passkey-oauth-http.js",
+        "?? test/test-passkey-pairing-lease.js",
+        "?? test/test-passkey-refresh-lease.js"
+      ],
+      "stagedPatchSha256": "d4f3d4e6d149d5ec9cf6bc4cf6a4ab087479e063e00b6c77fcbe61df68116314",
+      "unstagedPatchSha256": "07187f8eb4f2fb62bca075faa04790f7eef40caf586468ba82449ea59dd204f5",
+      "untrackedFiles": [
+        {
+          "path": "docs/LOCAL-MAC-FAMILY-CHAT-JAZZ-ARCHITECTURE.md",
+          "kind": "file",
+          "bytes": 17733,
+          "sha256": "69277220b04ce396b0aaf70a0177402269be5a621a672b3d6ae739863cadd628"
+        },
+        {
+          "path": "docs/LOCAL-ONLY-NO-SERVER-ARCHITECTURE-RESEARCH.md",
+          "kind": "file",
+          "bytes": 47528,
+          "sha256": "46f28d51b4e54753b027f7c75d32bcd03913b816c13045e5df4530faa5af889b"
+        },
+        {
+          "path": "docs/SERVERLESS-FAMILY-CHAT-JAZZ-ARCHITECTURE.md",
+          "kind": "file",
+          "bytes": 17144,
+          "sha256": "893d1dcc38ca09fbbea0268a8ba1d08580b7a51cbe103b250f339d6891322081"
+        },
+        {
+          "path": "docs/STATIC-TUNNEL-CHATGPT-ARCHITECTURE-OPTIONS.md",
+          "kind": "file",
+          "bytes": 30655,
+          "sha256": "fb020cfed63c71e718254085df2ab6a9ac4ecf0f603ae209832bf5957cc74ba9"
+        },
+        {
+          "path": "docs/architecture/LOCAL-MAC-FAMILY-CHAT-JAZZ-OPTIONS.mmd",
+          "kind": "file",
+          "bytes": 1308,
+          "sha256": "4ca37a4b8bc31f00fc69ee0eaf78679f77b490668e05d16267312dc0947a1640"
+        },
+        {
+          "path": "docs/architecture/LOCAL-MAC-FAMILY-CHAT-JAZZ-SEQUENCE.mmd",
+          "kind": "file",
+          "bytes": 2626,
+          "sha256": "18400be24e09724134a3ce751b86b195f1e8a3924b839d377905940d1a8c402e"
+        },
+        {
+          "path": "docs/architecture/LOCAL-MAC-FAMILY-CHAT-JAZZ.mmd",
+          "kind": "file",
+          "bytes": 3538,
+          "sha256": "3023978c33e7c9b534cd315978118b7438f3b133cc8ba2299f73d7efd3d2e432"
+        },
+        {
+          "path": "docs/architecture/SERVERLESS-FAMILY-CHAT-JAZZ-SEQUENCE.mmd",
+          "kind": "file",
+          "bytes": 2082,
+          "sha256": "32c035f608c30e78e59f5bda837f4bf13737ef6e48314909075b4040604667ef"
+        },
+        {
+          "path": "docs/architecture/SERVERLESS-FAMILY-CHAT-JAZZ.mmd",
+          "kind": "file",
+          "bytes": 2975,
+          "sha256": "2ae3d0097cb64698ae13fa67a14aaf21a6c50ce1e023defbb6c69df13c25a2c4"
+        },
+        {
+          "path": "docs/architecture/STATIC-TUNNEL-BOOT-AND-CALL-SEQUENCE.mmd",
+          "kind": "file",
+          "bytes": 1009,
+          "sha256": "8dc79e0657e877d94987c773de95c47830938a7f5613705644a82fc41fc090f9"
+        },
+        {
+          "path": "docs/architecture/STATIC-TUNNEL-CLOUDFLARE.mmd",
+          "kind": "file",
+          "bytes": 730,
+          "sha256": "29d18dd33d63c21f9190b64860c2c75bbc217cb00df02b51085abad60b755210"
+        },
+        {
+          "path": "docs/architecture/STATIC-TUNNEL-DIRECT-MCP.mmd",
+          "kind": "file",
+          "bytes": 716,
+          "sha256": "1087f683bfe630e3eb40620e98baeae796466c42a27e64da6197bb6d9ecbcf5e"
+        },
+        {
+          "path": "docs/architecture/STATIC-TUNNEL-IMPLEMENTATION-CHOICES.mmd",
+          "kind": "file",
+          "bytes": 1048,
+          "sha256": "0bc4bfa68c8c461d41085c620597fe3273e876331bf62845dbd9412d85559d2f"
+        },
+        {
+          "path": "docs/architecture/STATIC-TUNNEL-STDIO-SIDECAR.mmd",
+          "kind": "file",
+          "bytes": 642,
+          "sha256": "d67787407d561216965af737ed996df3c56c643ed15c0df13d7277bf77521f10"
+        },
+        {
+          "path": "docs/architecture/STATIC-TUNNEL-TAILSCALE-ZROK.mmd",
+          "kind": "file",
+          "bytes": 709,
+          "sha256": "cbfce21432ca8febe5df4e5788e0d44673fe748feae925d6ea29c2b2fb56bf3b"
+        },
+        {
+          "path": "docs/local-mac-mcp-chat/02-REFERENCE-AND-UI-TASKS.md",
+          "kind": "file",
+          "bytes": 52139,
+          "sha256": "19b446dc5cc5616d0e7da03791b228b8cf16ef2af476e3ff96b4fd9a406e937e"
+        },
+        {
+          "path": "scripts/capture-tested-build-state.mjs",
+          "kind": "file",
+          "bytes": 9012,
+          "sha256": "10ef0a12168750012eabb988101e2e657f8040abdefe1113b74a01ff841b8d8d"
+        },
+        {
+          "path": "src/remote-device/oauth-http.ts",
+          "kind": "file",
+          "bytes": 4457,
+          "sha256": "aaf3f95de1127888b1083aec7ab46cdd3532320fc0db9cda49a9af4c092a951d"
+        },
+        {
+          "path": "test/test-passkey-expiry-window.js",
+          "kind": "file",
+          "bytes": 6245,
+          "sha256": "e83ac85e4b1a554cfb08776f7c37cda554d6a0a48e4d5531763852144a58f4fd"
+        },
+        {
+          "path": "test/test-passkey-oauth-http.js",
+          "kind": "file",
+          "bytes": 4551,
+          "sha256": "90d7649ae1930fe0881c172ae408334cc942d760806aee039c76eefd0605cbae"
+        },
+        {
+          "path": "test/test-passkey-pairing-lease.js",
+          "kind": "file",
+          "bytes": 3263,
+          "sha256": "43c05de0807a9fd29bc1d1c4416e95ef5859a018f2dd3cd1b72eb28557e7a3dc"
+        },
+        {
+          "path": "test/test-passkey-refresh-lease.js",
+          "kind": "file",
+          "bytes": 7798,
+          "sha256": "01e45aced7a19924b93d6fdbe3b2161d503bdb33bbbb3d16a502af87b37d4451"
+        }
+      ],
+      "excludedEvidenceFiles": [
+        "TODO.md",
+        "docs/PASSKEY-TESTED-BUILD-MANIFEST.json"
+      ],
+      "lockfiles": [
+        {
+          "name": "package-lock.json",
+          "sha256": "6e3465ec8ccf851ae6c19a3a0f751776c8f5ddfdfa5ec3cfc7a8f0e01217c4e9"
+        },
+        {
+          "name": "flake.lock",
+          "sha256": "fc12681e6836952b925641971998990a3edd82b5f3e731f1ca2f315d25712891"
+        }
+      ],
+      "package": {
+        "path": "package.json",
+        "sha256": "ef41d65a7d9a9a0ca43ce6d6a4bc267b727559eb0616b7eb5bd5e93c7ed6fd02",
+        "name": "@wonderwhy-er/desktop-commander",
+        "version": "0.2.47",
+        "packageManager": null
+      }
+    },
+    "controlPlaneWorkspace": {
+      "path": "/Users/test/Documents/RemoteMCP-Jazz/implementation",
+      "branch": "main",
+      "head": null,
+      "headState": "unborn",
+      "statusShort": [
+        "A  .envrc",
+        "AM .gitignore",
+        "AM Justfile",
+        "AM README.md",
+        "AM apps/control-plane/.env.example",
+        "A  apps/control-plane/app/api/auth/[...all]/route.ts",
+        "AM apps/control-plane/app/api/devices/[id]/ping/route.ts",
+        "AM apps/control-plane/app/api/devices/[id]/reconnect/route.ts",
+        "AM apps/control-plane/app/api/devices/[id]/revoke/route.ts",
+        "AM apps/control-plane/app/api/mcp/route.ts",
+        "A  apps/control-plane/app/consent/consent-buttons.tsx",
+        "AM apps/control-plane/app/consent/page.tsx",
+        "AM apps/control-plane/app/dashboard/devices/page.tsx",
+        "AM apps/control-plane/app/device/approve/page.tsx",
+        "A  apps/control-plane/app/device/denied/page.tsx",
+        "AM apps/control-plane/app/device/page.tsx",
+        "A  apps/control-plane/app/device/success/page.tsx",
+        "A  apps/control-plane/app/layout.tsx",
+        "A  apps/control-plane/app/page.tsx",
+        "AM apps/control-plane/app/sign-in/page.tsx",
+        "A  apps/control-plane/device/credential-store.ts",
+        "A  apps/control-plane/device/device-auth.ts",
+        "AM apps/control-plane/device/heartbeat.ts",
+        "AM apps/control-plane/device/jazz-device.ts",
+        "A  apps/control-plane/device/local-mcp-supervisor.ts",
+        "A  apps/control-plane/device/native-credential-store.ts",
+        "A  apps/control-plane/device/reconnect-supervisor.ts",
+        "A  apps/control-plane/device/token-manager.ts",
+        "AM apps/control-plane/lib/audit.ts",
+        "AM apps/control-plane/lib/auth-client.ts",
+        "AM apps/control-plane/lib/auth-plugins.ts",
+        "AM apps/control-plane/lib/auth.ts",
+        "AM apps/control-plane/lib/call-router.ts",
+        "AM apps/control-plane/lib/device-admin.ts",
+        "AM apps/control-plane/lib/env.ts",
+        "AM apps/control-plane/lib/jazz-context.ts",
+        "AM apps/control-plane/next-env.d.ts",
+        "AM apps/control-plane/next.config.ts",
+        "AM apps/control-plane/package.json",
+        "AM apps/control-plane/permissions.ts",
+        "A  apps/control-plane/schema.ts",
+        "AM apps/control-plane/scripts/cleanup-calls.ts",
+        "AD apps/control-plane/scripts/generate-auth-schema.ts",
+        "A  apps/control-plane/tsconfig.json",
+        "A  docs/GIT-AND-CHANGE-PLAN.md",
+        "A  docs/HANDOFF-WORKFLOW.md",
+        "A  docs/IMPLEMENTATION-SEQUENCE.md",
+        "AM docs/TESTING.md",
+        "A  flake.lock",
+        "AM flake.nix",
+        "A  ops/.env.example",
+        "AM ops/Dockerfile.jazz",
+        "AM ops/Dockerfile.web",
+        "AM ops/README.md",
+        "A  ops/cloudflared/config.yml",
+        "AM ops/docker-compose.yml",
+        "A  ops/launchd/com.desktopcommander.jazz-device.plist",
+        "A  ops/systemd/desktop-commander-jazz-device.service",
+        "A  ops/systemd/remote-mcp-stack.service",
+        "AM package.json",
+        "A  packages/protocol/package.json",
+        "AM packages/protocol/src/application-schema.ts",
+        "AD packages/protocol/src/auth-schema.ts",
+        "A  packages/protocol/src/constants.ts",
+        "AM packages/protocol/src/index.ts",
+        "AD packages/protocol/src/schema-better-auth/schema.ts",
+        "AM packages/protocol/src/schema.ts",
+        "AM packages/protocol/tsconfig.json",
+        "AM pnpm-lock.yaml",
+        "AM pnpm-workspace.yaml",
+        "AM scripts/doctor.sh",
+        "AM scripts/init-local-env.sh",
+        "AM scripts/jazz-server.sh",
+        "A  scripts/smoke.sh",
+        "AM tsconfig.base.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/BUILD_ID",
+        "?? apps/control-plane/.next-stale-20260901-0821/app-build-manifest.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/app-path-routes-manifest.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/build-manifest.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/.previewinfo",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/.rscinfo",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/next-devtools-config.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/0.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/1.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/10.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/11.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/12.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/13.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/2.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/3.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/4.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/5.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/6.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/7.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/8.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/9.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/index.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/index.pack.gz.old",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-production/0.pack",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-production/1.pack",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-production/2.pack",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-production/3.pack",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-production/4.pack",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-production/5.pack",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-production/6.pack",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-production/index.pack",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-production/index.pack.old",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/edge-server-production/0.pack",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/edge-server-production/index.pack",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/0.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/1.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/10.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/11.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/12.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/13.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/14.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/15.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/2.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/3.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/4.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/5.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/6.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/7.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/8.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/9.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/index.pack.gz",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/index.pack.gz.old",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-production/0.pack",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-production/1.pack",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-production/2.pack",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-production/3.pack",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-production/4.pack",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-production/5.pack",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-production/index.pack",
+        "?? apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-production/index.pack.old",
+        "?? apps/control-plane/.next-stale-20260901-0821/diagnostics/build-diagnostics.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/diagnostics/framework.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/export-marker.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/images-manifest.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/next-minimal-server.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/next-server.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/package.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/prerender-manifest.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/react-loadable-manifest.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/required-server-files.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/routes-manifest.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/_error.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app-paths-manifest.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/.well-known/jazz-jwks/route.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/.well-known/jazz-jwks/route.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/.well-known/jazz-jwks/route_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/.well-known/oauth-protected-resource/mcp/route.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/.well-known/oauth-protected-resource/mcp/route.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/.well-known/oauth-protected-resource/mcp/route_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/.well-known/oauth-protected-resource/route.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/.well-known/oauth-protected-resource/route.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/.well-known/oauth-protected-resource/route_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/_not-found.html",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/_not-found.meta",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/_not-found.rsc",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/_not-found/page.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/_not-found/page.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/_not-found/page_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/auth/[...all]/route.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/auth/[...all]/route.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/auth/[...all]/route_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/device/calls/[id]/claim/route.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/device/calls/[id]/claim/route.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/device/calls/[id]/claim/route_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/device/calls/[id]/complete/route.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/device/calls/[id]/complete/route.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/device/calls/[id]/complete/route_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/device/heartbeat/route.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/device/heartbeat/route.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/device/heartbeat/route_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/device/jazz-token/route.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/device/jazz-token/route.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/device/jazz-token/route_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/device/register/route.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/device/register/route.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/device/register/route_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/devices/[id]/ping/route.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/devices/[id]/ping/route.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/devices/[id]/ping/route_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/devices/[id]/reconnect/route.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/devices/[id]/reconnect/route.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/devices/[id]/reconnect/route_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/devices/[id]/revoke/route.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/devices/[id]/revoke/route.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/devices/[id]/revoke/route_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/jazz/dashboard-token/route.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/jazz/dashboard-token/route.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/jazz/dashboard-token/route_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/mcp/route.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/mcp/route.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/api/mcp/route_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/consent/page.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/consent/page.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/consent/page_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/dashboard/devices.html",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/dashboard/devices.meta",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/dashboard/devices.rsc",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/dashboard/devices/page.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/dashboard/devices/page.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/dashboard/devices/page_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device.html",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device.meta",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device.rsc",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/approve.html",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/approve.meta",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/approve.rsc",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/approve/page.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/approve/page.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/approve/page_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/denied.html",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/denied.meta",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/denied.rsc",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/denied/page.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/denied/page.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/denied/page_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/page.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/page.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/page_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/success.html",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/success.meta",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/success.rsc",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/success/page.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/success/page.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/device/success/page_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/index.html",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/index.meta",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/index.rsc",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/page.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/page.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/page_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/sign-in.html",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/sign-in.meta",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/sign-in.rsc",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/sign-in/page.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/sign-in/page.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/app/sign-in/page_client-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/chunks/175.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/chunks/469.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/chunks/571.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/chunks/607.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/chunks/735.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/chunks/752.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/chunks/794.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/chunks/811.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/chunks/870.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/chunks/886.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/chunks/888.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/chunks/903.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/chunks/908.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/chunks/914.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/chunks/917.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/chunks/954.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/functions-config-manifest.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/interception-route-rewrite-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/middleware-build-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/middleware-manifest.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/middleware-react-loadable-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/next-font-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/next-font-manifest.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/pages-manifest.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/pages/404.html",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/pages/500.html",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/pages/_app.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/pages/_app.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/pages/_document.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/pages/_document.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/pages/_error.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/pages/_error.js.nft.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/server-reference-manifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/server-reference-manifest.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-auth+cimd@1.7.1_@better-auth+core@1.7.1_@better-auth+utils@0.4.2_@better-fetch+_c99fdd3d9ae07f8941041e77bb32a8c6.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-auth+core@1.7.1_@better-auth+utils@0.4.2_@better-fetch+fetch@1.3.1_@opentelemet_525910551952bb8106d36f107c5dc36a.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-auth+kysely-adapter@1.7.1_@better-auth+core@1.7.1_@better-auth+utils@0.4.2_@bet_b5087bb1270e5e10214f9ca476b86561.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-auth+mcp@1.7.1_@better-auth+core@1.7.1_@better-auth+utils@0.4.2_@better-fetch+f_88c67e0e00d4087dc9e8d337925d496d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-auth+memory-adapter@1.7.1_@better-auth+core@1.7.1_@better-auth+utils@0.4.2_@bet_2fa0f2d35c36e13220c5ad74bc0c9df6.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-auth+oauth-provider@1.7.1_@better-auth+core@1.7.1_@better-auth+utils@0.4.2_@bet_69d4e9357d4f32cfc3037f0b380a2106.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-auth+telemetry@1.7.1_@better-auth+core@1.7.1_@better-auth+utils@0.4.2_@better-f_796c62f22c89e5f21b12f476bf045076.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-auth+utils@0.4.2.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-auth+utils@0.5.0.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-fetch+fetch@1.3.1.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@noble+ciphers@2.4.0.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@noble+hashes@2.4.0.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@opentelemetry+api@1.9.1.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@opentelemetry+semantic-conventions@1.43.0.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@swc+helpers@0.5.15.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/better-auth@1.7.1_@opentelemetry+api@1.9.1_next@15.5.24_@babel+core@7.29.7_@opentelemet_38324768f46511f37ae14b7aad884cb9.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/better-call@1.4.0_zod@4.5.4.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/defu@6.1.7.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/jose@6.2.10.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/kysely@0.29.5.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/next@15.5.24_@babel+core@7.29.7_@opentelemetry+api@1.9.1_@types+node@24.13.3_react-dom@19.2.8_react@19.2.8__react@19.2.8.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/rou3@0.9.2.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/zod@4.5.4.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/server/webpack-runtime.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/6PqzqeQqzxHHuIGP663nb/_buildManifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/6PqzqeQqzxHHuIGP663nb/_ssgManifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/153.f87ba8ae9a912c72.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/204-2b14a0a778ca4ff6.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/410.a7beef3498c20e9e.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/479.a3505da2800e5c85.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/49.4177625de4d5282f.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/614-b496d87292c21a8f.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/660-0331c7369e4507f5.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/680.6e0292e55ae4ce2f.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/742.50060827e63169d7.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/780.800af2b8bb02d22b.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/842.7f502e8efb2f80e8.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/875.be44153699a3a834.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/903.b92f18bd4ed874f3.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/_error.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app-pages-internals.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/.well-known/jazz-jwks/route-492d6c84d67a8d7d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/.well-known/oauth-protected-resource/mcp/route-492d6c84d67a8d7d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/.well-known/oauth-protected-resource/route-492d6c84d67a8d7d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/_not-found/page-8d5907fb8e771d9a.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/auth/[...all]/route-492d6c84d67a8d7d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/device/calls/[id]/claim/route-492d6c84d67a8d7d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/device/calls/[id]/complete/route-492d6c84d67a8d7d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/device/heartbeat/route-492d6c84d67a8d7d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/device/jazz-token/route-492d6c84d67a8d7d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/device/register/route-492d6c84d67a8d7d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/devices/[id]/ping/route-492d6c84d67a8d7d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/devices/[id]/reconnect/route-492d6c84d67a8d7d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/devices/[id]/revoke/route-492d6c84d67a8d7d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/jazz/dashboard-token/route-492d6c84d67a8d7d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/mcp/route-492d6c84d67a8d7d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/consent/page-75a7f56bbf1105bb.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/dashboard/devices/page-7fdc57b6f68b2056.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/device/approve/page-3e996fc1b21115bc.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/device/denied/page-492d6c84d67a8d7d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/device/page-63aba47a56686daa.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/device/success/page-492d6c84d67a8d7d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/layout-492d6c84d67a8d7d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/layout.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/page-492d6c84d67a8d7d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/page.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/app/sign-in/page-ca6256f190d4748a.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/bb87b69c-f9ff7a98d746f96d.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/framework-d6fe23f2037e22ad.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/main-app-00d6d3f5461fa6fb.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/main-de564d17a2ab60b5.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/main.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/pages/_app-361ae2bb8d5b193c.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/pages/_app.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/pages/_error-26f24b8ac5e9d22f.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/pages/_error.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/polyfills-42372ed130431b0a.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/react-refresh.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/webpack-ddb46958213527de.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/chunks/webpack.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/development/_buildManifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/development/_ssgManifest.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/media/db.f47c1bde.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/media/jazz-broker-worker.b87bad5c.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/media/jazz_wasm_bg.7ad04d02.wasm",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/webpack/28ab48f7cb8acca3.webpack.hot-update.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/webpack/8ef501bb8332a037.webpack.hot-update.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/webpack/webpack.28ab48f7cb8acca3.hot-update.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/static/webpack/webpack.8ef501bb8332a037.hot-update.js",
+        "?? apps/control-plane/.next-stale-20260901-0821/trace",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/.well-known/jazz-jwks/route.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/.well-known/oauth-protected-resource/mcp/route.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/.well-known/oauth-protected-resource/route.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/api/auth/[...all]/route.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/api/device/calls/[id]/claim/route.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/api/device/calls/[id]/complete/route.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/api/device/heartbeat/route.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/api/device/jazz-token/route.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/api/device/register/route.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/api/devices/[id]/ping/route.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/api/devices/[id]/reconnect/route.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/api/devices/[id]/revoke/route.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/api/jazz/dashboard-token/route.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/api/mcp/route.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/consent/page.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/dashboard/devices/page.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/device/approve/page.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/device/denied/page.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/device/page.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/device/success/page.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/layout.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/page.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/app/sign-in/page.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/cache-life.d.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/package.json",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/routes.d.ts",
+        "?? apps/control-plane/.next-stale-20260901-0821/types/validator.ts",
+        "?? apps/control-plane/app/.well-known/jazz-jwks/route.ts",
+        "?? apps/control-plane/app/.well-known/oauth-authorization-server/api/auth/route.ts",
+        "?? apps/control-plane/app/.well-known/oauth-protected-resource/mcp/route.ts",
+        "?? apps/control-plane/app/.well-known/oauth-protected-resource/route.ts",
+        "?? apps/control-plane/app/api/auth/authorize/route.ts",
+        "?? apps/control-plane/app/api/auth/oauth2/device-authorization/route.ts",
+        "?? apps/control-plane/app/api/auth/oauth2/revoke/route.ts",
+        "?? apps/control-plane/app/api/device/calls/[id]/claim/route.ts",
+        "?? apps/control-plane/app/api/device/calls/[id]/complete/route.ts",
+        "?? apps/control-plane/app/api/device/heartbeat/route.ts",
+        "?? apps/control-plane/app/api/device/jazz-token/route.ts",
+        "?? apps/control-plane/app/api/device/register/route.ts",
+        "?? apps/control-plane/app/api/jazz/dashboard-token/route.ts",
+        "?? apps/control-plane/app/api/passkey/registration-intent/route.ts",
+        "?? apps/control-plane/app/mcp/route.ts",
+        "?? apps/control-plane/app/passkey/enroll/page.tsx",
+        "?? apps/control-plane/device/control-plane-client.ts",
+        "?? apps/control-plane/lib/auth-db.ts",
+        "?? apps/control-plane/lib/auth-migration-config.ts",
+        "?? apps/control-plane/lib/authorization-service.ts",
+        "?? apps/control-plane/lib/dashboard-auth.ts",
+        "?? apps/control-plane/lib/device-request-auth.ts",
+        "?? apps/control-plane/lib/ids.ts",
+        "?? apps/control-plane/lib/jazz-capability.ts",
+        "?? apps/control-plane/lib/jazz-principal.ts",
+        "?? apps/control-plane/lib/json.ts",
+        "?? apps/control-plane/lib/oauth-revocation.ts",
+        "?? apps/control-plane/lib/passkey-enrollment.ts",
+        "?? apps/control-plane/lib/passkey-only-identity.ts",
+        "?? apps/control-plane/lib/protected-resource-metadata.ts",
+        "?? apps/control-plane/migrations/20260901T024216-unnamed-050e375fcd50-25bfe44b6659.ts",
+        "?? apps/control-plane/migrations/snapshots/20260901T024159-25bfe44b6659.json",
+        "?? apps/control-plane/migrations/snapshots/20260901T024216-050e375fcd50.json",
+        "?? apps/control-plane/scripts/check-passkey-uv-patch.mjs",
+        "?? apps/control-plane/scripts/create-passkey-enrollment.ts",
+        "?? apps/control-plane/scripts/debug-attribution.ts",
+        "?? apps/control-plane/scripts/debug-jazz-storage.mjs",
+        "?? apps/control-plane/scripts/jazz-authority.ts",
+        "?? apps/control-plane/scripts/migrate-passkey-only-identity.mjs",
+        "?? apps/control-plane/scripts/reconcile-device-revocations.ts",
+        "?? apps/control-plane/scripts/smoke-device-flow.ts",
+        "?? apps/control-plane/scripts/test-oauth-revocation-wrapper.ts",
+        "?? apps/control-plane/scripts/test-passkey-account-registration.mjs",
+        "?? apps/control-plane/scripts/test-passkey-only-identity-migration.mjs",
+        "?? apps/control-plane/scripts/test-passkey-security-negatives.ts",
+        "?? apps/control-plane/scripts/verify-auth-db.mjs",
+        "?? docs/JAZZ-BETTER-AUTH-DECISION.md",
+        "?? ops/jazz-authority.mjs",
+        "?? patches/@better-auth__passkey@1.7.1.patch",
+        "?? scripts/auth-db-info.sh",
+        "?? scripts/upgrade-local-env.sh"
+      ],
+      "stagedPatchSha256": "e6caf10ecd6ed8ac31df75ed3f06c555890d549a07280729030a91b71f7b5f4b",
+      "unstagedPatchSha256": "a4d7e4ac924c500ed2a700002c8017a304938c1a67a89e40c07c8d955e913f42",
+      "untrackedFiles": [
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/BUILD_ID",
+          "kind": "file",
+          "bytes": 21,
+          "sha256": "f96eb7b4c03965a0cef12f777241770258e131fef86fef2a7cabfb3bfc60417a"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/app-build-manifest.json",
+          "kind": "file",
+          "bytes": 2019,
+          "sha256": "986ec91fd721d7181a9fe4dbfd18d31745eb7c90e76d02ebccaeb6314a5711c8"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/app-path-routes-manifest.json",
+          "kind": "file",
+          "bytes": 1246,
+          "sha256": "f758e2943c5e99504668fdc4d58224be59cd636996ac2b1a7ced2510c98a3f5b"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/build-manifest.json",
+          "kind": "file",
+          "bytes": 661,
+          "sha256": "2c9ae1d87a98b175c4e860abb06a1b26d22e3dc069640c2b42abb0851b269376"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/.previewinfo",
+          "kind": "file",
+          "bytes": 262,
+          "sha256": "bed50c0ba10a848c01e8f815d6b5d645e460fb58f195b0765a2b8b8bf1a8ac34"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/.rscinfo",
+          "kind": "file",
+          "bytes": 102,
+          "sha256": "fcf71e7df727984f639c795f9b552c3a5e33d626d30e0f17dc751b79f0639c33"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/next-devtools-config.json",
+          "kind": "file",
+          "bytes": 2,
+          "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/0.pack.gz",
+          "kind": "file",
+          "bytes": 95896,
+          "sha256": "638809fc1a2fc251b3e8863a2f5e44046e7d50e5b2348f425b34e10d94e616a7"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/1.pack.gz",
+          "kind": "file",
+          "bytes": 5681,
+          "sha256": "216b41296d8f070365925f67aae0c30864ab39997bb6f2abc0bf0d8241cd6365"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/10.pack.gz",
+          "kind": "file",
+          "bytes": 39788,
+          "sha256": "175522e6626d6bb64c8da9472e37187ab23550c0c6d568e5b3aafa3e42ca91a5"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/11.pack.gz",
+          "kind": "file",
+          "bytes": 451862,
+          "sha256": "acc46132d2d4b774d3e6c17abb0e1f2e25ba8764af692611e1ba36c0805173cd"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/12.pack.gz",
+          "kind": "file",
+          "bytes": 1411,
+          "sha256": "c5cb14991dd3fc8c619e81a87ef3d902b7064b51cd4d52d04d647f3f4294dc94"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/13.pack.gz",
+          "kind": "file",
+          "bytes": 65703,
+          "sha256": "468ab1b34e734e52a0aad1b68c217a7320400b414cd2022b669178f4f3b13c94"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/2.pack.gz",
+          "kind": "file",
+          "bytes": 1404,
+          "sha256": "b6b61baddf9d1527bffd105a08646e45fb26a8d3edd35e94b421ab717ed33551"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/3.pack.gz",
+          "kind": "file",
+          "bytes": 10671,
+          "sha256": "c692291ab1ada0e2dc80430f73595597613f1379254a9ee18ed7598a22492b9d"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/4.pack.gz",
+          "kind": "file",
+          "bytes": 11253781,
+          "sha256": "8b8d1b02a0ab054a5f2cd43619cbc55392cdf0706b5b54e8fbf27d79431520b0"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/5.pack.gz",
+          "kind": "file",
+          "bytes": 10627652,
+          "sha256": "59e4991a4c463da1f080dedbe37eb532722c74b23d597eafd0d0d006ede2d46a"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/6.pack.gz",
+          "kind": "file",
+          "bytes": 1404,
+          "sha256": "109b1367e903701a3e5d61d75b3f8030353e7effcfa052cebce50001454e54a5"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/7.pack.gz",
+          "kind": "file",
+          "bytes": 1407,
+          "sha256": "aee9f67cf6b02002ffa317eb83ab814d4ab56196d539fca43f0f03059ba17406"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/8.pack.gz",
+          "kind": "file",
+          "bytes": 1593,
+          "sha256": "7f96c22c0820ee5d34496dd521ef09571ea12370743d833521e10bb0150617e5"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/9.pack.gz",
+          "kind": "file",
+          "bytes": 4183,
+          "sha256": "97a4f8deaf4517065b5e01465d5c630ca445d82222c798e8bcecf4f6069b81de"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/index.pack.gz",
+          "kind": "file",
+          "bytes": 189024,
+          "sha256": "136aeda1215abce0a10d3b456d7d283e07fdbf7caa8642a7b9e355ef1b11e649"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-development/index.pack.gz.old",
+          "kind": "file",
+          "bytes": 141846,
+          "sha256": "59711586d746dbf923dbb954081858e8f6e851ff736cebe8e05e16cfc1660bc5"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-production/0.pack",
+          "kind": "file",
+          "bytes": 55826935,
+          "sha256": "a94de59242884528b83b04d61fa814fb094725e9c0e8becfacabf308470ecca0"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-production/1.pack",
+          "kind": "file",
+          "bytes": 2622,
+          "sha256": "d10c0b795d863515ca81a9fa44e8aa829bd957db2ed9c2165e40e2fe94410239"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-production/2.pack",
+          "kind": "file",
+          "bytes": 13965,
+          "sha256": "354d4249ec8a6649589e2b024395edb87bce8cd471ef16d8e64b90dc87b249ae"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-production/3.pack",
+          "kind": "file",
+          "bytes": 11167739,
+          "sha256": "acd655822372f4748fe2c5ac5733705daee277d85b4fd6f35fb84b5908c88ace"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-production/4.pack",
+          "kind": "file",
+          "bytes": 396421,
+          "sha256": "7e7fa1324941eb79933283693711a793d0352606bac28b1bbd25221f89e195c4"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-production/5.pack",
+          "kind": "file",
+          "bytes": 7745181,
+          "sha256": "9f52aea8e215cfa46bac350414bf6b00aa4f9c8a158b8de65cedd808d11a9262"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-production/6.pack",
+          "kind": "file",
+          "bytes": 38436,
+          "sha256": "9b4040d191adb98ca0b41bdb21d7715466a835eba13d1c16613bf4150020f73d"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-production/index.pack",
+          "kind": "file",
+          "bytes": 13030760,
+          "sha256": "cca5f7c51159db0a961b577eb8b655e0e97fe0b9516409940cc51b77ebf54ad5"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/client-production/index.pack.old",
+          "kind": "file",
+          "bytes": 12991016,
+          "sha256": "7b803e15f9ffcc244398b207445eed5ab84429864c0eb2d94420c2e296d1ff9d"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/edge-server-production/0.pack",
+          "kind": "file",
+          "bytes": 276,
+          "sha256": "4cf621d6541d0b5f1971d04d8acd429b63ef068b3eaf45a684bd7bf9f121aadc"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/edge-server-production/index.pack",
+          "kind": "file",
+          "bytes": 2647,
+          "sha256": "4659b6fdecaf7d75b0674ce365623594816164e07472414aaa0757f7ea6335f9"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/0.pack.gz",
+          "kind": "file",
+          "bytes": 2365,
+          "sha256": "21ab3569c3e85384f84aac7675201baf9f582c556a18d98b12128d2bb175eff3"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/1.pack.gz",
+          "kind": "file",
+          "bytes": 18289,
+          "sha256": "e14ca1127c3c77e63ba821adbf30e2b84edd4a9eafd8ceb3421ad287997960e2"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/10.pack.gz",
+          "kind": "file",
+          "bytes": 320249,
+          "sha256": "006986b0b6ff5c11d86cc287bd02a97ba0b6c3e0c6968d2777a3416e158d0493"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/11.pack.gz",
+          "kind": "file",
+          "bytes": 111529,
+          "sha256": "16e79ffdf95e02d88cdddfa6862cb62f01a53099829720cfcda4259b7c406f29"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/12.pack.gz",
+          "kind": "file",
+          "bytes": 6759662,
+          "sha256": "f3d671206986031bf22c8a7410d13c6d919b1ff1ba579a82449d526ebfaf33ca"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/13.pack.gz",
+          "kind": "file",
+          "bytes": 37734,
+          "sha256": "71d26bfedb8f4064793b7b845d5c4119ecd22ddbfb2592f33587c94c9628be0a"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/14.pack.gz",
+          "kind": "file",
+          "bytes": 162357,
+          "sha256": "e05f6dd6ff16834ef68ad87ca75c30336a407c4df3fd619e2d3083c53628e8d6"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/15.pack.gz",
+          "kind": "file",
+          "bytes": 16573,
+          "sha256": "39bb897552d2b98364d86f6d3cd5b5b569b18a18ef7e8c209bfaca2c580772da"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/2.pack.gz",
+          "kind": "file",
+          "bytes": 3106,
+          "sha256": "4ffec2afcb57c94c67ba9a04a6235574b6ad030a4b5398dfa7ae02e34c86da49"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/3.pack.gz",
+          "kind": "file",
+          "bytes": 3543,
+          "sha256": "ffffde15729931e1d3259764adea2ea20c2dd009523289569fd7e3a25ff29395"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/4.pack.gz",
+          "kind": "file",
+          "bytes": 7722,
+          "sha256": "4c5f80e97fb5530b215c6d3d38151da712b6b01b155a011668f5212ece7d71a8"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/5.pack.gz",
+          "kind": "file",
+          "bytes": 18240,
+          "sha256": "e57c73ca87e25366152fc028c7bafe22a513d34143f5ed3bec7ea1aa6ba1a994"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/6.pack.gz",
+          "kind": "file",
+          "bytes": 15041107,
+          "sha256": "52e7b9e766b7f25fd3731e232c4eb8006fc4039fedfc4b65ab33e609755a64f6"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/7.pack.gz",
+          "kind": "file",
+          "bytes": 247290,
+          "sha256": "11cabb46040a90ca188065095ede2a4859f7b2b1370d23dc700d1609a94806f2"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/8.pack.gz",
+          "kind": "file",
+          "bytes": 1274322,
+          "sha256": "d4fd08d7ef7442c78fe14e9c61b90b79045092cc2dcd7f94aa71f57b46815e7d"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/9.pack.gz",
+          "kind": "file",
+          "bytes": 16438,
+          "sha256": "64b5e14b0f82433e87f750a3c8c9e8508ccdb593d9f214ad8ed960d2a87a2400"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/index.pack.gz",
+          "kind": "file",
+          "bytes": 758727,
+          "sha256": "6f61408cc763e256fd2f11e4994ce9ff151400ed04dfa0a1d65594a0350d2ad1"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-development/index.pack.gz.old",
+          "kind": "file",
+          "bytes": 756691,
+          "sha256": "a03baafbc5670672a5e570b2c4abed6862904be744e1fb864f6de1685f471565"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-production/0.pack",
+          "kind": "file",
+          "bytes": 31885870,
+          "sha256": "c147e0cd33487c6d171192e0aec44c4e679ec90981784ae4eb4918c95d7de87f"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-production/1.pack",
+          "kind": "file",
+          "bytes": 23298679,
+          "sha256": "5cbadf926d3e41cf5d59f7e7c0d0c7751915d86fbbf8c4c4667dfc5baf93b3ce"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-production/2.pack",
+          "kind": "file",
+          "bytes": 163111461,
+          "sha256": "071684f0cc09354eea8217bfdf4055ab8774e192d891cf6b99bbb3c9f5526bc0"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-production/3.pack",
+          "kind": "file",
+          "bytes": 4627379,
+          "sha256": "a066dae9abfb5878efd8de2bfb29e111ee059633cb8ac1cea98728736db5d5fe"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-production/4.pack",
+          "kind": "file",
+          "bytes": 59233906,
+          "sha256": "c395f10853a68dd2ac01d30500e2c8b2b08356b6fb0fcfd18ce9d102f98fa94b"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-production/5.pack",
+          "kind": "file",
+          "bytes": 90767,
+          "sha256": "b055190afc18e201d05691c6bc9b1625bcea25a485df66fed36d1c8e3cc025da"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-production/index.pack",
+          "kind": "file",
+          "bytes": 38277818,
+          "sha256": "ff3caa40dae8b5324c5a1a8888eb32d62c85a5bfaa02fd8ae6a984f0865c746b"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/cache/webpack/server-production/index.pack.old",
+          "kind": "file",
+          "bytes": 37785846,
+          "sha256": "803ed2c759f42f53e0ec4091c17cbc40fea21b760a553faf6ba8dfaed98e3cc3"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/diagnostics/build-diagnostics.json",
+          "kind": "file",
+          "bytes": 93,
+          "sha256": "e4932338188cf0fbd08fb45f8b04421b523d0b2d9b90f197b5ad2e24fec94306"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/diagnostics/framework.json",
+          "kind": "file",
+          "bytes": 38,
+          "sha256": "6b1668f6195fe186ac737215f22ef229d488aa6cce968cbd27a242f7eee2b6f7"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/export-marker.json",
+          "kind": "file",
+          "bytes": 111,
+          "sha256": "82356527db218adb95bd1eca0ede6f3391165b38b22d667d064e62e6b539d974"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/images-manifest.json",
+          "kind": "file",
+          "bytes": 905,
+          "sha256": "aa214cfadf69e21be1f4300f1c33b0266167f3eb9108825ac6238b295ac510ad"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/next-minimal-server.js.nft.json",
+          "kind": "file",
+          "bytes": 25294,
+          "sha256": "71acb305dbf0bef57a32b018face1d2b2d52eee2d344d4052bb3a9aaabba22a9"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/next-server.js.nft.json",
+          "kind": "file",
+          "bytes": 135432,
+          "sha256": "7e231b9f61dff26ede10759706af01fa982af349efdccf4cead7a913c7a93d9a"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/package.json",
+          "kind": "file",
+          "bytes": 20,
+          "sha256": "091a04fa67c7907b98e106fcff8b964e13129754fce72d24f3025b97c4887fa3"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/prerender-manifest.json",
+          "kind": "file",
+          "bytes": 5304,
+          "sha256": "2aaefecf25965ff228ff6ed7c03a881bd59d35c4ed5b288d642abce69f05d9c1"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/react-loadable-manifest.json",
+          "kind": "file",
+          "bytes": 2,
+          "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/required-server-files.json",
+          "kind": "file",
+          "bytes": 9265,
+          "sha256": "01f4c62689ae2e79b5c15a330eaae290121c97ad9d5fc2668772b7105c520287"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/routes-manifest.json",
+          "kind": "file",
+          "bytes": 5530,
+          "sha256": "e01c5080b6f949a1f763bff6f2fae4e7d74fcf6951298cd08f6916cdf282b506"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/_error.js",
+          "kind": "file",
+          "bytes": 22336,
+          "sha256": "39b4ff4c0e897ce3f8de11b1b7ba8b933435041083a256de126499225a4605a3"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app-paths-manifest.json",
+          "kind": "file",
+          "bytes": 66,
+          "sha256": "8cc0d62c3129c4d394962d5dac97f9bc31c14d69e71228e2e5990571bc55435c"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/.well-known/jazz-jwks/route.js",
+          "kind": "file",
+          "bytes": 79431,
+          "sha256": "a648e5b87b8cacb932f3861b88b3144bc154746327d3d73fd06c2af336b92256"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/.well-known/jazz-jwks/route.js.nft.json",
+          "kind": "file",
+          "bytes": 17006,
+          "sha256": "44da6da7eae7bc7d4f6668c95df2beab2278cdfff9071e67e7e7499469868c24"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/.well-known/jazz-jwks/route_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 27690,
+          "sha256": "8ba9021080071245c34386cd57c2d31c31dbb3a34565d15a60810acb227791c9"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/.well-known/oauth-protected-resource/mcp/route.js",
+          "kind": "file",
+          "bytes": 8512,
+          "sha256": "065762251c392e7ce3b819e7c9b7639d93e8a05f2551698bd38bbbe00fa6c9cc"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/.well-known/oauth-protected-resource/mcp/route.js.nft.json",
+          "kind": "file",
+          "bytes": 17239,
+          "sha256": "e8ee03b50dd8a96303a878c9c00eebac034d4e2cec35f0cff402c119c31ca040"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/.well-known/oauth-protected-resource/mcp/route_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 9509,
+          "sha256": "143d30c7912d738c4ecb64f6847241276baeeb342cc00f92442b76d7a3ccc995"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/.well-known/oauth-protected-resource/route.js",
+          "kind": "file",
+          "bytes": 8489,
+          "sha256": "eec35f706e90c19a2eb8b77c61e68173a9acd9300d6f96aa2a930c5d09a37a63"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/.well-known/oauth-protected-resource/route.js.nft.json",
+          "kind": "file",
+          "bytes": 16945,
+          "sha256": "8e4807c8cd1c6e197e0897b2f0ebfb36d87c128ea7baced6e710491ff7681f52"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/.well-known/oauth-protected-resource/route_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 9378,
+          "sha256": "1d1bf08c0c2c3fac8c19ddac3433d8d88fd4ec058e05216be68eb8cf7ffdd9db"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/_not-found.html",
+          "kind": "file",
+          "bytes": 5848,
+          "sha256": "2a9c46f19859aac23638373f7f467fad53149852c003102323453e51cb7acf64"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/_not-found.meta",
+          "kind": "file",
+          "bytes": 207,
+          "sha256": "d2b0809d85d7e8932a2288cdcddbf8886f4c8c5a1a5c0a2414e63c3f5f5ef600"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/_not-found.rsc",
+          "kind": "file",
+          "bytes": 3189,
+          "sha256": "f85b619c8609ed3d690c5d53040794fd8c370f32d9f446e4280b9c01f217fc5b"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/_not-found/page.js",
+          "kind": "file",
+          "bytes": 16426,
+          "sha256": "3d6938b69b79b4b7bccbde22d2f24e788c5ce5507b395d1d0f65b8d1b5adc873"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/_not-found/page.js.nft.json",
+          "kind": "file",
+          "bytes": 16852,
+          "sha256": "b7f24e50e6d14e6593a56b1370e2b0cc70389bc188baf7f28ef31d6a257929e8"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/_not-found/page_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 9324,
+          "sha256": "0fa6112880cae00d1225a1e733b07de2ad3c2fbe0e091c10d721361eba51a5d0"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/auth/[...all]/route.js",
+          "kind": "file",
+          "bytes": 96306,
+          "sha256": "1bf1bf7b52345310479dc5f0fa17a350097ea79555f4f2c85073b8546abc06b6"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/auth/[...all]/route.js.nft.json",
+          "kind": "file",
+          "bytes": 17558,
+          "sha256": "3b041117dba22439104fee8c055d8a881fd0eebe6a2a3bb7121b8a97683d404c"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/auth/[...all]/route_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 27682,
+          "sha256": "4eb0cc219b4b51835b71486c6ca8d5de4b3dc75c2573df96f1cc56f9bcf9e77e"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/device/calls/[id]/claim/route.js",
+          "kind": "file",
+          "bytes": 8752,
+          "sha256": "7350cd1b4961f34b92ed347576e28824eb6d8de91473ffc32620d93141a94dfb"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/device/calls/[id]/claim/route.js.nft.json",
+          "kind": "file",
+          "bytes": 104925,
+          "sha256": "f860311b393cd89175174eb274592304f6aafef8cf213d9ef208cad0d17e3847"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/device/calls/[id]/claim/route_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 27702,
+          "sha256": "cd15f8c05f22715d29599e65cf175c48697dbba6187ede9f413c3812942aec7f"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/device/calls/[id]/complete/route.js",
+          "kind": "file",
+          "bytes": 9389,
+          "sha256": "a11b37fbacddae60758d8eabc6238350f2605a1357c71db4eace99f1d29e2d18"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/device/calls/[id]/complete/route.js.nft.json",
+          "kind": "file",
+          "bytes": 104925,
+          "sha256": "f860311b393cd89175174eb274592304f6aafef8cf213d9ef208cad0d17e3847"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/device/calls/[id]/complete/route_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 27708,
+          "sha256": "ebb64322f080f9e581aeb7b9331d8f22d14ad488f0f8e851146427f85986726f"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/device/heartbeat/route.js",
+          "kind": "file",
+          "bytes": 7999,
+          "sha256": "053fcc6e4e77fb56d5051a9eed8a79406236e6f305d0fc1b676cf831bd709808"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/device/heartbeat/route.js.nft.json",
+          "kind": "file",
+          "bytes": 101229,
+          "sha256": "fb9aa13548121e1cae91bd48c7d6815ed158e1c95dbe550d6e4724d07e59d962"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/device/heartbeat/route_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 27688,
+          "sha256": "0795ba2494ccde2f84a71c0dcc7b29cf2933ff71ea14b7d44078c80baab14eef"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/device/jazz-token/route.js",
+          "kind": "file",
+          "bytes": 9083,
+          "sha256": "f9704229d9561f5d0ca22a39c82b58e2ea9de7545f9db021fcd6774d165e0fee"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/device/jazz-token/route.js.nft.json",
+          "kind": "file",
+          "bytes": 101229,
+          "sha256": "fb9aa13548121e1cae91bd48c7d6815ed158e1c95dbe550d6e4724d07e59d962"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/device/jazz-token/route_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 27690,
+          "sha256": "7db2d9689ea33157378e8a64fdab67aa94a9053e4696ec1741440f9677745974"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/device/register/route.js",
+          "kind": "file",
+          "bytes": 11333,
+          "sha256": "c67e36190d8f1c4900777417051e66760aaeb981ef7b7e1b136e071a5c19ac3f"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/device/register/route.js.nft.json",
+          "kind": "file",
+          "bytes": 101229,
+          "sha256": "fb9aa13548121e1cae91bd48c7d6815ed158e1c95dbe550d6e4724d07e59d962"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/device/register/route_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 27686,
+          "sha256": "9ec41c798408859d176707a4ede39c3b6031f576eacb5d26573711cbf1f91c0d"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/devices/[id]/ping/route.js",
+          "kind": "file",
+          "bytes": 18499,
+          "sha256": "e5381ae08bef15ed6e1d38d813e13cb87967388857600fa3c89f859cde103476"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/devices/[id]/ping/route.js.nft.json",
+          "kind": "file",
+          "bytes": 103046,
+          "sha256": "3e04c217a428d0e6d125e78b7eabfe7c2bb636dced2faa554c165285f609390f"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/devices/[id]/ping/route_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 9348,
+          "sha256": "18c3ab850acde1cd534e6ec1240b662762ddb221a89eae38ad7773958fac7c92"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/devices/[id]/reconnect/route.js",
+          "kind": "file",
+          "bytes": 7504,
+          "sha256": "83e2f1f0875cabf0230a15af4834851415b86c97628c74efc0df440d39d7dcd1"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/devices/[id]/reconnect/route.js.nft.json",
+          "kind": "file",
+          "bytes": 103077,
+          "sha256": "fe0967ed9d64bad9fba9319b7bd9c43da78b3ab9cd50ea85b8991b22fb4997ee"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/devices/[id]/reconnect/route_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 27700,
+          "sha256": "315a6f54de2e49dfc2030dfe6745fa2def4e8d08c4b48bf4f249eeed15b9e7c7"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/devices/[id]/revoke/route.js",
+          "kind": "file",
+          "bytes": 7489,
+          "sha256": "e8ba2823a3ce7f0b3eb1b63ff795c7eb8fc24870e248a1f5071f6427cc826339"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/devices/[id]/revoke/route.js.nft.json",
+          "kind": "file",
+          "bytes": 103077,
+          "sha256": "fe0967ed9d64bad9fba9319b7bd9c43da78b3ab9cd50ea85b8991b22fb4997ee"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/devices/[id]/revoke/route_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 27694,
+          "sha256": "e67e2e433af499bf541a215ba517e3932928f0e0ddc9ea4253e8d64e18f001f4"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/jazz/dashboard-token/route.js",
+          "kind": "file",
+          "bytes": 12102,
+          "sha256": "42aa011d624d442d2cb3e183b0d344c8431fb2d5099a24836d9d1c366b264aaa"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/jazz/dashboard-token/route.js.nft.json",
+          "kind": "file",
+          "bytes": 17558,
+          "sha256": "3b041117dba22439104fee8c055d8a881fd0eebe6a2a3bb7121b8a97683d404c"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/jazz/dashboard-token/route_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 27696,
+          "sha256": "3bda25ecf96544e81f641183022c1f3d36a8b8d0e0ff1e0998545da6d6dc40af"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/mcp/route.js",
+          "kind": "file",
+          "bytes": 341128,
+          "sha256": "25c2dcef10e866870c6a857843f6fcad5335acdb97f1a9269b67f3ca521e4f12"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/mcp/route.js.nft.json",
+          "kind": "file",
+          "bytes": 99156,
+          "sha256": "035ce027869117ead7c537cb6c91d01759953a1eb7226e65e5fadadde5ca5697"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/api/mcp/route_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 9320,
+          "sha256": "a430608b0ad0029a7ffdae179524b7da16c31c1c8c5766dd8f81097d9aa02395"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/consent/page.js",
+          "kind": "file",
+          "bytes": 29274,
+          "sha256": "3f15dd364b1be6168da9d3cd0bf8d9de088d4718851a9e626ed95a2a2b440eea"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/consent/page.js.nft.json",
+          "kind": "file",
+          "bytes": 17154,
+          "sha256": "f4edef6c5cb187610bfc8627d15dd41448b36cef1945e5d5a1f8f8e050ba958f"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/consent/page_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 9422,
+          "sha256": "5d7150f13fc9e985110b0d3b8418b0d353b0591a3e4c251fd10613f1340d2d6e"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/dashboard/devices.html",
+          "kind": "file",
+          "bytes": 6367,
+          "sha256": "dccf7c3402872bc9a554ab4c238ca19a21d53f03fdd622213d7d9e8741426946"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/dashboard/devices.meta",
+          "kind": "file",
+          "bytes": 234,
+          "sha256": "207c624c1ffe901ed91905fde20b2617777638a2fc931d0835414abb8e959b2f"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/dashboard/devices.rsc",
+          "kind": "file",
+          "bytes": 3919,
+          "sha256": "3d98fc6fccbc830dc784b9a564deadfe3da7b638e554f07256dde174c1fa05c2"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/dashboard/devices/page.js",
+          "kind": "file",
+          "bytes": 22501,
+          "sha256": "77d156e0318bf847fd43aebb1615690629e22483a37b2d0e53479e9e46ce3e2f"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/dashboard/devices/page.js.nft.json",
+          "kind": "file",
+          "bytes": 91538,
+          "sha256": "692b8627f00c3fd535aff64c5d879801c6be22fd44af2826dbd1f0f1479b92f1"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/dashboard/devices/page_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 9498,
+          "sha256": "22eb2646721b11447c660d5ff75584069959f6b607e4805057b6a144082214e5"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device.html",
+          "kind": "file",
+          "bytes": 5566,
+          "sha256": "504ad5a685ca980fda4652f4daf40436eb5d5924c8c016c87ec7e8b7bbd13b94"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device.meta",
+          "kind": "file",
+          "bytes": 178,
+          "sha256": "acd459e5f079f6964245528b522aa1d23302a489e0279576f4c51c442ca55c93"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device.rsc",
+          "kind": "file",
+          "bytes": 3439,
+          "sha256": "c1c937778b324fc5ef30ffbb55f2fd8c225cf35c5520a3b40aefd29f4b0678cb"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/approve.html",
+          "kind": "file",
+          "bytes": 6059,
+          "sha256": "5cc8ea3e77f4bcf987a5134aa257082abb9a7c3a8443f7beeab6479dd6862782"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/approve.meta",
+          "kind": "file",
+          "bytes": 222,
+          "sha256": "dd06352576aaa82865a4dad171a0454d4d4bfb4a32b0af22abb7febaaaa7bba3"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/approve.rsc",
+          "kind": "file",
+          "bytes": 3859,
+          "sha256": "1e65df2b6791b25a846fd81a398756867afc13950c7ed259ed428841892cba30"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/approve/page.js",
+          "kind": "file",
+          "bytes": 19995,
+          "sha256": "1349ae03fbaf7d5d9a135718ee42022c673e9d1836cee26c323cdcb870a9e100"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/approve/page.js.nft.json",
+          "kind": "file",
+          "bytes": 17174,
+          "sha256": "8c48bce8e1014109f01a4733d117ba8b23d942c1e4afa7ccff4a7125143a372d"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/approve/page_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 9638,
+          "sha256": "25893b7fa7751c7e962e0ad65d37d2ddf45a129d9cbbe37f4599ca1ea58a1a88"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/denied.html",
+          "kind": "file",
+          "bytes": 5895,
+          "sha256": "68f29427a92c01994b4532309cf7580cc4c09d9d3b384a8a58a032f0ef2bda54"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/denied.meta",
+          "kind": "file",
+          "bytes": 219,
+          "sha256": "4a5715551c440d34d9897891d0769606e7fdd1765cc6161e1dea9c52aeca029c"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/denied.rsc",
+          "kind": "file",
+          "bytes": 3830,
+          "sha256": "cd4f2f16b7adc49f1bbdadb54ae783059808bbf7fbdcb80408609f3bffa55769"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/denied/page.js",
+          "kind": "file",
+          "bytes": 17109,
+          "sha256": "d4eb6675419f687163553d06659ee996b8c92dda1fc5cf6d03dc377ae37a10d1"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/denied/page.js.nft.json",
+          "kind": "file",
+          "bytes": 17215,
+          "sha256": "8097175b9b03293234746308573db9ca78a5e4c7fb06d8a22ab73a25fd1ced06"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/denied/page_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 9525,
+          "sha256": "216d8c4282e2957004ddd1d1f8b00810617689755ba48497a6b009c8c8142f56"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/page.js",
+          "kind": "file",
+          "bytes": 19554,
+          "sha256": "8dc7761ea6c513cd334e184cbc601dcf7bd118ed88d762ffdd18c60be2f1fa3f"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/page.js.nft.json",
+          "kind": "file",
+          "bytes": 16874,
+          "sha256": "00fbdf19cf5abdedaa823b7342cfbef91f85845e8058a9bfe6cf3a961a06046a"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/page_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 9419,
+          "sha256": "754f6a83aaae42df1bed817ae01810d48e3c5032d4cc4cb2c001f560c3ae0e0a"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/success.html",
+          "kind": "file",
+          "bytes": 6084,
+          "sha256": "4ea64fc660f40e4e797e97ade81f547b3313ab79c59f1cf3c5230c0529019665"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/success.meta",
+          "kind": "file",
+          "bytes": 222,
+          "sha256": "104329d63b8a5faf79f5a27b97160b9ad962e52519df9a5742618f4779d9050b"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/success.rsc",
+          "kind": "file",
+          "bytes": 3934,
+          "sha256": "8130d500ddea1c3fb59476846c7cd982bb4253dd34d030839837619c9783262a"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/success/page.js",
+          "kind": "file",
+          "bytes": 17211,
+          "sha256": "ed8e10918aa32fedda54ef8ce362ac0bffdd6e56c47beaa6d79073260cc4d805"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/success/page.js.nft.json",
+          "kind": "file",
+          "bytes": 17215,
+          "sha256": "8097175b9b03293234746308573db9ca78a5e4c7fb06d8a22ab73a25fd1ced06"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/device/success/page_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 9527,
+          "sha256": "7b29deb76b43b6336d83c491887dfb4b347ccb2b7c7aeda7b3b903cb557d9b6a"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/index.html",
+          "kind": "file",
+          "bytes": 5834,
+          "sha256": "e2755207e8a7fe4ae1f78022d6d4d289f6bb53253aece9c09a299b2f57b1ddae"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/index.meta",
+          "kind": "file",
+          "bytes": 145,
+          "sha256": "180ed960ec26551a486c0ef439325ec2b5de832b94cf6a63f27c1f195d4d82e0"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/index.rsc",
+          "kind": "file",
+          "bytes": 3507,
+          "sha256": "92b8b73321833263d66d3011296ed690dc98cef5aedbe4259d113f7d3e974bc1"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/page.js",
+          "kind": "file",
+          "bytes": 244861,
+          "sha256": "3d081177099cd1320a584caee93e8a7037ace24f7365feade9755691d5611678"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/page.js.nft.json",
+          "kind": "file",
+          "bytes": 16609,
+          "sha256": "f80e6bb2fab42d0698f991a95f680e1a0531f177d70256bb156feac721fbf648"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/page_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 27559,
+          "sha256": "fdfd78f5e66f47b83661461992fe96e9c8c918c2ea5db68b24cc7868b31d0634"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/sign-in.html",
+          "kind": "file",
+          "bytes": 5559,
+          "sha256": "b91c52cc2d8c385d3367e1b2ddee61f8da597da8dc9334fe41c3439099fc6617"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/sign-in.meta",
+          "kind": "file",
+          "bytes": 181,
+          "sha256": "8ce00f8fac697181e7a7a2f934297e5cec7921b27786728c90dc24506582efcc"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/sign-in.rsc",
+          "kind": "file",
+          "bytes": 3443,
+          "sha256": "f7682929b807eca3bb7476099e4a892fa3633e167077cb4c4723b5b0d0023cc1"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/sign-in/page.js",
+          "kind": "file",
+          "bytes": 19847,
+          "sha256": "b9d8826689fa2116403d37992301a93fabf0c4db5e76a0fdd366dfa3cee195ea"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/sign-in/page.js.nft.json",
+          "kind": "file",
+          "bytes": 16874,
+          "sha256": "00fbdf19cf5abdedaa823b7342cfbef91f85845e8058a9bfe6cf3a961a06046a"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/app/sign-in/page_client-reference-manifest.js",
+          "kind": "file",
+          "bytes": 9422,
+          "sha256": "63ce44ca4779e16fb6e6dc351eccc8945835782fe118d16a4e950dd86b8e1290"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/chunks/175.js",
+          "kind": "file",
+          "bytes": 156,
+          "sha256": "5a3dbcd22cffa446db44b20a1a04d7eb6fa2e94ab3fd740c2db22eb05f24e6d0"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/chunks/469.js",
+          "kind": "file",
+          "bytes": 22006,
+          "sha256": "5b5cc2e683164eabad40cb186e041f04bc4c70d657529687da3bf404478d94c7"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/chunks/571.js",
+          "kind": "file",
+          "bytes": 34049,
+          "sha256": "ceeb94fddf856fc1a4e87ca6c05c0ac1b5baca88f3590d1028b9e5fb6a15891a"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/chunks/607.js",
+          "kind": "file",
+          "bytes": 5362,
+          "sha256": "724ecb5c3676bdba03fb6ab0ab43e81b580fda73217e3adbbfb6731e3b9289e0"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/chunks/735.js",
+          "kind": "file",
+          "bytes": 138545,
+          "sha256": "9ba0c6fd6a63fba8c5d2e6e9c238b0f46eb214dbde647f135d33aeccb309bf56"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/chunks/752.js",
+          "kind": "file",
+          "bytes": 2808,
+          "sha256": "e8f1ec3795800886acbd05631da2fc1a4a0994a562c891df2fa23f899815e809"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/chunks/794.js",
+          "kind": "file",
+          "bytes": 8807,
+          "sha256": "8f562f9d3871b771669da270ab3392e439d9f1313e9fd6fc42e139fa77908f39"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/chunks/811.js",
+          "kind": "file",
+          "bytes": 15772,
+          "sha256": "4b5599cb04f6dd053034c2f1600f4a352214c34582ff23a3a58ce712eb3552a0"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/chunks/870.js",
+          "kind": "file",
+          "bytes": 230671,
+          "sha256": "2530ca76e2468964adc1f2d8e4297b1e1ccb293e449198a3183fbe43cc4d01e4"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/chunks/886.js",
+          "kind": "file",
+          "bytes": 2902,
+          "sha256": "e3fc97ceef347373042f239d94e66222fa585fe94ad8f52ade820a64f6035ab4"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/chunks/888.js",
+          "kind": "file",
+          "bytes": 505291,
+          "sha256": "1eac350fad6b1d3f475c078b26ce23f990d31e2225ad5ce608d92d6235a2bfea"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/chunks/903.js",
+          "kind": "file",
+          "bytes": 82269,
+          "sha256": "4dc0aa52aeba8f75c22f15699f79a11af0ab6385cd67ece8ddf5062b114a26ad"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/chunks/908.js",
+          "kind": "file",
+          "bytes": 456272,
+          "sha256": "c38b8faa89b6fa0c0c8ebf83aabf2e24878b84ce72537f86b940da2dc8d0d0d1"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/chunks/914.js",
+          "kind": "file",
+          "bytes": 2566,
+          "sha256": "f454155a5ee4aaaa518c2f2fe068640aebb0184139b728d5f8a11144981b237b"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/chunks/917.js",
+          "kind": "file",
+          "bytes": 13353,
+          "sha256": "3c945d850bbe5a07f5d7528b29b57608b830b53d0afa2f9d6dd8e5af5f8c2e9f"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/chunks/954.js",
+          "kind": "file",
+          "bytes": 2901,
+          "sha256": "84b04f59a0d55afe0d0bb0375e087e3631c1f8a7ea3b58725695305d0b1a7d88"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/functions-config-manifest.json",
+          "kind": "file",
+          "bytes": 37,
+          "sha256": "e7d9c7de4b1a0e8ed521c8ca071261fb4a0de053afc0040538c0a50e5e4c1ee4"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/interception-route-rewrite-manifest.js",
+          "kind": "file",
+          "bytes": 48,
+          "sha256": "fc5133e40acf09e6517b073ddd7b5c0c218d09938848902210f2cc13f08e1c81"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/middleware-build-manifest.js",
+          "kind": "file",
+          "bytes": 786,
+          "sha256": "c5bdb61bfaa2a65788a21b88d23ac69961132aaf8bdd3c20bb6199b8d1e9784a"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/middleware-manifest.json",
+          "kind": "file",
+          "bytes": 83,
+          "sha256": "0a8520bc7e076f7ae717c2d62713990c83e8a3d74626f327a3844bc0504e210c"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/middleware-react-loadable-manifest.js",
+          "kind": "file",
+          "bytes": 35,
+          "sha256": "f08020a220d120faf586bb941281cbfdf28793a9d1f87d2e6035faf0a6155d78"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/next-font-manifest.js",
+          "kind": "file",
+          "bytes": 113,
+          "sha256": "a464413ee75e1016f3e46f43acd014660ae511a62f634896d1cd75eed7a6e47d"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/next-font-manifest.json",
+          "kind": "file",
+          "bytes": 77,
+          "sha256": "926e772d34a53f2a4d9b16071dd6ea77b051b2b7acc49d9165723debe3fbbe0f"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/pages-manifest.json",
+          "kind": "file",
+          "bytes": 100,
+          "sha256": "f42d20f0436b68c912daf5e35f6bf3c465fc626b3b07dee5d298bb3d3a636212"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/pages/404.html",
+          "kind": "file",
+          "bytes": 5848,
+          "sha256": "2a9c46f19859aac23638373f7f467fad53149852c003102323453e51cb7acf64"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/pages/500.html",
+          "kind": "file",
+          "bytes": 2007,
+          "sha256": "fcfc7811dfb287da43163862d779deaae032314ea88c35b14c8b53f1fa566c9b"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/pages/_app.js",
+          "kind": "file",
+          "bytes": 1788,
+          "sha256": "ed1f32dc5a76774514cb17c2bf772f481bc62435555fa9a2ae9c393029984385"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/pages/_app.js.nft.json",
+          "kind": "file",
+          "bytes": 957,
+          "sha256": "bfc12cca55a22a9e26968a660f4c9ba9c4435b16ffd6deb5106f63fd7d5e39d8"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/pages/_document.js",
+          "kind": "file",
+          "bytes": 2415,
+          "sha256": "19baeada58374eff7bba4392178a769b1dbc220ac4f925fa31a3d2a0d095a441"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/pages/_document.js.nft.json",
+          "kind": "file",
+          "bytes": 16813,
+          "sha256": "b85a0073ba703e7a0f40c6422f2dbbe97684b4a3cffb61d1697093cb9014ef6a"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/pages/_error.js",
+          "kind": "file",
+          "bytes": 18263,
+          "sha256": "9e2af52996456dc89c4f91eb5fd9f293821c16267d035ac7f5cccdbfd51f0150"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/pages/_error.js.nft.json",
+          "kind": "file",
+          "bytes": 16805,
+          "sha256": "f54fdc0b42522aec270942ebdc416121108e0159694ae4c31663d0bd099e8025"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/server-reference-manifest.js",
+          "kind": "file",
+          "bytes": 140,
+          "sha256": "e3e3569b463052d9dfbdeeefc359a500ce7bee41ba4233ec9839decb09a8716a"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/server-reference-manifest.json",
+          "kind": "file",
+          "bytes": 97,
+          "sha256": "59146a7b9dd8560c1dacdb16737a3ff97f55d57ef769fa9096e6a2669c6521bd"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-auth+cimd@1.7.1_@better-auth+core@1.7.1_@better-auth+utils@0.4.2_@better-fetch+_c99fdd3d9ae07f8941041e77bb32a8c6.js",
+          "kind": "file",
+          "bytes": 101372,
+          "sha256": "0690a1c25c309a2a52b1a37554fb470da5eb2ce3f29ad4f75f2e45bbdf5574c3"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-auth+core@1.7.1_@better-auth+utils@0.4.2_@better-fetch+fetch@1.3.1_@opentelemet_525910551952bb8106d36f107c5dc36a.js",
+          "kind": "file",
+          "bytes": 1131584,
+          "sha256": "4b7cfa86d437241fec5b8e4fd70562d5e40376c06016efa68cc19b3d4150a695"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-auth+kysely-adapter@1.7.1_@better-auth+core@1.7.1_@better-auth+utils@0.4.2_@bet_b5087bb1270e5e10214f9ca476b86561.js",
+          "kind": "file",
+          "bytes": 133232,
+          "sha256": "3107bb667acaa2bb619d32b087746d75a31e00f59406ba8af8b26b83ae3d79d6"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-auth+mcp@1.7.1_@better-auth+core@1.7.1_@better-auth+utils@0.4.2_@better-fetch+f_88c67e0e00d4087dc9e8d337925d496d.js",
+          "kind": "file",
+          "bytes": 33931,
+          "sha256": "cc514d303cf01959678e6ee457cf74d8dec0fd8eb38671b33f5f8fdf2a6d61d0"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-auth+memory-adapter@1.7.1_@better-auth+core@1.7.1_@better-auth+utils@0.4.2_@bet_2fa0f2d35c36e13220c5ad74bc0c9df6.js",
+          "kind": "file",
+          "bytes": 44910,
+          "sha256": "9228e748b2eda68e5841bc1ab6a18a4c69c99350a84effec6bdb770e70db180d"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-auth+oauth-provider@1.7.1_@better-auth+core@1.7.1_@better-auth+utils@0.4.2_@bet_69d4e9357d4f32cfc3037f0b380a2106.js",
+          "kind": "file",
+          "bytes": 1162965,
+          "sha256": "336a13723ad95e031db9835fa597d50ccf0e93522073446562497d7bb939c826"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-auth+telemetry@1.7.1_@better-auth+core@1.7.1_@better-auth+utils@0.4.2_@better-f_796c62f22c89e5f21b12f476bf045076.js",
+          "kind": "file",
+          "bytes": 54242,
+          "sha256": "25683a7f8ddc48efe72cba607af20811f39c703c7f2d54d5af86aa0f3cd1f5bb"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-auth+utils@0.4.2.js",
+          "kind": "file",
+          "bytes": 39317,
+          "sha256": "52ab603031f474e36f62d8743a166bdba0bbfdbee45f2af2daa41355e5b29c80"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-auth+utils@0.5.0.js",
+          "kind": "file",
+          "bytes": 2970,
+          "sha256": "8606e678d01abe56b2b37fd18585a22f00044a1b0efdd6aea2945202d38a125c"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@better-fetch+fetch@1.3.1.js",
+          "kind": "file",
+          "bytes": 68307,
+          "sha256": "0594bc15967289de74dc662f54e2572aade92fffabbd5d113e5b2e81ae156074"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@noble+ciphers@2.4.0.js",
+          "kind": "file",
+          "bytes": 228431,
+          "sha256": "66d657bd49e2019b89e0de117d260577c7c350998da79f76c35ae7c124358cad"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@noble+hashes@2.4.0.js",
+          "kind": "file",
+          "bytes": 198293,
+          "sha256": "65d57afb604c8e52d8cd12e94ae01142350a34d695fc7c5469d086c18bae4ed0"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@opentelemetry+api@1.9.1.js",
+          "kind": "file",
+          "bytes": 767368,
+          "sha256": "597866bc02b3272f9f39465ff94b69b19988a48f9c1dc9753cbe64fa72d20583"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@opentelemetry+semantic-conventions@1.43.0.js",
+          "kind": "file",
+          "bytes": 206304,
+          "sha256": "583a631072ca67d9cd8ea19c1903547ab675186a0a0f985184030d781ea78fff"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/@swc+helpers@0.5.15.js",
+          "kind": "file",
+          "bytes": 13401,
+          "sha256": "5f2d857e0fd992fdf27e9572985091a1a79d7e21bcc96723ca882ae94a548717"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/better-auth@1.7.1_@opentelemetry+api@1.9.1_next@15.5.24_@babel+core@7.29.7_@opentelemet_38324768f46511f37ae14b7aad884cb9.js",
+          "kind": "file",
+          "bytes": 1661166,
+          "sha256": "01d402164848d2c91e3eac7e73b96eeebfd2c1c3098a3f528d26af2f4f1beeb1"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/better-call@1.4.0_zod@4.5.4.js",
+          "kind": "file",
+          "bytes": 133511,
+          "sha256": "34f1cdc8bb977dd9445879b83e08e8bc1a798c330d91248d98940b01cf093f76"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/defu@6.1.7.js",
+          "kind": "file",
+          "bytes": 7652,
+          "sha256": "e0cd7e877668a56b939c9fdba450931779a143b32ca64f7e6fa91382b683b38b"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/jose@6.2.10.js",
+          "kind": "file",
+          "bytes": 418241,
+          "sha256": "cf7d7127cc7a157455cadcd979333b8adf4fe0e93be889a7056615f41ad91c8a"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/kysely@0.29.5.js",
+          "kind": "file",
+          "bytes": 2323548,
+          "sha256": "14af84f8b19a1d9ee85d5939017726e2fe993a89edc2f3d7ca1d5659c74803ec"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/next@15.5.24_@babel+core@7.29.7_@opentelemetry+api@1.9.1_@types+node@24.13.3_react-dom@19.2.8_react@19.2.8__react@19.2.8.js",
+          "kind": "file",
+          "bytes": 3690262,
+          "sha256": "e21249713e28828e023da9a215daf019a69f599b20ef5444cc92c276d5b49080"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/rou3@0.9.2.js",
+          "kind": "file",
+          "bytes": 95749,
+          "sha256": "1f6307a47b30f74852fe6139a15ad1809622bd74c71e195dd54c946e61f56280"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/vendor-chunks/zod@4.5.4.js",
+          "kind": "file",
+          "bytes": 1040773,
+          "sha256": "41253f4a460c0cd694df5a62e0ac2eed37c0a5f614dc285a527ed40e74e4784f"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/server/webpack-runtime.js",
+          "kind": "file",
+          "bytes": 15377,
+          "sha256": "cd4a02aa022f29c260542bc372278bb42272aeb0835c61d1d292ac2570886b56"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/6PqzqeQqzxHHuIGP663nb/_buildManifest.js",
+          "kind": "file",
+          "bytes": 1201,
+          "sha256": "005d0a1110c4f6a69ecd5a6026634eac1c654ddad1b680c80ea857416ce3051c"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/6PqzqeQqzxHHuIGP663nb/_ssgManifest.js",
+          "kind": "file",
+          "bytes": 80,
+          "sha256": "678f6ce2cb80b1fe72fc67e7412be6e2ab6ada083111b64f7c40d35e3cba5e00"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/153.f87ba8ae9a912c72.js",
+          "kind": "file",
+          "bytes": 3829,
+          "sha256": "a65e5a495a8a4f51fac93d75978f3ab084b984aa9ce9e35e8578e7b7458c5a3d"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/204-2b14a0a778ca4ff6.js",
+          "kind": "file",
+          "bytes": 34003,
+          "sha256": "c58985ba6ef999b5f193b7d5070ce1b5131abc3ac1e22fb88376602fab05fc6a"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/410.a7beef3498c20e9e.js",
+          "kind": "file",
+          "bytes": 2546,
+          "sha256": "8c1b8d05ef8e96ca9951e42a7e8701feafdf3db81ed9b2bdc23f16b245f5c45c"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/479.a3505da2800e5c85.js",
+          "kind": "file",
+          "bytes": 34691,
+          "sha256": "79d0c765ebbca91e9a8ee6188af3fc65e10032c88fa5e5d00bc1a379add6b347"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/49.4177625de4d5282f.js",
+          "kind": "file",
+          "bytes": 5595,
+          "sha256": "4eca3fcb7848faa7786a3ec6c7f1f1d7b30e361d4896465322e1e7eed7f81365"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/614-b496d87292c21a8f.js",
+          "kind": "file",
+          "bytes": 165167,
+          "sha256": "c93ccf0fde08fde053ecb9858abf71c0103ecc0361a38e8fa7dfa7628f8729a7"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/660-0331c7369e4507f5.js",
+          "kind": "file",
+          "bytes": 173640,
+          "sha256": "79af725a1c7fd8b7c0fdd447146190d9a589e8f3ef4fefc281230a8d373d1ea4"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/680.6e0292e55ae4ce2f.js",
+          "kind": "file",
+          "bytes": 33989,
+          "sha256": "7f0eab23b51fccf759bd1dfa0576d035a6a32722679f2788d05df9ec0e15c9a0"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/742.50060827e63169d7.js",
+          "kind": "file",
+          "bytes": 19736,
+          "sha256": "6f9353b2c0768b58bfa090ec2eeeb7ccadb722cab771bc0e71d74e67493afd40"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/780.800af2b8bb02d22b.js",
+          "kind": "file",
+          "bytes": 32297,
+          "sha256": "7782cc78a3bf813aca4e9153f153a92e71653112aec8e7cdba561b274db17495"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/842.7f502e8efb2f80e8.js",
+          "kind": "file",
+          "bytes": 10893,
+          "sha256": "70d3211acd2b6dc05e947fd955627a72098505caa52da7ef3d471e05daa8eec4"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/875.be44153699a3a834.js",
+          "kind": "file",
+          "bytes": 4650,
+          "sha256": "33ec0e618a9e0d120d977a55f4ac09874f1ae439713028dcfc0ea39e2c106c01"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/903.b92f18bd4ed874f3.js",
+          "kind": "file",
+          "bytes": 1607,
+          "sha256": "151bf46a9d56addee98c1ac38e9e7784dba29c97b7456d13c218b5e4e35e08c2"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/_error.js",
+          "kind": "file",
+          "bytes": 6869,
+          "sha256": "ce66e83e9a2e5ee3dd99e6b6549b83814d7eda8c04adc681b424d4d33d185d75"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app-pages-internals.js",
+          "kind": "file",
+          "bytes": 288374,
+          "sha256": "660ccd1acfefce67a298747787e5df726a48d1b30ba744dddc813c173b7b5abb"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/.well-known/jazz-jwks/route-492d6c84d67a8d7d.js",
+          "kind": "file",
+          "bytes": 197,
+          "sha256": "0850063d0dad915eb69af3784737adf420a6af3e714b8ee9664186976b8b2950"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/.well-known/oauth-protected-resource/mcp/route-492d6c84d67a8d7d.js",
+          "kind": "file",
+          "bytes": 197,
+          "sha256": "0850063d0dad915eb69af3784737adf420a6af3e714b8ee9664186976b8b2950"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/.well-known/oauth-protected-resource/route-492d6c84d67a8d7d.js",
+          "kind": "file",
+          "bytes": 197,
+          "sha256": "0850063d0dad915eb69af3784737adf420a6af3e714b8ee9664186976b8b2950"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/_not-found/page-8d5907fb8e771d9a.js",
+          "kind": "file",
+          "bytes": 2670,
+          "sha256": "4846b8178a25fb8b29f3f0e152e0bd513ddb332807f07aaebb020d088632b9b9"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/auth/[...all]/route-492d6c84d67a8d7d.js",
+          "kind": "file",
+          "bytes": 197,
+          "sha256": "0850063d0dad915eb69af3784737adf420a6af3e714b8ee9664186976b8b2950"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/device/calls/[id]/claim/route-492d6c84d67a8d7d.js",
+          "kind": "file",
+          "bytes": 197,
+          "sha256": "0850063d0dad915eb69af3784737adf420a6af3e714b8ee9664186976b8b2950"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/device/calls/[id]/complete/route-492d6c84d67a8d7d.js",
+          "kind": "file",
+          "bytes": 197,
+          "sha256": "0850063d0dad915eb69af3784737adf420a6af3e714b8ee9664186976b8b2950"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/device/heartbeat/route-492d6c84d67a8d7d.js",
+          "kind": "file",
+          "bytes": 197,
+          "sha256": "0850063d0dad915eb69af3784737adf420a6af3e714b8ee9664186976b8b2950"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/device/jazz-token/route-492d6c84d67a8d7d.js",
+          "kind": "file",
+          "bytes": 197,
+          "sha256": "0850063d0dad915eb69af3784737adf420a6af3e714b8ee9664186976b8b2950"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/device/register/route-492d6c84d67a8d7d.js",
+          "kind": "file",
+          "bytes": 197,
+          "sha256": "0850063d0dad915eb69af3784737adf420a6af3e714b8ee9664186976b8b2950"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/devices/[id]/ping/route-492d6c84d67a8d7d.js",
+          "kind": "file",
+          "bytes": 197,
+          "sha256": "0850063d0dad915eb69af3784737adf420a6af3e714b8ee9664186976b8b2950"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/devices/[id]/reconnect/route-492d6c84d67a8d7d.js",
+          "kind": "file",
+          "bytes": 197,
+          "sha256": "0850063d0dad915eb69af3784737adf420a6af3e714b8ee9664186976b8b2950"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/devices/[id]/revoke/route-492d6c84d67a8d7d.js",
+          "kind": "file",
+          "bytes": 197,
+          "sha256": "0850063d0dad915eb69af3784737adf420a6af3e714b8ee9664186976b8b2950"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/jazz/dashboard-token/route-492d6c84d67a8d7d.js",
+          "kind": "file",
+          "bytes": 197,
+          "sha256": "0850063d0dad915eb69af3784737adf420a6af3e714b8ee9664186976b8b2950"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/api/mcp/route-492d6c84d67a8d7d.js",
+          "kind": "file",
+          "bytes": 197,
+          "sha256": "0850063d0dad915eb69af3784737adf420a6af3e714b8ee9664186976b8b2950"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/consent/page-75a7f56bbf1105bb.js",
+          "kind": "file",
+          "bytes": 1465,
+          "sha256": "3d6eef6018bfd81c77a3c0cf63f6ea04141fac49bb9434916b821e546c23b270"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/dashboard/devices/page-7fdc57b6f68b2056.js",
+          "kind": "file",
+          "bytes": 5017,
+          "sha256": "32b25bd29efcaa5255aa6309cf0d9eee85c840d789a3ab931d893160feacb976"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/device/approve/page-3e996fc1b21115bc.js",
+          "kind": "file",
+          "bytes": 3391,
+          "sha256": "b033f36c67079fa7cd1c6bdb1ba740a3b2a3bf9ed4e8fa2a4636ad23764f75fb"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/device/denied/page-492d6c84d67a8d7d.js",
+          "kind": "file",
+          "bytes": 197,
+          "sha256": "0850063d0dad915eb69af3784737adf420a6af3e714b8ee9664186976b8b2950"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/device/page-63aba47a56686daa.js",
+          "kind": "file",
+          "bytes": 2490,
+          "sha256": "7ef5d8598dfd4226fcd7ae8aad3a7a6ecd4262961141dd9a9eb841e0b854fde7"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/device/success/page-492d6c84d67a8d7d.js",
+          "kind": "file",
+          "bytes": 197,
+          "sha256": "0850063d0dad915eb69af3784737adf420a6af3e714b8ee9664186976b8b2950"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/layout-492d6c84d67a8d7d.js",
+          "kind": "file",
+          "bytes": 197,
+          "sha256": "0850063d0dad915eb69af3784737adf420a6af3e714b8ee9664186976b8b2950"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/layout.js",
+          "kind": "file",
+          "bytes": 2378,
+          "sha256": "e4ba36dce6c2fbad6614af86523462175ef9c1a84f2ddccdd7e816bac1dbceee"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/page-492d6c84d67a8d7d.js",
+          "kind": "file",
+          "bytes": 197,
+          "sha256": "0850063d0dad915eb69af3784737adf420a6af3e714b8ee9664186976b8b2950"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/page.js",
+          "kind": "file",
+          "bytes": 2376,
+          "sha256": "262db09dae8d9592e9219076e0c1c2ee29a070aaaf267b202451e331a34cf775"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/app/sign-in/page-ca6256f190d4748a.js",
+          "kind": "file",
+          "bytes": 2731,
+          "sha256": "d77753cf9142e68a8d7f8b0b6f1918cbc506551ee29212558c40efc700a1a6b9"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/bb87b69c-f9ff7a98d746f96d.js",
+          "kind": "file",
+          "bytes": 173018,
+          "sha256": "a08a5e31ef50654989ec022ddb76c21b3bf7cc900105bd937614961ed7c70cb7"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/framework-d6fe23f2037e22ad.js",
+          "kind": "file",
+          "bytes": 189758,
+          "sha256": "5711bb9134504757dd3cdc79f68e9f26e2c80c35074b84461620be6ebf7532e8"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/main-app-00d6d3f5461fa6fb.js",
+          "kind": "file",
+          "bytes": 558,
+          "sha256": "7c69ed2fd9ed99e6385fb8941b5ed8310f6a013e7a0facde857ec686bf919108"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/main-de564d17a2ab60b5.js",
+          "kind": "file",
+          "bytes": 128281,
+          "sha256": "0ad9a89af558b7e270c74fe4fa5e1455afff718abe18dfe0c0a0a7915adac0dd"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/main.js",
+          "kind": "file",
+          "bytes": 7302015,
+          "sha256": "754bb222946c368b1e2a0c4511d8f4fac92b8ab14d053be2f6b1a03ec66059bb"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/pages/_app-361ae2bb8d5b193c.js",
+          "kind": "file",
+          "bytes": 236,
+          "sha256": "cf19e60dc945166e89642e5c93c68657b23a086eb8321279520595b218799266"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/pages/_app.js",
+          "kind": "file",
+          "bytes": 4813,
+          "sha256": "49697ca14d88e61df2d124443ea94fb4da14bc0c2fc395003ae1fca8aa516114"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/pages/_error-26f24b8ac5e9d22f.js",
+          "kind": "file",
+          "bytes": 218,
+          "sha256": "7aa21735d0bd9e352209b9c3fda2c0014cff864b0c1d4080a1fb71710194a52e"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/pages/_error.js",
+          "kind": "file",
+          "bytes": 4649,
+          "sha256": "55eae93c8004067eca5a93cfb1d24dd244f05e5b85ffa0981b80915faf0adad2"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/polyfills-42372ed130431b0a.js",
+          "kind": "file",
+          "bytes": 112594,
+          "sha256": "0973c1d64c88adc8e3c950410cb58b288f72118d5965b78049438deb8f2f9683"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/react-refresh.js",
+          "kind": "file",
+          "bytes": 84663,
+          "sha256": "f5fe02976e22d95f78aabdd7ec9d0c4b37f3a99d155c37a9ebf502b3079edcac"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/webpack-ddb46958213527de.js",
+          "kind": "file",
+          "bytes": 3964,
+          "sha256": "edba590fa5871421fbfce98a90034b371d504d4e64c044554b7fc619e2e3fe2b"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/chunks/webpack.js",
+          "kind": "file",
+          "bytes": 139627,
+          "sha256": "d343d345e7c85cf9fe5575bf0c12d0728dfe83ee58eec4d2f83276759deb929b"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/development/_buildManifest.js",
+          "kind": "file",
+          "bytes": 312,
+          "sha256": "89cc0197386fd0db029bd3d6820d6e373215c46fbda5f00a19c3c99b7b6b97f4"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/development/_ssgManifest.js",
+          "kind": "file",
+          "bytes": 76,
+          "sha256": "653f3e53e89b4f8548ff86c19e92bb3c6b84b6be7485a320b1e00893ed877479"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/media/db.f47c1bde.js",
+          "kind": "file",
+          "bytes": 17957,
+          "sha256": "82804d3c527a5cd0fe445bdee84f01bf1f95d06229fbec1f1bbab841b0453135"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/media/jazz-broker-worker.b87bad5c.js",
+          "kind": "file",
+          "bytes": 22150,
+          "sha256": "6c1574061d4cc313c54cd338cbc6b6f3d9c80d56823a6cb7f15fbef4164823bf"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/media/jazz_wasm_bg.7ad04d02.wasm",
+          "kind": "file",
+          "bytes": 9799438,
+          "sha256": "1e6d10f8080cc42b46e3179b7f038eef5d0fc292cafedde9f9ac177768fdb25f"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/webpack/28ab48f7cb8acca3.webpack.hot-update.json",
+          "kind": "file",
+          "bytes": 31,
+          "sha256": "eea3c145b3456fcdf200b061ba939627d594c39727e9faa523ed958ed05b4705"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/webpack/8ef501bb8332a037.webpack.hot-update.json",
+          "kind": "file",
+          "bytes": 31,
+          "sha256": "eea3c145b3456fcdf200b061ba939627d594c39727e9faa523ed958ed05b4705"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/webpack/webpack.28ab48f7cb8acca3.hot-update.js",
+          "kind": "file",
+          "bytes": 1157,
+          "sha256": "e8bee62ba25dbd767e7cbad330d3a831a14fc794d727a0f9fb6e8809c2d6e081"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/static/webpack/webpack.8ef501bb8332a037.hot-update.js",
+          "kind": "file",
+          "bytes": 4770,
+          "sha256": "debc84a34ab4950c41da469ebed936961e748e6a16cf30ae45aacaa4242124ee"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/trace",
+          "kind": "file",
+          "bytes": 938501,
+          "sha256": "4f8b8194f9862b21e175c76ac9666eba5ccd97ac12e428a92e0e442741cccc3b"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/.well-known/jazz-jwks/route.ts",
+          "kind": "file",
+          "bytes": 8794,
+          "sha256": "ad133a237fb7ecae45dd9cb50bb6958a00a078696cf852e92a26eae7955a1717"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/.well-known/oauth-protected-resource/mcp/route.ts",
+          "kind": "file",
+          "bytes": 8857,
+          "sha256": "baa51a2386524c82a9948774b81131da84633b8d9324700d7a8f34aac5cd734d"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/.well-known/oauth-protected-resource/route.ts",
+          "kind": "file",
+          "bytes": 8839,
+          "sha256": "23a8da4544128d762b71a4e73995a87ffe72e82e60e19cac337361a4ad5ce4dd"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/api/auth/[...all]/route.ts",
+          "kind": "file",
+          "bytes": 8788,
+          "sha256": "3f3f5535c6df3447aa3548ffb546884ede7323dee9763620ab725434d68c11d7"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/api/device/calls/[id]/claim/route.ts",
+          "kind": "file",
+          "bytes": 8830,
+          "sha256": "09c43dfc4b6a80e9ef37cad40ff788344048756b1f80f4ab03cc15058fe4e647"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/api/device/calls/[id]/complete/route.ts",
+          "kind": "file",
+          "bytes": 8839,
+          "sha256": "b1209982a8081d0670bbdbf08f9e725ff3c64a41d373303afb40fa7d2b5a1bb5"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/api/device/heartbeat/route.ts",
+          "kind": "file",
+          "bytes": 8797,
+          "sha256": "157154aa921e0468926554156786f086a92c37e437117bdd26aefe29be05ad76"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/api/device/jazz-token/route.ts",
+          "kind": "file",
+          "bytes": 8800,
+          "sha256": "be9cfca394484ad7c8e15e06043a9eeaf4748c37f8f89db2df302ff7cfa57513"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/api/device/register/route.ts",
+          "kind": "file",
+          "bytes": 8794,
+          "sha256": "307b576ea29a0d0b66518c974d39146b9f1334d5ddc1ebd4c234bfc141985b13"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/api/devices/[id]/ping/route.ts",
+          "kind": "file",
+          "bytes": 8806,
+          "sha256": "fc62e26c69bc85415b06d2de97b4e35bd0a0c8300bb979844b994cebad930a2e"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/api/devices/[id]/reconnect/route.ts",
+          "kind": "file",
+          "bytes": 8821,
+          "sha256": "f7bd1501e53c46b311b29e95ec93c6666e2dac28b0c8066f463b26248efd6645"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/api/devices/[id]/revoke/route.ts",
+          "kind": "file",
+          "bytes": 8812,
+          "sha256": "10e0cd68ffacda32f0852a00b1cb73761fd1464a9860746b405213808fa2f56b"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/api/jazz/dashboard-token/route.ts",
+          "kind": "file",
+          "bytes": 8809,
+          "sha256": "5b27dc002421d65e17b0f9be05e25d0c0c7d88af990db031432d60002f03de67"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/api/mcp/route.ts",
+          "kind": "file",
+          "bytes": 8752,
+          "sha256": "cc33b6945e0ec9d7250af3cbedf2b9d5b0c8d02d118ed815408b7be8b191b1c9"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/consent/page.ts",
+          "kind": "file",
+          "bytes": 3756,
+          "sha256": "a167a61fdd408609ded56fab59168427a7b4f6c0c196b6114f01455cb4191028"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/dashboard/devices/page.ts",
+          "kind": "file",
+          "bytes": 3792,
+          "sha256": "57bf109821e6785d900a757acbee0357745869dfa383fbec1ef13bbdc8383fa3"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/device/approve/page.ts",
+          "kind": "file",
+          "bytes": 3783,
+          "sha256": "e37de07423b4be0aad6166726c96b9f6f3b8fa08dabc9e3972f554dff851dfe1"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/device/denied/page.ts",
+          "kind": "file",
+          "bytes": 3780,
+          "sha256": "778f6c7d622137236df58ef67117051fc4d3ac4ba4a575f26a3cc0eaf6ef0120"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/device/page.ts",
+          "kind": "file",
+          "bytes": 3753,
+          "sha256": "eb51a64272a621dc1677d43773af67b8a6ffccb5a9776b80dd011ebb3a33b722"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/device/success/page.ts",
+          "kind": "file",
+          "bytes": 3783,
+          "sha256": "2ec2931cc932d0b4c053631140acec1fc8bf7e5589b57bccdb43e0b757d70727"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/layout.ts",
+          "kind": "file",
+          "bytes": 3738,
+          "sha256": "3076782c177f5f22220915fc2dc70ea9d11145f19b4b7a063d63e78ca821353e"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/page.ts",
+          "kind": "file",
+          "bytes": 3726,
+          "sha256": "4ce18812ca914998ca2237577d31f99d3c4c5e836c3d053c87f3e7713ca5bb29"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/app/sign-in/page.ts",
+          "kind": "file",
+          "bytes": 3756,
+          "sha256": "dbced9335f5c6c4f5470d0736df89ea530538c66e2f5df42c14a2c68f20eaa42"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/cache-life.d.ts",
+          "kind": "file",
+          "bytes": 5863,
+          "sha256": "2552a31fad45a9ed1bde87e51b038dc0e786cd364b597162263abbf57018949b"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/package.json",
+          "kind": "file",
+          "bytes": 18,
+          "sha256": "e3d5a4a2d8551aa52c5a01d2a0efb2e06a2d9711b4f5c5f1d20de6e21807e2cd"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/routes.d.ts",
+          "kind": "file",
+          "bytes": 3137,
+          "sha256": "4d018a8ddfb6b627dea2a2846f9fedc3a34433b855bac1571cdbbcaeadcf9165"
+        },
+        {
+          "path": "apps/control-plane/.next-stale-20260901-0821/types/validator.ts",
+          "kind": "file",
+          "bytes": 9764,
+          "sha256": "38263af845ae237dbfe61d2dc76c21ffeb1c0c19d9e12843b48081fbbd886983"
+        },
+        {
+          "path": "apps/control-plane/app/.well-known/jazz-jwks/route.ts",
+          "kind": "file",
+          "bytes": 203,
+          "sha256": "b5a683c40f6111f78b4bfcdb8f39333cb108b30f1edb8d1d47b97eded8fe3d9f"
+        },
+        {
+          "path": "apps/control-plane/app/.well-known/oauth-authorization-server/api/auth/route.ts",
+          "kind": "file",
+          "bytes": 910,
+          "sha256": "c0794cb0dacebd3dcd307fdb1c6512c4d2c3f7713870e4a6423f34d62312a452"
+        },
+        {
+          "path": "apps/control-plane/app/.well-known/oauth-protected-resource/mcp/route.ts",
+          "kind": "file",
+          "bytes": 229,
+          "sha256": "a931834dc06a63ca1eb9aa78c6acf18bc6c257c7ba33f6874b9041783eca5640"
+        },
+        {
+          "path": "apps/control-plane/app/.well-known/oauth-protected-resource/route.ts",
+          "kind": "file",
+          "bytes": 226,
+          "sha256": "72429148a24c6dd33499007cbcea71e172d45ec1623a9cc39b2b54353954c265"
+        },
+        {
+          "path": "apps/control-plane/app/api/auth/authorize/route.ts",
+          "kind": "file",
+          "bytes": 227,
+          "sha256": "4949bfafe9f6e2154066b52129d42bc9b401c6c7922780e91d2215442bb209a3"
+        },
+        {
+          "path": "apps/control-plane/app/api/auth/oauth2/device-authorization/route.ts",
+          "kind": "file",
+          "bytes": 226,
+          "sha256": "3ec484195ca4d0f3e88066aecc22a6d89f2e6d6c8b711cda9dd5efae36d295ab"
+        },
+        {
+          "path": "apps/control-plane/app/api/auth/oauth2/revoke/route.ts",
+          "kind": "file",
+          "bytes": 518,
+          "sha256": "13f186a3e952e2cb2a0607b7bd1bceaa0adc66bced8371b1620cfaab4a504bcb"
+        },
+        {
+          "path": "apps/control-plane/app/api/device/calls/[id]/claim/route.ts",
+          "kind": "file",
+          "bytes": 3305,
+          "sha256": "13cf8fdf2b01772bd31256d84ba47e3847e8f722ffa6d199a9038ac7a7adc5e8"
+        },
+        {
+          "path": "apps/control-plane/app/api/device/calls/[id]/complete/route.ts",
+          "kind": "file",
+          "bytes": 3953,
+          "sha256": "49336198ee3247c784220b368f5e20a0f8ff205c505052e8164ee48fe090e3a5"
+        },
+        {
+          "path": "apps/control-plane/app/api/device/heartbeat/route.ts",
+          "kind": "file",
+          "bytes": 1484,
+          "sha256": "522ce065477727730514266caebe6dc110659c6497b90913ac826528bd90d18d"
+        },
+        {
+          "path": "apps/control-plane/app/api/device/jazz-token/route.ts",
+          "kind": "file",
+          "bytes": 1283,
+          "sha256": "30f7cbe36759d9b9b57f14c71a718a9c9fef4a1572ce068775a66dfcecbdd513"
+        },
+        {
+          "path": "apps/control-plane/app/api/device/register/route.ts",
+          "kind": "file",
+          "bytes": 4229,
+          "sha256": "912d344b70c4630be0b27660f35731317e2f2cebf026a38d03e82408add72644"
+        },
+        {
+          "path": "apps/control-plane/app/api/jazz/dashboard-token/route.ts",
+          "kind": "file",
+          "bytes": 568,
+          "sha256": "5f04c1f63453d41d22501927070bd3ff05499b1f73ff3b6edf630d20f90a91ab"
+        },
+        {
+          "path": "apps/control-plane/app/api/passkey/registration-intent/route.ts",
+          "kind": "file",
+          "bytes": 778,
+          "sha256": "42ec5511ce3eac1ccab8a74c67ba1ae5d42210d047a66d36153ae532c0f32ae3"
+        },
+        {
+          "path": "apps/control-plane/app/mcp/route.ts",
+          "kind": "file",
+          "bytes": 117,
+          "sha256": "cc27c07835deb02527f7f39142f7d0d4d701f7c49ae6814c0b84c45743b76e05"
+        },
+        {
+          "path": "apps/control-plane/app/passkey/enroll/page.tsx",
+          "kind": "file",
+          "bytes": 1707,
+          "sha256": "5aa4128af6fa9928eb8cfc8db30e8305d9935e6666dcf455c715190efc4f9e2c"
+        },
+        {
+          "path": "apps/control-plane/device/control-plane-client.ts",
+          "kind": "file",
+          "bytes": 2557,
+          "sha256": "c3ead3e4c4b5333596d8c2fcb4802b18786a2609af3ddea3ff2158a89ab9b287"
+        },
+        {
+          "path": "apps/control-plane/lib/auth-db.ts",
+          "kind": "file",
+          "bytes": 973,
+          "sha256": "00453ff6a7d13ade699f217ccff5416aa22524d5423e4fc5603f98d8d3061deb"
+        },
+        {
+          "path": "apps/control-plane/lib/auth-migration-config.ts",
+          "kind": "file",
+          "bytes": 717,
+          "sha256": "f82b92f643f50e23ca7aa7f56d42b09ead30a413a652e14a5779602c01b06278"
+        },
+        {
+          "path": "apps/control-plane/lib/authorization-service.ts",
+          "kind": "file",
+          "bytes": 1461,
+          "sha256": "ed869a23b30303598a19d9fb8164c60c11f717cff02e3468cf26fcf93ad67a6b"
+        },
+        {
+          "path": "apps/control-plane/lib/dashboard-auth.ts",
+          "kind": "file",
+          "bytes": 312,
+          "sha256": "050e5445afc19ee4f78f71afebe31c2ac8bd2aaad4921273f4f934635618e84d"
+        },
+        {
+          "path": "apps/control-plane/lib/device-request-auth.ts",
+          "kind": "file",
+          "bytes": 1672,
+          "sha256": "7fcd4b4c81b5cf5414d676d1113b8297ebaaa415d96ff337a6c262e95460842b"
+        },
+        {
+          "path": "apps/control-plane/lib/ids.ts",
+          "kind": "file",
+          "bytes": 740,
+          "sha256": "443464836b737f556d869d309586f431638687a5647babcc32246b0e4461d247"
+        },
+        {
+          "path": "apps/control-plane/lib/jazz-capability.ts",
+          "kind": "file",
+          "bytes": 2270,
+          "sha256": "8ce7eece1c5f72ac3dfac9b85959652bfda14fe53743f9a311b440f8f144ea7c"
+        },
+        {
+          "path": "apps/control-plane/lib/jazz-principal.ts",
+          "kind": "file",
+          "bytes": 231,
+          "sha256": "6a27ec75b90105076007e3c053d30ec1177da42db176d33a930b6116d279d23b"
+        },
+        {
+          "path": "apps/control-plane/lib/json.ts",
+          "kind": "file",
+          "bytes": 461,
+          "sha256": "aa34553d77e2b64feece241910b3d71f38c21327db8fc0f8696ae50df3c549bd"
+        },
+        {
+          "path": "apps/control-plane/lib/oauth-revocation.ts",
+          "kind": "file",
+          "bytes": 6497,
+          "sha256": "104830b437796dbac1096c0d9ab486561031d57db1213bcff5bd7fab2a710f0e"
+        },
+        {
+          "path": "apps/control-plane/lib/passkey-enrollment.ts",
+          "kind": "file",
+          "bytes": 4497,
+          "sha256": "7e943250b15973404ef5aec2620dce845943297a8583a60987ef8531afcaf585"
+        },
+        {
+          "path": "apps/control-plane/lib/passkey-only-identity.ts",
+          "kind": "file",
+          "bytes": 1009,
+          "sha256": "99e7c9a93dcf48a133d83e8dbfc0baddb216f9f731e44352dca8038b932125ec"
+        },
+        {
+          "path": "apps/control-plane/lib/protected-resource-metadata.ts",
+          "kind": "file",
+          "bytes": 643,
+          "sha256": "9aa611b0236fcc03b3292a51bf2839cdcabae3b91b108d86691f6a23ee35192b"
+        },
+        {
+          "path": "apps/control-plane/migrations/20260901T024216-unnamed-050e375fcd50-25bfe44b6659.ts",
+          "kind": "file",
+          "bytes": 3165,
+          "sha256": "f56dd399efe461d6382e4249575bfce89a74b46e9362354e00f2d623d35b8660"
+        },
+        {
+          "path": "apps/control-plane/migrations/snapshots/20260901T024159-25bfe44b6659.json",
+          "kind": "file",
+          "bytes": 5242,
+          "sha256": "63549c89fb6b1e148306d35431cbc644472c27d6f49696277825e13550602dcf"
+        },
+        {
+          "path": "apps/control-plane/migrations/snapshots/20260901T024216-050e375fcd50.json",
+          "kind": "file",
+          "bytes": 4849,
+          "sha256": "941486268df919c0f3a0708b8e7f97d5fd21a81ec811943cafe43003dcbdb9bf"
+        },
+        {
+          "path": "apps/control-plane/scripts/check-passkey-uv-patch.mjs",
+          "kind": "file",
+          "bytes": 1617,
+          "sha256": "6a04bd33d09f9e6a1d8490fc121fb53be7c5d8b340ceebe47a6f6014319db451"
+        },
+        {
+          "path": "apps/control-plane/scripts/create-passkey-enrollment.ts",
+          "kind": "file",
+          "bytes": 931,
+          "sha256": "32446a2c8e035f5e736a3c80677902f113ff90bf25916144a55e70f1955a679c"
+        },
+        {
+          "path": "apps/control-plane/scripts/debug-attribution.ts",
+          "kind": "file",
+          "bytes": 1344,
+          "sha256": "9a7843a3e40db9629b324bb8b9fab96163541dc580fda307f181bd46ff1f704b"
+        },
+        {
+          "path": "apps/control-plane/scripts/debug-jazz-storage.mjs",
+          "kind": "file",
+          "bytes": 781,
+          "sha256": "062a6a751b002791bce39fc3b10bdb7f57f04ae54ec62d55f6075e4f16d1fd40"
+        },
+        {
+          "path": "apps/control-plane/scripts/jazz-authority.ts",
+          "kind": "file",
+          "bytes": 1301,
+          "sha256": "b1c3d7c8b7cb45a9f45fd5d9799de100101f4f0fbf9fec7fd081d4275078637c"
+        },
+        {
+          "path": "apps/control-plane/scripts/migrate-passkey-only-identity.mjs",
+          "kind": "file",
+          "bytes": 5449,
+          "sha256": "14605bb302cab252655aee9a644618017dd447b297201d6f6f3168c4ba29f0ed"
+        },
+        {
+          "path": "apps/control-plane/scripts/reconcile-device-revocations.ts",
+          "kind": "file",
+          "bytes": 1620,
+          "sha256": "b477cfa13d07bae0d60bf14aafe73e35e0b6743870a99949239e6a6094a1884b"
+        },
+        {
+          "path": "apps/control-plane/scripts/smoke-device-flow.ts",
+          "kind": "file",
+          "bytes": 21730,
+          "sha256": "bec626c76c42290320f3bb4871dea9b89639921de36948fa43e890c79e35d954"
+        },
+        {
+          "path": "apps/control-plane/scripts/test-oauth-revocation-wrapper.ts",
+          "kind": "file",
+          "bytes": 12158,
+          "sha256": "899e2c7f294d12455598dbf8c16a1d1254b9d0dafe740ac8afd9f52101ee5cdb"
+        },
+        {
+          "path": "apps/control-plane/scripts/test-passkey-account-registration.mjs",
+          "kind": "file",
+          "bytes": 4671,
+          "sha256": "308e3e4803f669c3d373e8b38200722c97778f2156bd92af755d3ccf0bf9f4eb"
+        },
+        {
+          "path": "apps/control-plane/scripts/test-passkey-only-identity-migration.mjs",
+          "kind": "file",
+          "bytes": 3901,
+          "sha256": "23318f4aa3776e54709ff422e9d3adc2fd68fc9ef2b4b1cb8148ce44adbb80a6"
+        },
+        {
+          "path": "apps/control-plane/scripts/test-passkey-security-negatives.ts",
+          "kind": "file",
+          "bytes": 9784,
+          "sha256": "e1c012ecf30d11a537426219f960f491a860e8978fa5de49a7056414d25ee85d"
+        },
+        {
+          "path": "apps/control-plane/scripts/verify-auth-db.mjs",
+          "kind": "file",
+          "bytes": 788,
+          "sha256": "806a1be0e081d0816faf2a6a81185dc8a7441f438f7ea25bef32f35f8cfa4a89"
+        },
+        {
+          "path": "docs/JAZZ-BETTER-AUTH-DECISION.md",
+          "kind": "file",
+          "bytes": 7647,
+          "sha256": "0f2dc66194958423022329f251261ab32a1ed59c5dcdbc480b2c22854452d29f"
+        },
+        {
+          "path": "ops/jazz-authority.mjs",
+          "kind": "file",
+          "bytes": 1131,
+          "sha256": "366e2e60d92b421c56baf64192962c81598b308ee94ca8087cbc38c52cbbe69c"
+        },
+        {
+          "path": "patches/@better-auth__passkey@1.7.1.patch",
+          "kind": "file",
+          "bytes": 2416,
+          "sha256": "c7bdb557afa37e57b70b40a9d1cb63a993d97711a06ee917e49b37f844ef3a9b"
+        },
+        {
+          "path": "scripts/auth-db-info.sh",
+          "kind": "file",
+          "bytes": 744,
+          "sha256": "46227f17f610700033369fcf40f6da7a7ac99626149f95142bd1e8fa1f547953"
+        },
+        {
+          "path": "scripts/upgrade-local-env.sh",
+          "kind": "file",
+          "bytes": 1634,
+          "sha256": "5e5dae9990a6594851dd01f4036d6625f775538d9e681e27bff8327b4c2bf615"
+        }
+      ],
+      "excludedEvidenceFiles": [],
+      "lockfiles": [
+        {
+          "name": "pnpm-lock.yaml",
+          "sha256": "f6a66dbb957d145d7afcf6d88e5aa01c523088fe523add32e8ea12e0fcab7bdd"
+        },
+        {
+          "name": "flake.lock",
+          "sha256": "fc12681e6836952b925641971998990a3edd82b5f3e731f1ca2f315d25712891"
+        }
+      ],
+      "package": {
+        "path": "package.json",
+        "sha256": "fcfa8ea36f112121c64ac996f1106a2e111f517b40555aaffb8a15da4c7e461e",
+        "name": "remote-mcp-jazz",
+        "version": "0.1.0",
+        "packageManager": "pnpm@11.22.0"
+      },
+      "components": [
+        {
+          "path": "apps/control-plane/package.json",
+          "sha256": "bf98de66be77e88cced9abc0bfe189bb975db6d9941bb642fd53814fbe26c577",
+          "name": "@remote-dc/control-plane",
+          "version": "0.1.0",
+          "packageManager": null
+        }
+      ]
+    }
+  },
+  "runtimes": {
+    "desktopCommander": {
+      "node": "DesktopCommanderMCP dev shell\n  node: v22.23.2\n  npm:  10.9.8\n  git:  2.55.0\nUseful gates:\n  just bootstrap   # npm ci\n  just check       # TypeScript/build\n  just test        # project regression suite\n  just integration # integration suite\nv22.23.2",
+      "packageManager": "npm",
+      "packageManagerVersion": "DesktopCommanderMCP dev shell\n  node: v22.23.2\n  npm:  10.9.8\n  git:  2.55.0\nUseful gates:\n  just bootstrap   # npm ci\n  just check       # TypeScript/build\n  just test        # project regression suite\n  just integration # integration suite\n10.9.8",
+      "git": "DesktopCommanderMCP dev shell\n  node: v22.23.2\n  npm:  10.9.8\n  git:  2.55.0\nUseful gates:\n  just bootstrap   # npm ci\n  just check       # TypeScript/build\n  just test        # project regression suite\n  just integration # integration suite\ngit version 2.55.0",
+      "nix": "nix (Lix, like Nix) 2.95.2\nSystem type: aarch64-darwin\nAdditional system types: x86_64-darwin\nFeatures: gc, signed-caches\nSystem configuration file: /etc/nix/nix.conf\nUser configuration files: /Users/test/.config/nix/nix.conf:/Users/test/.nix-profile/etc/xdg/nix/nix.conf:/etc/profiles/per-user/test/etc/xdg/nix/nix.conf:/run/current-system/sw/etc/xdg/nix/nix.conf:/nix/var/nix/profiles/default/etc/xdg/nix/nix.conf\nStore directory: /nix/store\nState directory: /nix/var/nix\nData directory: /nix/store/4dw2mganmnsxy31wyjll1vrn3gp5x345-lix-2.95.2/share"
+    },
+    "controlPlaneWorkspace": {
+      "node": "RemoteMCP-Jazz dev shell\n  node: v22.23.2\n  pnpm: 11.22.0\n  next: just bootstrap\nv22.23.2",
+      "packageManager": "pnpm",
+      "packageManagerVersion": "RemoteMCP-Jazz dev shell\n  node: v22.23.2\n  pnpm: 11.22.0\n  next: just bootstrap\n11.22.0",
+      "git": "RemoteMCP-Jazz dev shell\n  node: v22.23.2\n  pnpm: 11.22.0\n  next: just bootstrap\ngit version 2.55.0",
+      "nix": "nix (Lix, like Nix) 2.95.2\nSystem type: aarch64-darwin\nAdditional system types: x86_64-darwin\nFeatures: gc, signed-caches\nSystem configuration file: /etc/nix/nix.conf\nUser configuration files: /Users/test/.config/nix/nix.conf:/Users/test/.nix-profile/etc/xdg/nix/nix.conf:/etc/profiles/per-user/test/etc/xdg/nix/nix.conf:/run/current-system/sw/etc/xdg/nix/nix.conf:/nix/var/nix/profiles/default/etc/xdg/nix/nix.conf\nStore directory: /nix/store\nState directory: /nix/var/nix\nData directory: /nix/store/4dw2mganmnsxy31wyjll1vrn3gp5x345-lix-2.95.2/share"
+    }
+  },
+  "buildFingerprintSha256": "9e788f3f16133aa340ea6ab037e9b8518b3a0fd55cfbbab0f81afefcd17f7f53"
+}

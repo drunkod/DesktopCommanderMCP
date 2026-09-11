@@ -55,5 +55,11 @@ validate-tools:
 device:
   npm run device:start
 
+tested-build-capture:
+  node scripts/capture-tested-build-state.mjs
+
+tested-build-verify:
+  node scripts/capture-tested-build-state.mjs --verify
+
 status:
   git status --short
