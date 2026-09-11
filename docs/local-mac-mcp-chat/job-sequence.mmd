@@ -1,0 +1,67 @@
+sequenceDiagram
+    participant U as Family browser
+    participant N as Local Next.js through ingress
+    participant A as Existing auth and policy
+    participant Q as Exclusive local coordinator
+    participant J as Local Jazz authority
+    participant W as Opt-in pinned AI worker
+    participant D as Local device and stdio child
+
+    U->>N: POST conversation message with stable idempotency key
+    N->>A: Verify session CSRF membership and engine consent
+    A-->>N: Verified requester and allowed policy
+    N->>Q: Admit scoped message intent
+    Q->>J: Transaction message job event and receipt
+    J-->>Q: Authority accepted commit
+    Q-->>N: Durable receipt and cursor
+    N-->>U: 202 accepted - not yet an assistant answer
+
+    W->>N: Open workflow-only session pinned to conversation
+    N->>A: Verify worker grant and sharing authorization
+    N->>Q: Open session with hard expiry
+    Q->>J: Persist session and idempotent receipt
+    J-->>Q: Accepted
+    N-->>W: Session and bounded call limits
+
+    loop Only while the real worker continues and authorization is valid
+        W->>N: Claim next family job with short wait
+        N->>Q: Validate worker pin and claim operation
+        Q->>J: Transaction lane claim fence and event
+        J-->>Q: Authority accepted
+        N-->>W: One claimed job and bounded authorized context
+        W->>N: Heartbeat within hard session deadline
+
+        opt A permitted device effect is required
+            W->>N: Propose job capability and exact arguments
+            N->>Q: Resolve requester delegation and effect identity
+            opt Human approval required
+                N-->>U: Display exact proposed action
+                U->>N: Approve bound operation and argument hash
+                N->>A: Verify non-model approver
+                N->>Q: Persist single-use approval
+            end
+            Q->>J: Commit effect intent remoteCall and event
+            J-->>D: Committed pending remoteCall
+            D->>N: Private device claim
+            N->>Q: Recheck fence grant cancellation and policy
+            Q->>J: Accept device claim before execution
+            N-->>D: Authorized claim
+            D->>D: Execute one stdio tool operation
+            D->>N: Report same operation result with fingerprint
+            N->>Q: Persist or reconcile result without rerunning tool
+            W->>N: Read bounded job tool result
+            N-->>W: Result or explicit pending or indeterminate state
+        end
+
+        W->>N: Complete job with stable operation ID
+        N->>Q: Validate current claim and effect ledger
+        Q->>J: Transaction assistant message terminal state event and receipt
+        J-->>Q: Authority accepted commit
+        N-->>W: Completion receipt
+        U->>N: Authorized SSE replay or bounded polling
+        N-->>U: Committed reply and state
+    end
+
+    Note over W,Q: A 25-minute logical maximum is not a 25-minute HTTP request or liveness guarantee
+    Note over Q,D: Unknown effects remain indeterminate - never blindly replay
+    Note over U,N: If Mac is offline no new acceptance can be promised - hostname remains configured

@@ -1,0 +1,23 @@
+flowchart TB
+    C[ChatGPT custom MCP app] --> E{Provider-assigned stable public identity}
+    E -->|Tailscale Funnel| TF[node.tailnet.ts.net]
+    E -->|zrok v2 reserved name| ZR[namespace:name public endpoint]
+    E -->|ngrok Free| NG[account Dev Domain]
+    TF --> L[Loopback authenticated MCP gateway]
+    ZR --> L
+    NG --> L
+    L --> P[Remote tool allowlist/policy]
+    P --> M[Desktop Commander MCP]
+    M --> OS[Local OS]
+
+    subgraph Home laptop
+      L
+      P
+      M
+      OS
+    end
+
+    rule[Provider identity can survive laptop/process restarts if preserved]
+    E -.-> rule
+    migration[Changing later to another provider-owned hostname changes ChatGPT/OAuth identity]
+    E -.-> migration

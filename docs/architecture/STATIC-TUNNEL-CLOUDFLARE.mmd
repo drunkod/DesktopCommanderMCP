@@ -1,0 +1,22 @@
+flowchart LR
+    C[ChatGPT] -->|https://mcp.example.com/mcp| CF[Owned hostname on Cloudflare DNS]
+    CF --> CT[Named Cloudflare Tunnel UUID]
+    CT -->|outbound-only cloudflared| L[127.0.0.1 MCP gateway]
+    L --> A[OAuth + remote policy gate]
+    A --> M[Desktop Commander MCP]
+    M --> OS[Local OS]
+
+    subgraph Home laptop
+      CT
+      L
+      A
+      M
+      OS
+    end
+
+    dns[DNS record persists if cloudflared/laptop is offline; origin is unavailable until reconnect]
+    CF -.-> dns
+    cost[Low-cost normal setup uses Cloudflare authoritative DNS; partial CNAME setup is Business/Enterprise]
+    CF -.-> cost
+    quick[Do not substitute a random Quick Tunnel for persistent ChatGPT configuration]
+    CT -.-> quick

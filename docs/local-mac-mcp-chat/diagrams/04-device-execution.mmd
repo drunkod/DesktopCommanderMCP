@@ -1,0 +1,24 @@
+sequenceDiagram
+    participant C as ChatGPT MCP client
+    participant CP as Control plane
+    participant J as Jazz remoteCalls
+    participant D as MCPDevice
+    participant DC as Desktop Commander
+
+    C->>CP: call_device_tool / ping / reconnect / shutdown
+    CP->>CP: verify OAuth subject + device ownership + heartbeat
+    CP->>J: insert pending remoteCall
+    J-->>D: pending-row subscription event
+    D->>CP: POST claim(callId, deviceId)
+    CP->>J: pending -> executing
+    CP-->>D: claimed=true
+    D->>DC: execute local MCP tool
+    DC-->>D: result / error
+    D->>CP: POST completion
+    CP->>J: executing -> completed/failed
+    J-->>CP: terminal row observed
+    CP-->>C: durable result
+
+    Note over D,DC: Local side effect begins only after authority claim.
+    Note over CP,J: Idempotency key can converge duplicate requests.
+    Note over D,CP: Planned hardening: separate effect execution from result-reporting uncertainty.

@@ -1,0 +1,22 @@
+flowchart TB
+    G0[Gate 0: ChatGPT plan/workspace supports required capabilities]
+    G1[Gate 1: choose provider hostname vs owned hostname]
+    G0 --> G1
+    G1 --> A[Option A: authenticated HTTP MCP sidecar -> stdio]
+    G1 --> B[Option B: native Streamable HTTP adapter]
+    G1 --> C[Option C: refactor separate control-plane app -> direct dispatch]
+    G1 --> D[Option D: retain current OAuth + Jazz remote architecture]
+
+    A --> A1[Lowest code invasion; best proof]
+    A --> A2[Needs remote allowlist, auth, logging audit, cancellation mapping]
+    B --> B1[Cleanest long-term runtime]
+    B --> B2[Requires transport/core refactor]
+    C --> C1[Reuses Better Auth/passkey work in separate workspace]
+    C --> C2[Direct dispatch is proposed work, not current behavior]
+    D --> D1[Needed for multi-device/offline durable coordination]
+    D --> D2[Most moving parts for one laptop]
+
+    pick[Recommended sequence: A proof -> B or C product; D only if coordination requirements justify it]
+    A -.-> pick
+    B -.-> pick
+    C -.-> pick

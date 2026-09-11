@@ -1,0 +1,36 @@
+flowchart TB
+    GOAL["Family AI hub on one MacBook\none static tunnel origin\n/chat + /mcp"]
+
+    GOAL --> A["A. ChatGPT MCP queue worker"]
+    GOAL --> B["B. Local orchestrator + model API"]
+    GOAL --> C["C. Local orchestrator + local LLM"]
+    GOAL --> D["D. Hybrid engine-neutral queue"]
+    GOAL --> E["E. Direct ChatGPT MCP per family user"]
+
+    A --> A1["Uses chatJobs + 25m Jazz worker lease"]
+    A --> A2["Lowest new AI cost"]
+    A --> A3["Experimental: ChatGPT is not guaranteed background worker"]
+
+    B --> B1["Most reliable ChatGPT-like /chat"]
+    B --> B2["Official outbound model API"]
+    B --> B3["Usage-based model cost"]
+
+    C --> C1["No model API cost"]
+    C --> C2["Strict local processing"]
+    C --> C3["Quality/concurrency limited by Mac hardware"]
+
+    D --> D1["Same Jazz queue, multiple worker engines"]
+    D --> D2["Fallback when ChatGPT worker disappears"]
+    D --> D3["More implementation work, best resilience"]
+
+    E --> E1["Simplest existing MCP path"]
+    E --> E2["Each user uses their own ChatGPT UI"]
+    E --> E3["Does not satisfy shared custom /chat product"]
+
+    PICK1["Prototype your idea: A"]
+    PICK2["Production recommendation: B or D"]
+    PICK3["Strict zero model-fee target: C"]
+    A -.-> PICK1
+    B -.-> PICK2
+    D -.-> PICK2
+    C -.-> PICK3

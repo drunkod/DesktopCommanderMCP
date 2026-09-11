@@ -1,0 +1,63 @@
+sequenceDiagram
+    participant F as Family Browser /chat
+    participant N as Local Next.js Control Plane
+    participant A as Better Auth + SQLite
+    participant J as Local Jazz
+    participant G as ChatGPT MCP Worker
+    participant D as MCPDevice
+    participant L as Desktop Commander stdio MCP
+
+    F->>N: GET /chat through same static tunnel origin
+    N->>A: Validate browser session / passkey login
+    A-->>N: family user subject
+    N->>J: Load authorized conversations
+    J-->>N: conversation state
+    N-->>F: Render chat UI
+
+    F->>N: POST new family message
+    N->>J: Insert message + chatJob(pending)
+    N-->>F: Accepted + live status stream
+
+    Note over G,N: Operator starts a ChatGPT worker run through the same /mcp origin
+    G->>N: OAuth + open_family_worker_session(25m)
+    N->>A: Validate worker subject/scope
+    N->>J: Insert agentSession lease
+    J-->>N: workerSessionId + expiresAt
+    loop While ChatGPT keeps taking tool turns and lease remains active
+        G->>N: next_chat_job(workerSessionId)
+        N->>J: Atomically claim one chatJob
+        J-->>N: job + bounded conversation context
+        N-->>G: Claimed family turn
+
+        opt Desktop Commander action is needed
+            G->>N: call_device_tool(deviceId, tool, args)
+            N->>J: Create remoteCall(pending)
+            J-->>D: RemoteChannel subscription sees pending call
+            D->>N: Claim via control-plane API
+            N->>J: pending -> executing
+            D->>L: MCP Client -> stdio tool call
+            L-->>D: local result
+            D->>N: Complete remoteCall
+            N->>J: executing -> completed/failed
+            J-->>N: durable tool result
+            N-->>G: MCP tool result
+        end
+
+        G->>N: publish_chat_reply(jobId, response)
+        N->>J: Complete chatJob + insert assistant message
+        J-->>N: durable chat state
+        N-->>F: SSE/poll update
+    end
+    alt Worker lease expires or ChatGPT stops
+        N->>J: Mark agentSession expired/offline
+        Note over F,J: Pending chatJobs remain durable; another permitted worker may claim them later
+    else Worker continues
+        G->>N: renew_family_worker_session()
+        N->>J: Extend lease according to policy
+    end
+
+    Note over F,L: /chat and /mcp share one public tunnel origin
+    Note over J,D: Jazz and device APIs remain local/private on the Mac
+    Note over G,J: One long MCP HTTP request is not required
+    Note over G,J: ChatGPT background polling duration is not yet a guaranteed platform primitive
+    Note over N,J: Each job must carry only the claimed conversation's authorized context

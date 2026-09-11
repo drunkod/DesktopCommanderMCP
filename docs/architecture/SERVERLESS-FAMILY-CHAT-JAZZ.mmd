@@ -1,0 +1,79 @@
+flowchart TB
+    U[Family users] -->|Browser| CHAT["https://family.example.com/chat"]
+    GPT[ChatGPT custom MCP app] -->|Streamable HTTP + OAuth| MCP["https://family.example.com/mcp"]
+
+    subgraph EDGE["Same public origin - serverless Next.js control plane"]
+        CHAT --> WEB[Next.js 15 + React 19 Chat UI]
+        MCP --> MCPH["@modelcontextprotocol/server MCP handler"]
+        AUTH["Better Auth\npasskey + OAuth provider + MCP + CIMD + JWT"]
+        WEB --> AUTH
+        MCPH --> AUTH
+        API["Serverless Chat / Task API"]
+        WEB --> API
+        MCPH --> ROUTER[Call Router]
+        API --> ROUTER
+    end
+
+    AUTH --> AUTHDB[("Durable Auth DB\nserverless SQL target")]
+    ROUTER --> JAZZ["Jazz application database / sync"]
+
+    subgraph JSTATE["Jazz durable shared state"]
+        DEV[(devices)]
+        CALLS[(remoteCalls)]
+        AUDIT[(auditEvents)]
+        GRANTS[("proposed: familyMemberships / deviceGrants")]
+        CONV[("proposed: conversations")]
+        MSG[("proposed: messages")]
+        LEASE[("proposed: agentSessions / 25m lease")]
+    end
+    JAZZ --> DEV
+    JAZZ --> CALLS
+    JAZZ --> AUDIT
+    JAZZ --> GRANTS
+    JAZZ --> CONV
+    JAZZ --> MSG
+    JAZZ --> LEASE
+
+    API -->|create conversation/message| CONV
+    API -->|enqueue execution task| CALLS
+    MCPH -->|MCP tool request -> durable call| CALLS
+    API -->|create or refresh 25m session lease| LEASE
+    WEB <-->|realtime sync or bounded polling| MSG
+    CALLS -->|completed result reference| MSG
+    GRANTS -.->|authorize family member to shared laptop| ROUTER
+
+    subgraph HOME["Home laptop - long-lived worker"]
+        DEVICE[MCPDevice]
+        TOKEN["DeviceTokenManager + NativeCredentialStore"]
+        CHANNEL["RemoteChannel\nJazz subscription + heartbeat + reconnect"]
+        CLAIM["HttpDeviceControlPlaneClient\nclaim / complete"]
+        BRIDGE[DesktopCommanderIntegration]
+        SDK["MCP Client + StdioClientTransport"]
+        DC["Existing Desktop Commander stdio MCP"]
+        OS["Filesystem / terminal / local apps"]
+    end
+    DEVICE --> TOKEN
+    DEVICE --> CHANNEL
+    CHANNEL <-->|read pending calls| CALLS
+    DEVICE --> CLAIM
+    CLAIM -->|server-mediated claim| ROUTER
+    CLAIM -->|durable completion| ROUTER
+    DEVICE --> BRIDGE
+    BRIDGE --> SDK
+    SDK --> DC
+    DC --> OS
+
+    LEASE -.->|authorizes active family work window| ROUTER
+    DEV -.->|device identity and online state| ROUTER
+    ROUTER --> AUDIT
+
+    NOTE1["Do not keep a serverless HTTP request open for 25 minutes"]
+    LEASE -.-> NOTE1
+    NOTE2["Laptop worker may stay connected continuously; 25m is an application lease"]
+    DEVICE -.-> NOTE2
+    NOTE3["Same origin: /mcp for ChatGPT, /chat for family UI, /api/auth for Better Auth"]
+    EDGE -.-> NOTE3
+    NOTE4["Current node:sqlite auth DB is not serverless-safe; use durable external SQL"]
+    AUTHDB -.-> NOTE4
+    NOTE5["Current ownerId authorization must be extended for family sharing"]
+    GRANTS -.-> NOTE5

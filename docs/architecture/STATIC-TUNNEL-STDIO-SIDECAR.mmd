@@ -1,0 +1,22 @@
+flowchart LR
+    C[ChatGPT] --> T[Stable HTTPS tunnel]
+    T --> B[Loopback Streamable HTTP MCP sidecar]
+    B --> A[Authentication + remote tool allowlist]
+    A -->|MCP client over stdio| P[Existing Desktop Commander child]
+    P --> S[src/index.ts + FilteredStdioServerTransport]
+    S --> O[Existing server.ts tools]
+    O --> OS[Local OS]
+
+    subgraph Home laptop
+      B
+      A
+      P
+      S
+      O
+      OS
+    end
+
+    log[Production gate: audit child history, debug, stderr and notifications]
+    A -.-> log
+    note[Prototype can leave stdio tool core unchanged; remote policy cannot be assumed safe unchanged]
+    A -.-> note

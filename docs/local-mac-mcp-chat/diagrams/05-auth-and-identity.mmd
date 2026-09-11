@@ -1,0 +1,29 @@
+flowchart LR
+    USER[Owner]
+    CG[ChatGPT custom MCP app]
+    BA[Better Auth]
+    PASS[Passkey]
+    OAUTH[OAuth provider]
+    MCP[/mcp resource]
+    DEV[Desktop Commander device]
+    VAULT[OS credential vault]
+    JCAP[Jazz capability token]
+    JAZZ[(Jazz)]
+
+    USER --> PASS --> BA
+    CG -->|DCR in current MVP| OAUTH
+    OAUTH --> BA
+    BA -->|mcp:tools + offline_access| CG
+    CG --> MCP
+    MCP -->|subject from verified token| WORKER[Worker/device tools]
+
+    DEV -->|device authorization grant| OAUTH
+    OAUTH -->|device:sync + offline_access| DEV
+    DEV --> VAULT
+    DEV -->|authenticated register/token request| BA
+    BA -->|short-lived jazz:device capability| JCAP
+    JCAP --> DEV --> JAZZ
+
+    FUTURE[Planned: workflow-only worker client/scope\nseparate from owner/device powers]:::planned
+    FUTURE -.-> OAUTH
+    classDef planned stroke-dasharray: 5 5;

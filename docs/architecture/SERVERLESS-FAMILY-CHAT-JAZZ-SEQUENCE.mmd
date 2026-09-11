@@ -1,0 +1,57 @@
+sequenceDiagram
+    participant F as Family Member
+    participant C as ChatGPT or /chat
+    participant W as Serverless Next.js Control Plane
+    participant A as Better Auth
+    participant J as Jazz
+    participant D as Home MCPDevice
+    participant L as Desktop Commander stdio MCP
+
+    F->>C: Open ChatGPT MCP app or /chat
+    C->>W: Request on family.example.com
+    W->>A: Validate browser session or OAuth token
+    A-->>W: userId / subject
+    W->>J: Check family membership + device grant
+    J-->>W: Authorized shared laptop
+
+    opt Start or refresh work window
+        W->>J: Upsert agentSession lease (expires in ~25m)
+        J-->>W: sessionId + expiresAt
+    end
+
+    C->>W: Submit message or MCP tool request
+    W->>J: Create message + remoteCalls(pending)
+    W-->>C: Accepted/job state or short synchronous wait
+
+    J-->>D: Subscription delivers pending remoteCall
+    D->>W: Claim call via device control API
+    W->>J: pending -> executing
+    J-->>W: claim durable
+    W-->>D: claim accepted
+    D->>L: MCP Client -> StdioClientTransport -> call tool
+    L-->>D: Local tool result
+    D->>W: Complete call via device control API
+    W->>J: executing -> completed/failed
+    W->>J: Update linked chat message/event
+
+    par /chat live view
+        J-->>C: Realtime sync / bounded polling update
+        C-->>F: Render tool progress/result
+    and ChatGPT MCP short call
+        W-->>C: Return MCP result if within request budget
+        C-->>F: ChatGPT continues response
+    end
+
+    alt Work exceeds serverless request budget
+        W-->>C: Return jobId/sessionId
+        F->>C: Continue later / UI keeps observing
+        C->>W: get_task_status(jobId)
+        W->>J: Read durable call/message state
+        J-->>W: Current status/result
+        W-->>C: Status/result
+    end
+
+    Note over W,J: No 25-minute HTTP request is required
+    Note over J,D: Home worker can stay online continuously
+    Note over F,A: Every family member has an individual identity
+    Note over W,J: Current owner-only authorization must be extended with family/device grants

@@ -1,0 +1,102 @@
+flowchart TB
+    BASE["One static public origin\nhttps://stable-tunnel-host.example"]
+    F["Family browsers"] -->|GET /chat| BASE
+    GPT["ChatGPT custom MCP app / worker"] -->|POST /mcp + OAuth| BASE
+
+    BASE --> T["Existing static tunnel\nTailscale Funnel or zrok reserved name"]
+    T -->|only public target| N["127.0.0.1:3000\nNext.js 15 control plane"]
+
+    subgraph MAC["HOME MACBOOK - all application-owned services"]
+        N
+        CHAT["/chat\nReact 19 + assistant-ui"]
+        CHATAPI["/api/chat/*\nconversation + queue API + SSE"]
+        MCP["/mcp -> existing /api/mcp\n@modelcontextprotocol/server 2"]
+        AUTH["/api/auth/* + /.well-known/*\nBetter Auth 1.7.1"]
+        ACL["Family ACL / device grants / remote tool policy"]
+
+        N --> CHAT
+        N --> CHATAPI
+        N --> MCP
+        N --> AUTH
+        CHAT --> CHATAPI
+        CHATAPI --> AUTH
+        MCP --> AUTH
+        CHATAPI --> ACL
+        MCP --> ACL
+    end
+    subgraph AUTHSTACK["Local identity/persistence"]
+        BA["Better Auth plugins\nbearer + JWT + passkey + MCP + OAuth provider + CIMD"]
+        JOSE["jose / ES256 JWKS"]
+        SQL[("node:sqlite\nWAL auth database")]
+        KEYCHAIN["NativeCredentialStore\nmacOS credential vault"]
+    end
+    AUTH --> BA
+    BA --> JOSE
+    BA --> SQL
+
+    subgraph JAZZSTACK["Local Jazz durable plane - loopback only"]
+        JS["Jazz authority\n127.0.0.1:1625\njazz-tools 2.0.0-alpha.53"]
+        JDATA[("Persistent JAZZ_DATA_DIR")]
+        EXIST[("existing\ndevices\nremoteCalls\nauditEvents")]
+        FAMILY[("proposed\nfamilies\nfamilyMembers\ndeviceGrants")]
+        CHATSTATE[("proposed\nconversations\nmessages\nchatJobs\nagentSessions\nchatEvents")]
+    end
+    JS --> JDATA
+    JS --> EXIST
+    JS --> FAMILY
+    JS --> CHATSTATE
+    ACL --> FAMILY
+    CHATAPI --> CHATSTATE
+    MCP --> EXIST
+    subgraph WORKER["Existing local execution worker"]
+        DEV["MCPDevice"]
+        TOK["DeviceTokenManager"]
+        CH["RemoteChannel\nJazz subscription + heartbeat + reconnect"]
+        CP["HttpDeviceControlPlaneClient\nclaim / complete"]
+        DCI["DesktopCommanderIntegration"]
+        SDK["@modelcontextprotocol/sdk\nMCP Client + StdioClientTransport"]
+        DC["Desktop Commander stdio MCP"]
+        OS["Filesystem / terminal / local apps"]
+    end
+
+    DEV --> TOK
+    TOK --> KEYCHAIN
+    DEV --> CH
+    CH <-->|subscribe pending remoteCalls| JS
+    DEV --> CP
+    CP -->|loopback control APIs| N
+    DEV --> DCI
+    DCI --> SDK
+    SDK --> DC
+    DC --> OS
+
+    subgraph AI["AI worker choices"]
+        QW["A: ChatGPT MCP queue worker\nexperimental 25m lease"]
+        APIAI["B: local orchestrator -> model API"]
+        LOCALAI["C: local model runtime"]
+        HYBRID["D: hybrid claim policy"]
+    end
+    GPT -.-> QW
+    QW -->|claim/publish chatJobs via /mcp tools| MCP
+    APIAI -->|claim/publish| CHATSTATE
+    LOCALAI -->|claim/publish| CHATSTATE
+    HYBRID --> QW
+    HYBRID --> APIAI
+    HYBRID --> LOCALAI
+
+    CHATSTATE -->|tool needed| EXIST
+    EXIST -->|durable call result| CHATSTATE
+    CHATAPI -->|SSE/poll result| CHAT
+
+    LAUNCHD["macOS LaunchAgents\nsupervise Next.js + Jazz + tunnel + MCPDevice"]
+    LAUNCHD -.-> N
+    LAUNCHD -.-> JS
+    LAUNCHD -.-> T
+    LAUNCHD -.-> DEV
+
+    NOTE1["Only port 3000 is tunneled\nJazz 1625 and stdio stay private"]
+    N -.-> NOTE1
+    NOTE2["25m is a Jazz agentSession lease\nnot one 25-minute HTTP request"]
+    CHATSTATE -.-> NOTE2
+    NOTE3["Same Better Auth identity across /chat and /mcp"]
+    AUTH -.-> NOTE3

@@ -1,0 +1,27 @@
+flowchart TB
+    CG[ChatGPT / remote MCP client]
+    HTTPS[Tailscale Funnel HTTPS]
+    NEXT[Next.js control plane\n127.0.0.1:3000]
+    AUTH[(Better Auth SQLite)]
+    JAZZ[Jazz authority\n127.0.0.1:1625]
+    CACHE[(Persistent Jazz backend cache)]
+    DEVICE[MCPDevice]
+    LOCAL[Desktop Commander child MCP]
+    VAULT[OS credential vault]
+    LAUNCHD[launchd supervisor]
+
+    CG --> HTTPS --> NEXT
+    NEXT --> AUTH
+    NEXT --> CACHE --> JAZZ
+    DEVICE -->|private HTTP device API| NEXT
+    DEVICE -->|read/subscription capability| JAZZ
+    DEVICE --> VAULT
+    DEVICE --> LOCAL
+    LAUNCHD --> NEXT
+    LAUNCHD --> JAZZ
+
+    PLANNED[Planned hardened topology:\npublic ingress :3000 -> private Next :3001]:::planned
+    HTTPS -. future .-> PLANNED
+    PLANNED -. future .-> NEXT
+
+    classDef planned stroke-dasharray: 5 5;

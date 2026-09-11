@@ -1,0 +1,33 @@
+flowchart TB
+    F[Invited family browser] -->|Same origin /chat and /api/chat| T[Durable HTTPS tunnel origin]
+    G[Opt-in ChatGPT workflow client] -->|Same origin /mcp| T
+    T -->|Tunnel target only| I[Local ingress 127.0.0.1:3000]
+
+    subgraph MAC[Owner MacBook - all application services]
+        I -->|Explicit public route allowlist| N[Private Next.js backend 127.0.0.1:3001]
+        N --> UI[Chat UI and authenticated chat APIs]
+        N --> M[Protected MCP workflow tools]
+        N --> A[Existing Better Auth and passkeys]
+        A --> SQL[(Local auth SQLite and WAL)]
+        UI --> P[Family ACL and effective capability policy]
+        M --> P
+        P -->|Authenticated private Unix socket| Q[Single local queue coordinator]
+        Q --> J[Local Jazz authority 127.0.0.1:1625]
+        J --> DISK[(Persistent local Jazz data)]
+        J --> C[(Conversations and chatMessages)]
+        J --> JOB[(chatJobs and workerSessions)]
+        J --> E[(Events approvals and receipts)]
+        J --> R[(Existing remoteCalls)]
+        UI -.->|Authorized snapshots and event replay| Q
+        Q -->|Opt-in local adapters| L[Local model or API orchestration]
+        J -->|Committed pending calls| D[MCPDevice and RemoteChannel]
+        D -->|Private claim and completion APIs| N
+        D --> K[Native credential store]
+        D --> B[DesktopCommanderIntegration]
+        B -->|MCP client over stdio| DC[Desktop Commander child]
+        DC -->|Authorized effects only| OS[Mac files processes and applications]
+    end
+
+    L -.->|Explicit cost and data-sharing consent only| API[Optional remote model API]
+    I -.-> DENY[Publicly deny device APIs raw Jazz debug and admin paths]
+    G -.-> LIMIT[One approved conversation context - no guaranteed background worker]

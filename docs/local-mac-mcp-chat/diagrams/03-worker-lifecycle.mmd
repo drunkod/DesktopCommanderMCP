@@ -1,0 +1,32 @@
+sequenceDiagram
+    participant U as User / ChatGPT
+    participant MCP as /mcp server
+    participant Q as Worker queue service
+    participant J as Jazz
+
+    U->>MCP: open_task_worker_session
+    MCP->>Q: openWorkerSession(subject)
+    Q->>J: insert 25-minute worker session
+    J-->>MCP: session + fixed expiresAt
+
+    loop while session active
+      U->>MCP: wait_for_task(waitSeconds=8)
+      MCP->>Q: read-only peek
+      Q->>J: read queued job
+      alt task available
+        MCP-->>U: taskId only
+        U->>MCP: claim_task(taskId)
+        MCP->>Q: atomic bounded claim
+        Q->>J: queued -> running
+        MCP-->>U: prompt
+        U->>U: reason about task
+        U->>MCP: save_task_result(result)
+        MCP->>Q: idempotent completion
+        Q->>J: running -> completed
+      else no task
+        MCP-->>U: idle + remainingSeconds
+      end
+    end
+
+    U->>MCP: wait_for_task after deadline
+    MCP-->>U: worker session expired

@@ -1,0 +1,23 @@
+flowchart LR
+    U[User in ChatGPT] --> C[ChatGPT custom MCP app]
+    C -->|HTTPS to durable URL| T[Stable public tunnel edge]
+    T -->|outbound tunnel to laptop| G[Loopback MCP HTTP gateway]
+    G --> A[OAuth / access-token validation]
+    A --> P[Remote tool allowlist + policy gate]
+    P --> M[Streamable HTTP MCP execution adapter]
+    M --> D[Desktop Commander tool core/execution]
+    D --> F[Filesystem / processes / local apps]
+
+    subgraph Home laptop
+      G
+      A
+      P
+      M
+      D
+      F
+    end
+
+    note1[No Jazz/hosted call router is required in the one-laptop direct path]
+    M -.-> note1
+    note2[Policy administration and logging need explicit remote-mode hardening]
+    P -.-> note2

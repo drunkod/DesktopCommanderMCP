@@ -1,0 +1,23 @@
+sequenceDiagram
+    participant U as User
+    participant L as Home laptop
+    participant T as Stable tunnel provider
+    participant C as ChatGPT
+    participant M as Authenticated local MCP gateway
+    participant D as Desktop Commander stdio child
+
+    L->>M: Start loopback Streamable HTTP adapter
+    L->>T: Reconnect outbound tunnel using saved identity
+    T-->>L: Restore same public HTTPS hostname
+    U->>C: Configure custom MCP app once with fixed /mcp URL
+    C->>M: OAuth / authorization through tunnel
+    M-->>C: Authorized MCP transport
+    C->>M: MCP call using permitted remote tool
+    M->>M: Enforce remote allowlist/policy
+    M->>D: MCP request over stdio
+    D-->>M: Result
+    M-->>C: MCP result
+
+    Note over L,C: Network/IP changes do not require reconfiguration while public identity is preserved
+    Note over L,C: Selected arguments/results can leave the laptop; source execution remains local
+    Note over L,C: Sleep/offline preserves configuration identity, not availability

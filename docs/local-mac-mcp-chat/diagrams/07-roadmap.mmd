@@ -1,0 +1,24 @@
+flowchart LR
+    A[Implemented now\nLocal MCP + remote device]
+    B[Implemented now\nOAuth/passkeys + Jazz]
+    C[Implemented now\n25-minute queue worker]
+    D[Implemented now\nRestart durability + launchd]
+    E[Next\n/chat API + conversations]
+    F[Next\nFamily membership + ACLs]
+    G[Next\nWorkflow-only OAuth]
+    H[Next\nDelegated Desktop Commander effects]
+    I[Next\nApprovals + cancellation + reconciliation]
+    J[Next\nPublic/private ingress hardening]
+    K[Next\nBackup/restore + 15-user acceptance]
+    L[Optional\nLocal LLM / model API engine]
+
+    A --> B --> C --> D
+    D --> E --> F --> G --> H --> I --> J --> K
+    K -. optional .-> L
+
+    classDef done fill:#e8f5e9,stroke:#2e7d32;
+    classDef next fill:#fff3e0,stroke:#ef6c00;
+    classDef optional fill:#e3f2fd,stroke:#1565c0,stroke-dasharray:5 5;
+    class A,B,C,D done;
+    class E,F,G,H,I,J,K next;
+    class L optional;

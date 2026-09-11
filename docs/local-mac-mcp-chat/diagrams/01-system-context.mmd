@@ -1,0 +1,30 @@
+flowchart LR
+    U[User in ChatGPT] -->|OAuth + MCP| PUB[Stable HTTPS origin /mcp]
+    U2[Future family browser user] -.->|planned /chat| PUB
+    PUB --> CP[Next control plane]
+    CP --> AUTH[Better Auth + Passkeys + OAuth]
+    CP --> Q[Worker queue service]
+    CP --> DR[Durable remote-call router]
+    Q --> J[(Local Jazz authority)]
+    DR --> J
+    J --> DEV[MCPDevice / RemoteChannel]
+    DEV --> DC[Desktop Commander stdio MCP]
+    DC --> OS[Mac files, terminal, processes, documents]
+    T[Tailscale Funnel today\n/zrok supported in code] --> PUB
+    L[macOS launchd] --> CP
+    L --> J
+
+    subgraph MacBook[Owner MacBook]
+      CP
+      AUTH
+      Q
+      DR
+      J
+      DEV
+      DC
+      OS
+      L
+    end
+
+    classDef planned stroke-dasharray: 5 5;
+    class U2 planned;

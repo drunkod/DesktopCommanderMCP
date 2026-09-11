@@ -1,0 +1,41 @@
+erDiagram
+    DEVICES ||--o{ REMOTE_CALLS : executes
+    WORKER_SESSIONS ||--o{ CHAT_JOBS : claims
+    DEVICES ||--o{ AUDIT_EVENTS : referenced_by
+    REMOTE_CALLS ||--o{ AUDIT_EVENTS : referenced_by
+
+    DEVICES {
+      string ownerId
+      string stableId
+      string oauthClientId
+      string status
+      timestamp lastSeenAt
+    }
+    REMOTE_CALLS {
+      string ownerId
+      string requestId
+      string requestFingerprint
+      string status
+      json toolArgs
+      json result
+    }
+    WORKER_SESSIONS {
+      string ownerId
+      string status
+      timestamp startedAt
+      timestamp expiresAt
+    }
+    CHAT_JOBS {
+      string ownerId
+      string requesterId
+      string conversationId
+      string prompt
+      string status
+      string answer
+    }
+    AUDIT_EVENTS {
+      string ownerId
+      string kind
+      string summary
+      timestamp occurredAt
+    }
