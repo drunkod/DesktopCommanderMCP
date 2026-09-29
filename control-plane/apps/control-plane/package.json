@@ -23,6 +23,7 @@
     "worker:enqueue": "NODE_ENV=production node --env-file=.env.local --import tsx ./scripts/enqueue-worker-task.ts",
     "worker:tasks": "NODE_ENV=production node --env-file=.env.local --import tsx ./scripts/list-worker-tasks.ts",
     "worker:inspect": "NODE_ENV=production node --env-file=.env.local --import tsx ./scripts/inspect-worker-session.ts",
+    "cutover:inspect": "NODE_ENV=production node --env-file=.env.local --import tsx ./scripts/inspect-cutover-readiness.ts",
     "test:worker-queue": "tsx ./scripts/test-worker-queue.ts",
     "test:worker-mcp": "tsx ./scripts/test-worker-mcp.ts",
     "test:worker-restart": "tsx ./scripts/test-worker-restart.ts",

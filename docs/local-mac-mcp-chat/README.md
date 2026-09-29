@@ -30,7 +30,8 @@ Every application-owned process and persistent store runs on the owner's MacBook
 6. [MVP without chat](06-MVP-WITHOUT-CHAT.md) — implemented private-MVP scope and accepted runtime state.
 7. [Service overview and implementation status](07-SERVICE-OVERVIEW-IMPLEMENTATION-REPORT.md) — current codebase review, user-facing capabilities, implemented/planned matrix and implementation roadmap.
 8. [Unified repository migration and cutover plan](08-UNIFIED-REPOSITORY-MIGRATION-PLAN.md) — history-preserving import, publication audit, persistent-state migration, isolated validation, launchd cutover, rollback and post-migration product sequencing.
-9. Diagrams: [architecture](architecture.mmd), [job sequence](job-sequence.mmd), plus the [service overview diagram set](diagrams/).
+9. [Controlled cutover architecture](09-CUTOVER-CONTROL-ARCHITECTURE.md) — ingress freeze, drain/readiness semantics, execution-stop ordering, snapshot boundary, rollback and observation invariants.
+10. Diagrams: [architecture](architecture.mmd), [job sequence](job-sequence.mmd), plus the [service overview diagram set](diagrams/).
 
 This pack has **27 top-level tasks**, with detailed checklist subtasks, dependencies, proposed file locations, examples and acceptance criteria. All implementation checkboxes start unchecked. These are repository documents, not automatically created external task-tracker entries.
 
