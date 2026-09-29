@@ -8,6 +8,10 @@ yarn-error.log*
 dist/
 *.tsbuildinfo
 
+# Generated architecture indexes
+.codegraph/
+graphify-out/
+
 # IDE and editor files
 .idea/
 .vscode/
