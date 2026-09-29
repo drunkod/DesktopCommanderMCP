@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { fileURLToPath } from "node:url";
 
 const isProduction = process.env.NODE_ENV === "production";
 const scriptSrc = isProduction
@@ -23,6 +24,10 @@ const csp = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Keep standalone/output tracing inside the nested control-plane workspace.
+  // Without this, Next sees the repository-root package-lock.json and treats the
+  // entire DesktopCommanderMCP checkout as its workspace root.
+  outputFileTracingRoot: fileURLToPath(new URL("../..", import.meta.url)),
   serverExternalPackages: ["jazz-tools", "jazz-napi"],
   async headers() {
     const headers = [
