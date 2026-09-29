@@ -6,7 +6,7 @@ ROOT="${REMOTE_MCP_ROOT:-$SCRIPT_ROOT}"
 CONTROL="$ROOT/apps/control-plane"
 ENV_FILE="$CONTROL/.env.local"
 RUNTIME_ENV="${REMOTE_MCP_RUNTIME_ENV:-$ROOT/.data/launchd-runtime.env}"
-TAILSCALE_BIN="${TAILSCALE_BIN:-/etc/profiles/per-user/test/bin/tailscale}"
+TAILSCALE_BIN="${TAILSCALE_BIN:-}"
 
 JAZZ_PID=""
 WEB_PID=""
@@ -37,7 +37,7 @@ shutdown() {
 trap cleanup EXIT
 trap shutdown INT TERM HUP
 
-for required in "$ENV_FILE" "$RUNTIME_ENV" "$CONTROL/.next/BUILD_ID" "$TAILSCALE_BIN"; do
+for required in "$ENV_FILE" "$RUNTIME_ENV" "$CONTROL/.next/BUILD_ID"; do
   if [[ ! -e "$required" ]]; then
     log "required path is missing: $required"
     exit 1
@@ -49,10 +49,12 @@ done
 source "$RUNTIME_ENV"
 : "${NODE_BIN:?NODE_BIN missing from runtime env}"
 : "${PNPM_BIN:?PNPM_BIN missing from runtime env}"
+: "${TAILSCALE_BIN:?TAILSCALE_BIN missing from runtime env}"
 [[ -x "$NODE_BIN" ]] || { log "NODE_BIN is not executable: $NODE_BIN"; exit 1; }
 [[ -x "$PNPM_BIN" ]] || { log "PNPM_BIN is not executable: $PNPM_BIN"; exit 1; }
+[[ -x "$TAILSCALE_BIN" ]] || { log "TAILSCALE_BIN is not executable: $TAILSCALE_BIN"; exit 1; }
 
-export PATH="$(dirname "$NODE_BIN"):$(dirname "$PNPM_BIN"):/etc/profiles/per-user/test/bin:/run/current-system/sw/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export PATH="$(dirname "$NODE_BIN"):$(dirname "$PNPM_BIN"):$(dirname "$TAILSCALE_BIN"):/run/current-system/sw/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 export HOME="${HOME:-/Users/test}"
 export TERM_PROGRAM="${TERM_PROGRAM:-remote-mcp-launchd}"
 set -a

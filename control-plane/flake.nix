@@ -26,6 +26,7 @@
               openssl
               sqlite
               cloudflared
+              tailscale
               just
               python3
               pkg-config
