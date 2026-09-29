@@ -1,8 +1,9 @@
 # RemoteMCP Jazz implementation
 
-This directory is the **real implementation repository** for the self-hosted
-Remote Desktop Commander control plane. Research and prototypes stay one level
-up under `plan/` and `research/`.
+This directory is the self-hosted Remote Desktop Commander **control-plane component**
+inside the unified `DesktopCommanderMCP` repository. It preserves its own pnpm/Nix
+workspace so the control plane can be developed and validated independently from the
+root Desktop Commander npm package.
 
 ## Repository responsibilities
 
@@ -16,14 +17,14 @@ Better Auth owns OAuth/OIDC/MCP authentication state in SQLite. Jazz owns the
 Remote MCP application data (devices, calls and audit events) and validates
 Better Auth JWTs through JWKS. Supabase is not part of this implementation.
 
-The Desktop Commander device-agent changes are intentionally **not** copied
-into this repository. They belong in the existing `DesktopCommanderMCP` Git
-repository so upstream changes remain mergeable.
+Desktop Commander device-agent code remains at the unified repository root under
+`src/remote-device/`. The control plane stays nested here so the upstream Desktop
+Commander tree remains structurally close to its original layout.
 
 ## Quick start
 
 ```bash
-cd ~/Documents/RemoteMCP-Jazz/implementation
+cd /path/to/DesktopCommanderMCP/control-plane
 nix develop
 just doctor
 just bootstrap
@@ -44,9 +45,10 @@ Do not commit `apps/control-plane/.env.local`, `.data/`, `.next/` or
 
 ## Current phase
 
-Phase 1 is to get the control-plane/protocol repository reproducibly green
-under Nix. Phase 2 moves into the existing DesktopCommanderMCP repository and
-replaces its Supabase remote transport with the shared Jazz protocol.
+The private no-chat Jazz/Better Auth worker MVP is implemented and tested. The
+current phase is unified-repository consolidation and controlled deployment cutover,
+followed by least-privilege multi-user authorization and chat work. See the root
+`docs/local-mac-mcp-chat/08-UNIFIED-REPOSITORY-MIGRATION-PLAN.md`.
 
 See [`docs/JAZZ-BETTER-AUTH-DECISION.md`](docs/JAZZ-BETTER-AUTH-DECISION.md)
 for the compatibility research behind the SQLite/JWKS boundary.

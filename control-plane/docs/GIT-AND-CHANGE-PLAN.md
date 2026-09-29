@@ -1,11 +1,14 @@
 # Git and change plan
 
+> **Historical bootstrap document.** The separate control-plane repository described below has been superseded by the unified `DesktopCommanderMCP/control-plane/` layout. For current migration/deployment steps, use `../../docs/local-mac-mcp-chat/08-UNIFIED-REPOSITORY-MIGRATION-PLAN.md`.
+
+
 ## 1. New implementation repository
 
 Repository root:
 
 ```text
-~/Documents/RemoteMCP-Jazz/implementation/
+<DesktopCommanderMCP>/control-plane/
 ```
 
 This is the only new Git repository we initialise now. It owns:

@@ -1,11 +1,14 @@
 # Implementation sequence from here
 
+> **Historical bootstrap document.** The separate control-plane repository described below has been superseded by the unified `DesktopCommanderMCP/control-plane/` layout. For current migration/deployment steps, use `../../docs/local-mac-mcp-chat/08-UNIFIED-REPOSITORY-MIGRATION-PLAN.md`.
+
+
 ## Gate 1 — make the new control-plane repo green
 
 Work only in:
 
 ```text
-~/Documents/RemoteMCP-Jazz/implementation/
+<DesktopCommanderMCP>/control-plane/
 ```
 
 Run the complete `docs/TESTING.md` sequence. Fix dependency/API/type/build issues

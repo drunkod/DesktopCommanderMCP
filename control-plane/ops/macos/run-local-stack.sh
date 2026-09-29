@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="${REMOTE_MCP_ROOT:-/Users/test/Documents/RemoteMCP-Jazz/implementation}"
+SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ROOT="${REMOTE_MCP_ROOT:-$SCRIPT_ROOT}"
 CONTROL="$ROOT/apps/control-plane"
 ENV_FILE="$CONTROL/.env.local"
 RUNTIME_ENV="${REMOTE_MCP_RUNTIME_ENV:-$ROOT/.data/launchd-runtime.env}"

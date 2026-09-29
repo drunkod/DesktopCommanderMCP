@@ -13,7 +13,8 @@ TAILSCALE_BIN="/etc/profiles/per-user/$(id -un)/bin/tailscale"
 RUNTIME_PROFILE="$ROOT/.data/launchd-dev-profile"
 RUNTIME_ENV="$ROOT/.data/launchd-runtime.env"
 
-case "${1:-install}" in
+ACTION="${1:-install}"
+case "$ACTION" in
   uninstall)
     launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
     rm -f "$PLIST"
@@ -24,15 +25,18 @@ case "${1:-install}" in
     launchctl print "$DOMAIN/$LABEL"
     exit $?
     ;;
-  install) ;;
-  *) echo "usage: $0 [install|uninstall|status]" >&2; exit 2 ;;
+  render|install) ;;
+  *) echo "usage: $0 [render|install|uninstall|status]" >&2; exit 2 ;;
 esac
 for required in "$RUNNER" "$BASH_BIN" "$NIX_BIN" "$TAILSCALE_BIN"; do
   [[ -e "$required" ]] || { echo "missing required path: $required" >&2; exit 1; }
 done
 
-mkdir -p "$PLIST_DIR" "$HOME/Library/Logs" "$ROOT/.data"
-chmod +x "$RUNNER"
+mkdir -p "$ROOT/.data"
+if [[ "$ACTION" == "install" ]]; then
+  mkdir -p "$PLIST_DIR" "$HOME/Library/Logs"
+  chmod +x "$RUNNER"
+fi
 
 echo "Resolving pinned runtime from the repository Nix dev shell..."
 RUNTIME_LINES="$($NIX_BIN develop "$ROOT" --profile "$RUNTIME_PROFILE" --command bash -c \
@@ -50,7 +54,12 @@ EOF
 chmod 600 "$RUNTIME_ENV"
 echo "Pinned runtime: $($NODE_BIN --version), pnpm $($PNPM_BIN --version)"
 
-TMP="$PLIST.tmp.$$"
+if [[ "$ACTION" == "render" ]]; then
+  TARGET_PLIST="$ROOT/.data/$LABEL.plist.rendered"
+else
+  TARGET_PLIST="$PLIST"
+fi
+TMP="$TARGET_PLIST.tmp.$$"
 cat >"$TMP" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
@@ -82,9 +91,16 @@ cat >"$TMP" <<EOF
 </plist>
 EOF
 /usr/bin/plutil -lint "$TMP"
+mv "$TMP" "$TARGET_PLIST"
+chmod 600 "$TARGET_PLIST"
+
+if [[ "$ACTION" == "render" ]]; then
+  echo "Rendered $TARGET_PLIST"
+  echo "No launchd service was modified."
+  exit 0
+fi
+
 launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
-mv "$TMP" "$PLIST"
-chmod 600 "$PLIST"
 launchctl bootstrap "$DOMAIN" "$PLIST"
 launchctl enable "$DOMAIN/$LABEL"
 launchctl kickstart -k "$DOMAIN/$LABEL"

@@ -29,7 +29,7 @@ for each release. Queue/build/restart checks are separate from the remaining
 ## Step 0 — enter the repository
 
 ```bash
-cd ~/Documents/RemoteMCP-Jazz/implementation
+cd /path/to/DesktopCommanderMCP/control-plane
 ```
 
 ## Step 1 — enter the pinned Nix shell
@@ -247,7 +247,7 @@ just build
 Open **Terminal A**:
 
 ```bash
-cd ~/Documents/RemoteMCP-Jazz/implementation
+cd /path/to/DesktopCommanderMCP/control-plane
 nix develop
 just web
 ```
@@ -277,7 +277,7 @@ If Next reports an import/runtime error, send the first root-cause stack trace.
 Open **Terminal B**:
 
 ```bash
-cd ~/Documents/RemoteMCP-Jazz/implementation
+cd /path/to/DesktopCommanderMCP/control-plane
 nix develop
 just jazz
 ```
@@ -303,7 +303,7 @@ If Jazz exits at startup, send the complete startup error. Do not rotate secrets
 With Terminal A and B still running, open **Terminal C**:
 
 ```bash
-cd ~/Documents/RemoteMCP-Jazz/implementation
+cd /path/to/DesktopCommanderMCP/control-plane
 nix develop
 just jazz-deploy
 ```
