@@ -1,6 +1,6 @@
 # Unified repository migration and controlled cutover plan
 
-**Status:** repository consolidation implemented and validated through pre-cutover gates; production cutover remains blocked on an independently attested local/SSH control channel and the final quiesced-state snapshot.
+**Status:** repository consolidation implemented and validated through pre-cutover gates; production cutover and local-device activation remain blocked by device branch divergence. A copied-state row-repair rehearsal found no accepted row-level repair; a clean-authority logical reseed rehearsal is the next copy-only repair track.
 **Date:** 2026-09-29.
 **Target repository:** `drunkod/DesktopCommanderMCP`.
 **Target branch:** create a dedicated consolidation branch from the current clean Desktop Commander tip.
@@ -726,7 +726,37 @@ When implementation begins, perform these next actions in order:
 13. Execute identity/state/device/worker continuity tests.
 14. Push the reviewed consolidation branch only after the publication gate passes.
 15. Observe, run restart/restore checks, then archive redundant checkouts.
-16. Resume product development with authorization semantics before multi-user device execution.
+16. Keep production cutover and isolated local-device activation blocked until device branch divergence is resolved and all views converge.
+17. Run the copy-only clean-authority logical reseed rehearsal described in Plan 09, with isolated state and ports.
+18. If and only if every reseed acceptance criterion passes, separately design and review a production migration/cutover; rehearsal success alone does not authorize production migration.
+19. Resume product development with authorization semantics before multi-user device execution.
+
+### Completed copied-state branch-repair rehearsal (2026-09-29)
+
+The committed command `pnpm device:rehearse-branch-repair` is copied-state-only. The rehearsal operated only on SQLite backups under `/tmp` and random isolated Jazz ports; production state was not a mutation target. Three fresh-copy candidates were tested:
+
+| Candidate | Fresh-copy observation | Durable canonical result |
+| --- | --- | --- |
+| Backend update of `stableId` | Candidate acknowledged; both copied views looked canonical immediately. After authority restart plus a brand-new backend cache, the backend view returned to the stale `stableId`. | `durableCanonical=false` |
+| Backend upsert of the full device row, same ID and canonical `stableId` | Immediate copied backend view looked canonical. After authority restart plus a brand-new backend cache, the backend view returned to stale. | `durableCanonical=false` |
+| Admin upsert of the already-canonical authority row | Admin stayed canonical; backend stayed stale immediately and after restart. | `durableCanonical=false` |
+
+No tested row-level update/upsert is an accepted production repair. Do not weaken `blocked-backend-divergence` or create/start the isolated local device based on this evidence. Production remains pinned to Jazz alpha.53; do not perform an in-place upgrade as a repair.
+
+### Next repair track: clean-authority logical reseed rehearsal (COPY-ONLY first)
+
+This is a proposed rehearsal, not an implemented or validated repair. Execute only against copied state, using isolated authority/backend storage and ports:
+
+1. Snapshot source authority and backend state.
+2. Start the copied source authority read-only for canonical export.
+3. Create a new empty isolated authority using the same app ID, admin secret, and backend secret only inside the rehearsal.
+4. Deploy the same schema and permissions to the new authority.
+5. Export current canonical application rows from the authority-admin view for every app table.
+6. Import those rows to the new authority in dependency-safe order, preserving row IDs, references, timestamps/business fields, and current revoked/status state.
+7. Do not copy old row-history or internal storage files into the new authority.
+8. Restart the new authority and connect a brand-new empty backend cache.
+9. Verify complete application-level table inventory/content equivalence, device/dashboard/admin/backend visibility, owner/client invariants, no active-work drift, and stable canonical device identity.
+10. Only if all checks pass, separately design a production migration/cutover. The rehearsal itself authorizes no production migration.
 
 ## 32. Explicit non-goals of the migration
 

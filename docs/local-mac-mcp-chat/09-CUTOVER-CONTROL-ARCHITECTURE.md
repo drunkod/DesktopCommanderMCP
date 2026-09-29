@@ -94,6 +94,35 @@ repair. Manual authority/backend-branch maintenance from an independently contro
 SSH is required, followed by a fresh dry-run. Do not create the isolated config or start the unified
 local device until all four views converge.
 
+#### Copied-state branch-repair rehearsal (2026-09-29)
+
+The committed command `pnpm device:rehearse-branch-repair` is copied-state-only. It operated only on SQLite backups under `/tmp` and random isolated Jazz ports; production state was not used as a mutation target. Three fresh-copy candidates were tested:
+
+| Candidate | Result | `durableCanonical` |
+| --- | --- | --- |
+| Backend update of `stableId` | Candidate acknowledged and both copied views looked canonical immediately; after authority restart plus a brand-new backend cache, backend returned to stale `stableId`. | `false` |
+| Backend upsert of full device row with same ID and canonical `stableId` | Immediate copied backend looked canonical; after authority restart plus a brand-new backend cache, backend returned stale. | `false` |
+| Admin upsert of already-canonical authority row | Admin stayed canonical; backend stayed stale both immediately and after restart. | `false` |
+
+No tested row-level update/upsert is an accepted production repair. Do not weaken `blocked-backend-divergence` or create/start the isolated local device based on this evidence. Production remains pinned to Jazz alpha.53; do not in-place upgrade as a repair.
+
+#### Next repair track: clean-authority logical reseed rehearsal (COPY-ONLY first)
+
+The following is a proposed track, not an implemented or validated repair. Keep every step inside a copied-state rehearsal with isolated storage and ports:
+
+1. Snapshot source authority and backend state.
+2. Start copied source authority read-only for canonical export.
+3. Create a new empty isolated authority using the same app ID/admin/backend secrets only inside rehearsal.
+4. Deploy the same schema and permissions.
+5. Export current canonical application rows from the authority-admin view for all app tables.
+6. Import rows to the new authority in dependency-safe order, preserving row IDs, references, timestamps/business fields, and current revoked/status state.
+7. Do not copy old row-history or internal storage files into the new authority.
+8. Restart the new authority and connect a brand-new empty backend cache.
+9. Verify complete table inventory and application-level content equivalence, device/dashboard/admin/backend visibility, owner/client invariants, no active-work drift, and stable canonical device identity.
+10. Only if all checks pass, separately design a production migration/cutover. The rehearsal itself authorizes no production migration.
+
+Reseed rehearsal acceptance criteria are all mandatory: source snapshot remains untouched; schema and permissions match; every app table is inventoried and logically equivalent after reseed; row identity, references, timestamps/business fields, and revoked/status state are preserved; all four device views agree on canonical identity after authority restart and brand-new backend cache creation; owner/client invariants and active-work state are unchanged; and no production state is modified. Any mismatch fails the rehearsal and keeps branch divergence blocked.
+
 #### Jazz repair/upgrade boundary
 
 The current upstream jazz-tools CLI exposes validation, schema export/hash, deploy, permissions
