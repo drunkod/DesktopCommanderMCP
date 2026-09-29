@@ -141,9 +141,11 @@ Accepted evidence:
 - immutable authority/backend snapshot hashes: unchanged before/after
 - SQLite `quick_check`: `ok`
 
-This proves a **candidate recovery procedure on copied state**, not permission to execute it live. The operator handoff is documented in `10-JAZZ-CLEAN-RESEED-PRODUCTION-RUNBOOK.md`. Before any freeze, `ops/macos/verify-jazz-clean-reseed-live-preflight.sh` must pass from a human-controlled independent Terminal/SSH session. A production reseed still requires current-state re-snapshot/revalidation, freeze/drain gates, rollback assets, a separately reviewed live stage/apply implementation, and explicit verification before local-device activation.
+This proves a **candidate recovery procedure on copied state**, not permission to execute it live. The operator handoff is documented in `10-JAZZ-CLEAN-RESEED-PRODUCTION-RUNBOOK.md`. Before any freeze, `ops/macos/verify-jazz-clean-reseed-live-preflight.sh` must pass from a human-controlled independent Terminal/SSH session. A production reseed still requires current-state re-snapshot/revalidation, freeze/drain gates, rollback assets, execution of the reviewed stage/apply commands from that independent channel, and explicit post-handoff verification before local-device activation.
 
 Do not use the older row-level update/upsert candidates. Do not copy old Jazz row-history into the new authority. Do not flatten all tables through one principal: alpha.53 preserves meaningful principal-specific visibility, and the accepted rehearsal depends on preserving that provenance.
+
+The operational stage/handoff layer is implemented in commit `d960f45`: `device:stage-clean-reseed` creates and validates a closed staged authority from frozen snapshots; `device:apply-clean-reseed` performs only the guarded same-filesystem authority-directory handoff while writers are stopped; `device:verify-clean-reseed` validates the live persistent backend plus admin/dashboard/device views after restart while every freeze remains active. The committed-code stage rehearsal `control-plane/.data/recovery-stage/rehearsal-20260929T230843Z` passed with `stageReady=true`, returning-cache compatibility, and post-cache fresh convergence; a `/tmp` handoff rehearsal preserved both new-stage and old-rollback hashes. None of these rehearsals authorizes or performs live production recovery.
 
 #### Jazz repair/upgrade boundary
 

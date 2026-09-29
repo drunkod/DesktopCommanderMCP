@@ -121,7 +121,7 @@ Preserve the old Jazz authority directory and backend cache as a rollback pair. 
 
 ## 7. Validated logical recovery semantics
 
-A live staging implementation must reproduce the semantics proven by `pnpm device:rehearse-clean-reseed`:
+The implemented stager `pnpm device:stage-clean-reseed -- production` reproduces the semantics proven by `pnpm device:rehearse-clean-reseed`. It accepts only frozen snapshot inputs under `.data/recovery-live`, requires the independent-control attestation, all three freeze markers, launchd booted out, and no listeners on ports 3000/1625:
 
 1. Start only working copies of the frozen snapshots on isolated ports.
 2. Read both backend-service and authority-admin logical projections.
@@ -138,43 +138,81 @@ A live staging implementation must reproduce the semantics proven by `pnpm devic
 10. Restart the staged authority and verify exact backend/admin projections and all four target views.
 11. Reconnect a copy of the pre-reseed backend cache, require exact synchronization and an acknowledged canonical no-op write.
 12. Restart again and require another fresh backend cache to converge exactly.
-## 8. Deliberate stop point before live replacement
+## 8. Implemented stage and handoff boundary
 
-There is currently **no reviewed one-click production stage/apply command** in this repository.
+The production stage/apply boundary is implemented, but **has not been executed against live Jazz state**.
 
-That is intentional. The copy-only rehearsal proves the data-recovery algorithm, not the operational authority-directory replacement.
+Committed implementation SHA: `d960f45c73df407ead7e6ef8dfe4a4642116ff2c`.
 
-Do not manually adapt the rehearsal by pointing it at production paths, disabling its alias guards, or changing its cleanup behavior.
+Committed-code rehearsal evidence:
 
-Before live replacement is allowed, add and review a stage/apply implementation that:
+- staged authority: `control-plane/.data/recovery-stage/rehearsal-20260929T230843Z`
+- `stageReady=true`
+- stage manifest Git SHA: `d960f45c73df407ead7e6ef8dfe4a4642116ff2c`
+- returning backend cache compatible: `true`
+- post-returning-cache fresh convergence: `true`
+- `productionApplyAuthorized=false`
+- actual handoff rehearsal using copies of the old and staged SQLite authority: new-stage hash landed at the live rehearsal path and the old-authority hash landed at the rollback rehearsal path.
 
-- consumes only the final frozen snapshots;
-- writes a new staged authority directory, never the active one;
-- validates the staged authority with the same acceptance checks;
-- stops all staged Jazz processes before handoff;
-- records hashes and a manifest for the staged directory;
-- supports same-filesystem atomic directory handoff while production remains stopped;
-- has a rollback procedure for the old authority **and** backend-cache pair;
-- refuses to run unless the independent-control preflight is valid.
+Production staging, from the independently controlled shell **after Phase 6 frozen snapshots exist**, is:
 
-Until that implementation exists and passes an isolated rehearsal, stop maintenance before Phase 8 and restore the normal service using the existing authority if necessary.
+```bash
+export DEVICE_RESEED_STAGE_SOURCE_AUTHORITY_DB="$RECOVERY_DIR/source-authority.sqlite"
+export DEVICE_RESEED_STAGE_SOURCE_BACKEND_DB="$RECOVERY_DIR/source-backend.sqlite"
+export DEVICE_RESEED_DEVICE_ID='<target device row id>'
+export DEVICE_RESEED_EXPECTED_BACKEND_STABLE_ID='<historical backend stable id>'
+export DEVICE_RESEED_EXPECTED_CANONICAL_STABLE_ID='<canonical stable id>'
+
+pnpm device:stage-clean-reseed -- production
+```
+
+The stager writes only under `.data/recovery-stage/production-*`, deploys schema/permissions into a new authority, preserves backend/admin provenance, validates both principal projections, reconnects a copy of the frozen backend cache, restarts again with a fresh cache, stops every staged process, runs SQLite `quick_check`, hashes the staged authority, and writes `stage-manifest.json`. It never moves the active authority and never self-authorizes production apply.
+
+After reviewing the stage manifest, handoff is:
+
+```bash
+export DEVICE_RESEED_STAGE_DIR='<absolute production stage directory>'
+export DEVICE_RESEED_LIVE_RECOVERY_DIR="$RECOVERY_DIR"
+
+pnpm device:apply-clean-reseed -- apply
+```
+
+The handoff command again requires independent-control attestation, all freeze markers, launchd booted out, no listeners, a current-SHA `mode=production` stage, matching stage hash/SQLite integrity, and same-filesystem live/stage/rollback paths. It performs only two directory renames while writers are stopped:
+
+1. active `.data/jazz` -> `$RECOVERY_DIR/pre-apply-authority-dir`;
+2. staged authority -> active `.data/jazz`.
+
+If the second rename fails, the first rename is restored automatically. On success, services remain stopped and `.data/reseed-handoff-pending-validation.json` is written with `validationComplete=false`.
+
+Do not manually point the copy-only rehearsal at production paths or bypass the stage/apply guards.
 
 ## 9. Post-recovery verification requirements
 
-After a future reviewed live replacement, keep public ingress frozen and task/effect admission frozen until all of these pass:
+After handoff, start the existing launchd control-plane stack while all three freeze markers remain present. The runner must therefore keep public Funnel ingress closed.
 
-- loopback Next and Jazz health;
-- exact backend projection;
-- exact admin projection;
-- backend/admin/dashboard/device target identity equality;
-- canonical target `stableId`;
-- no revocation/owner/client drift;
-- current backend cache synchronization;
+From the same independently controlled shell run:
+
+```bash
+pnpm device:verify-clean-reseed
+```
+
+This command requires the independent-control attestation, all freeze markers, launchd running, and loopback ports 3000/1625 listening. It reads the stage directory from `.data/reseed-handoff-pending-validation.json`, then verifies:
+
+- the **actual persistent backend cache** projection exactly matches the staged expected backend hash/counts;
+- the live admin projection exactly matches the staged expected admin hash/counts;
+- backend/admin/dashboard/device target identity is exactly the canonical staged identity;
+- owner/client/status/revocation identity has not drifted.
+
+A successful result updates the pending marker to `validationComplete=true`, but explicitly reports `admissionsReopenAuthorized=false` and `publicIngressReopenAuthorized=false`.
+
+Then run the remaining continuity gates while ingress and admissions are still frozen:
+
 - `pnpm device:reconcile-identity` reports convergence;
+- `pnpm cutover:inspect` shows no unexpected running/non-terminal state;
 - isolated device config contains only the canonical `stableId`;
-- no unexpected queued/running/non-terminal state.
+- loopback Next/Jazz health and resource identity are correct.
 
-Only after those checks may the isolated local-Jazz device be activated and its dedicated credential flow tested.
+Only after those checks may the isolated local-Jazz device be activated and its dedicated credential flow tested. Public ingress remains closed until that device continuity succeeds.
 ## 10. Reopen and observation
 
 After local-device continuity is verified:
