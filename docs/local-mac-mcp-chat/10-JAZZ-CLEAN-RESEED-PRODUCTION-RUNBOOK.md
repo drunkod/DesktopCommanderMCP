@@ -6,15 +6,15 @@
 
 The accepted copy-only recovery evidence is:
 
-- evidence: `control-plane/.data/recovery-evidence/clean-reseed-20260929T215309Z`
-- recovery-code SHA recorded by the evidence: `5c843ea80c47824183ed2a4f255224572d58db7d`
+- evidence: `control-plane/.data/recovery-evidence/clean-reseed-20260929T234323Z`
+- recovery-code SHA recorded by the evidence: `ae06bd3e93f17dced59c2db9ae565a270d66c24d`
 - `rehearsalAccepted=true`
 - `productionMigrationAuthorized=false`
 - old backend cache reconnect: compatible
 - post-reconnect fresh-cache convergence: exact
 - device Jazz persistence: memory-only
 
-This document does not override `productionMigrationAuthorized=false`. It defines the operator boundary and the sequence that must be satisfied before a separately reviewed live stage/apply implementation may be executed.
+This document does not override `productionMigrationAuthorized=false`. It defines the operator boundary and the sequence that must be satisfied before the reviewed live stage/apply commands may be executed.
 
 ## 1. Non-negotiable boundaries
 
@@ -36,7 +36,7 @@ From an already-open local Terminal or independent SSH session:
 cd /Users/test/Documents/RemoteMCP-Jazz/repositories/DesktopCommanderMCP/control-plane
 ./ops/macos/independent-control-preflight.sh attest
 
-export DEVICE_RESEED_ACCEPTED_EVIDENCE_DIR="$PWD/.data/recovery-evidence/clean-reseed-20260929T215309Z"
+export DEVICE_RESEED_ACCEPTED_EVIDENCE_DIR="$PWD/.data/recovery-evidence/clean-reseed-20260929T234323Z"
 ./ops/macos/verify-jazz-clean-reseed-live-preflight.sh
 ```
 
@@ -103,17 +103,37 @@ lsof -nP -iTCP:1625 -sTCP:LISTEN
 Both commands must show no production listener before final snapshots are taken.
 ## 6. Final frozen-state recovery snapshot
 
-Create a new recovery directory outside Git, under `control-plane/.data/recovery-live/`, with mode 0700.
+With all three freeze markers present, launchd booted out, and ports 3000/1625 free, capture the stopped state from the independent shell:
 
-While writers remain stopped, capture at minimum:
+```bash
+pnpm device:capture-clean-reseed-frozen-state -- production
+```
 
-- Jazz authority SQLite using SQLite `.backup`;
-- Jazz backend runtime SQLite using SQLite `.backup`;
-- Better Auth SQLite using SQLite `.backup`;
-- production `.env.local` with mode 0600;
-- installed LaunchAgent plist and launchd runtime environment;
-- current Git SHA, freeze-marker state, and current Funnel status;
-- SHA-256 hashes and SQLite `PRAGMA quick_check` results.
+The command creates a mode-0700 directory under `control-plane/.data/recovery-live/frozen-*` and prints its path. Set:
+
+```bash
+export RECOVERY_DIR='<printed absolute recovery directory>'
+export DEVICE_RESEED_LIVE_RECOVERY_MANIFEST="$RECOVERY_DIR/recovery-manifest.json"
+```
+
+The capture uses SQLite `.backup` for the Jazz authority and backend runtime databases and, when configured, Better Auth. It also preserves the production `.env.local`, installed LaunchAgent plist and launchd runtime environment with restrictive permissions.
+
+`recovery-manifest.json` binds:
+
+- the current Git SHA;
+- the exact stopped live authority/backend paths;
+- the exact snapshot paths and SHA-256 values;
+- SQLite `quick_check` results;
+- a logical stopped-state fingerprint defined as the SHA-256 of a SQLite `.backup` made from each stopped live database;
+- WAL/SHM presence, size and SHA-256 at capture as diagnostic context.
+
+The logical fingerprint is authoritative for freshness because SQLite `.backup` includes committed state visible through WAL. Before staging and again immediately before handoff, the recovery code creates fresh temporary `.backup` files from the still-stopped live databases and requires their hashes to equal the manifest fingerprints.
+
+You can verify this explicitly while writers remain stopped:
+
+```bash
+./ops/macos/verify-jazz-clean-reseed-frozen-state.sh "$RECOVERY_DIR/recovery-manifest.json"
+```
 
 The accepted copy-only evidence is not a substitute for this final frozen snapshot. Production may have changed since the rehearsal.
 
@@ -142,23 +162,26 @@ The implemented stager `pnpm device:stage-clean-reseed -- production` reproduces
 
 The production stage/apply boundary is implemented, but **has not been executed against live Jazz state**.
 
-Committed implementation SHA: `d960f45c73df407ead7e6ef8dfe4a4642116ff2c`.
+Current hardened recovery implementation SHA: `ae06bd3e93f17dced59c2db9ae565a270d66c24d`.
 
 Committed-code rehearsal evidence:
 
-- staged authority: `control-plane/.data/recovery-stage/rehearsal-20260929T230843Z`
+- staged authority: `control-plane/.data/recovery-stage/rehearsal-20260929T234452Z`
 - `stageReady=true`
-- stage manifest Git SHA: `d960f45c73df407ead7e6ef8dfe4a4642116ff2c`
+- stage manifest Git SHA: `ae06bd3e93f17dced59c2db9ae565a270d66c24d`
 - returning backend cache compatible: `true`
 - post-returning-cache fresh convergence: `true`
 - `productionApplyAuthorized=false`
-- actual handoff rehearsal using copies of the old and staged SQLite authority: new-stage hash landed at the live rehearsal path and the old-authority hash landed at the rollback rehearsal path.
+- handoff rehearsal using copies of the accepted old and staged SQLite authority: new-stage hash landed at the live rehearsal path and the old-authority hash landed at rollback;
+- journal phase after successful rehearsal handoff: `awaiting-validation`;
+- journal recovery restored both the old live authority and the staged new authority exactly.
 
 Production staging, from the independently controlled shell **after Phase 6 frozen snapshots exist**, is:
 
 ```bash
 export DEVICE_RESEED_STAGE_SOURCE_AUTHORITY_DB="$RECOVERY_DIR/source-authority.sqlite"
 export DEVICE_RESEED_STAGE_SOURCE_BACKEND_DB="$RECOVERY_DIR/source-backend.sqlite"
+export DEVICE_RESEED_LIVE_RECOVERY_MANIFEST="$RECOVERY_DIR/recovery-manifest.json"
 export DEVICE_RESEED_DEVICE_ID='<target device row id>'
 export DEVICE_RESEED_EXPECTED_BACKEND_STABLE_ID='<historical backend stable id>'
 export DEVICE_RESEED_EXPECTED_CANONICAL_STABLE_ID='<canonical stable id>'
@@ -166,7 +189,7 @@ export DEVICE_RESEED_EXPECTED_CANONICAL_STABLE_ID='<canonical stable id>'
 pnpm device:stage-clean-reseed -- production
 ```
 
-The stager writes only under `.data/recovery-stage/production-*`, deploys schema/permissions into a new authority, preserves backend/admin provenance, validates both principal projections, reconnects a copy of the frozen backend cache, restarts again with a fresh cache, stops every staged process, runs SQLite `quick_check`, hashes the staged authority, and writes `stage-manifest.json`. It never moves the active authority and never self-authorizes production apply.
+Before staging, the wrapper verifies that the selected authority/backend snapshots are exactly the pair named by `recovery-manifest.json`, that their hashes match, and that fresh logical backups of the still-stopped live databases still equal the frozen-state fingerprints. The stager then writes only under `.data/recovery-stage/production-*`, deploys schema/permissions into a new authority, preserves backend/admin provenance, validates both principal projections, reconnects a copy of the frozen backend cache, restarts again with a fresh cache, stops every staged process, runs SQLite `quick_check`, hashes the staged authority, and writes `stage-manifest.json`. That stage manifest records the recovery-manifest path and SHA-256, so handoff is bound to the exact frozen pair. It never moves the active authority and never self-authorizes production apply.
 
 After reviewing the stage manifest, handoff is:
 
@@ -177,14 +200,17 @@ export DEVICE_RESEED_LIVE_RECOVERY_DIR="$RECOVERY_DIR"
 pnpm device:apply-clean-reseed -- apply
 ```
 
-The handoff command again requires independent-control attestation, all freeze markers, launchd booted out, no listeners, a current-SHA `mode=production` stage, matching stage hash/SQLite integrity, and same-filesystem live/stage/rollback paths. It performs only two directory renames while writers are stopped:
+The handoff command again requires independent-control attestation, all freeze markers, launchd booted out, no listeners, a current-SHA `mode=production` stage, matching stage hash/SQLite integrity, same-filesystem live/stage/rollback paths, and a fresh successful verification that the stopped live databases still match the frozen-state manifest.
 
-1. active `.data/jazz` -> `$RECOVERY_DIR/pre-apply-authority-dir`;
-2. staged authority -> active `.data/jazz`.
+Before the first rename it durably creates and fsyncs `.data/reseed-handoff-pending-validation.json` as a write-ahead journal with phase `prepared`. It then records these phases durably around the two directory renames:
 
-If the second rename fails, the first rename is restored automatically. On success, services remain stopped and `.data/reseed-handoff-pending-validation.json` is written with `validationComplete=false`.
+1. active `.data/jazz` -> `$RECOVERY_DIR/pre-apply-authority-dir`; journal phase `old-moved`;
+2. staged authority -> active `.data/jazz`; journal phase `new-live`;
+3. after filesystem sync, journal phase `awaiting-validation`.
 
-Do not manually point the copy-only rehearsal at production paths or bypass the stage/apply guards.
+Ordinary errors trigger in-process rollback and preserve the stage. For an abrupt interruption where traps cannot run, the journal exists before mutation and `pnpm device:apply-clean-reseed -- recover` reconstructs the safe rollback action from both the journal and actual directory state while writers are still stopped. Recovery has tests for interruption after each rename and failures after each journal phase. Automatic filesystem rollback is refused once services have started after handoff.
+
+Do not manually point the copy-only rehearsal at production paths or bypass the frozen-state, journal, stage/apply, or independent-control guards.
 
 ## 9. Post-recovery verification requirements
 
@@ -196,14 +222,18 @@ From the same independently controlled shell run:
 pnpm device:verify-clean-reseed
 ```
 
-This command requires the independent-control attestation, all freeze markers, launchd running, and loopback ports 3000/1625 listening. It reads the stage directory from `.data/reseed-handoff-pending-validation.json`, then verifies:
+This command requires the independent-control attestation, all freeze markers, launchd running, and loopback ports 3000/1625 listening. As soon as the running stack is confirmed, it durably changes the handoff journal to phase `validating` and records `servicesStartedAfterHandoff=true`; from that point automatic filesystem rollback is intentionally disabled.
 
-- the **actual persistent backend cache** projection exactly matches the staged expected backend hash/counts;
+The verifier does **not** open the web process's configured backend-cache file. It creates a dedicated verifier cache under the selected recovery directory, connects it to the live authority, and verifies:
+
+- the dedicated fresh backend projection exactly matches the staged expected backend hash/counts;
 - the live admin projection exactly matches the staged expected admin hash/counts;
 - backend/admin/dashboard/device target identity is exactly the canonical staged identity;
 - owner/client/status/revocation identity has not drifted.
 
-A successful result updates the pending marker to `validationComplete=true`, but explicitly reports `admissionsReopenAuthorized=false` and `publicIngressReopenAuthorized=false`.
+Jazz reads, client shutdowns and the whole verifier subprocess are bounded. The TypeScript verifier exits explicitly after cleanup, and the shell wrapper has a 90-second watchdog. If a child exits `0` but its JSON is malformed or does not contain `liveValidationAccepted=true`, the wrapper returns exit `2` rather than accidentally succeeding.
+
+A successful result atomically updates the journal to phase `validated` with `validationComplete=true`, but explicitly reports `admissionsReopenAuthorized=false` and `publicIngressReopenAuthorized=false`.
 
 Then run the remaining continuity gates while ingress and admissions are still frozen:
 

@@ -126,8 +126,8 @@ The rehearsal closes the recovery gaps that blocked the earlier proposal:
 
 Accepted evidence:
 
-- evidence directory: `control-plane/.data/recovery-evidence/clean-reseed-20260929T215309Z`
-- committed recovery-code SHA recorded by the evidence manifest: `5c843ea80c47824183ed2a4f255224572d58db7d`
+- evidence directory: `control-plane/.data/recovery-evidence/clean-reseed-20260929T234323Z`
+- committed recovery-code SHA recorded by the evidence manifest: `ae06bd3e93f17dced59c2db9ae565a270d66c24d`
 - process exit: `0`
 - `rehearsalAccepted=true`
 - `productionMigrationAuthorized=false`
@@ -145,7 +145,7 @@ This proves a **candidate recovery procedure on copied state**, not permission t
 
 Do not use the older row-level update/upsert candidates. Do not copy old Jazz row-history into the new authority. Do not flatten all tables through one principal: alpha.53 preserves meaningful principal-specific visibility, and the accepted rehearsal depends on preserving that provenance.
 
-The operational stage/handoff layer is implemented in commit `d960f45`: `device:stage-clean-reseed` creates and validates a closed staged authority from frozen snapshots; `device:apply-clean-reseed` performs only the guarded same-filesystem authority-directory handoff while writers are stopped; `device:verify-clean-reseed` validates the live persistent backend plus admin/dashboard/device views after restart while every freeze remains active. The committed-code stage rehearsal `control-plane/.data/recovery-stage/rehearsal-20260929T230843Z` passed with `stageReady=true`, returning-cache compatibility, and post-cache fresh convergence; a `/tmp` handoff rehearsal preserved both new-stage and old-rollback hashes. None of these rehearsals authorizes or performs live production recovery.
+The operational recovery boundary is hardened in commit `ae06bd3`. `device:capture-clean-reseed-frozen-state` creates a stopped-state recovery manifest whose authoritative freshness fingerprints are SQLite `.backup` hashes and whose diagnostics record WAL/SHM state. Production staging and handoff both re-backup the still-stopped live authority/backend databases and require exact fingerprint equality before proceeding. `device:stage-clean-reseed` binds its stage manifest to that exact recovery-manifest path/hash and snapshot pair. `device:apply-clean-reseed` creates and fsyncs a write-ahead handoff journal before the first rename, records `prepared -> old-moved -> new-live -> awaiting-validation`, and supports journal/state-driven recovery after hard interruption while services remain stopped. `device:verify-clean-reseed` uses a dedicated verifier backend cache rather than opening the web process's cache, bounds Jazz operations with a shell watchdog, explicitly exits after cleanup, and fails closed on malformed/rejected zero-exit output. The committed-code stage rehearsal `control-plane/.data/recovery-stage/rehearsal-20260929T234452Z` passed with `stageReady=true`, returning-cache compatibility, and post-cache fresh convergence; a handoff/recovery rehearsal using the accepted/staged SQLite copies preserved both hashes and restored both paths exactly. None of these rehearsals authorizes or performs live production recovery.
 
 #### Jazz repair/upgrade boundary
 
