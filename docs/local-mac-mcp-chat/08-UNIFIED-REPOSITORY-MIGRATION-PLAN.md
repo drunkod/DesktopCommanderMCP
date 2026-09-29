@@ -466,6 +466,14 @@ Only after the destination build and state are ready:
 
 Device identity convergence is a cutover gate; this plan does not claim the current production device branch is repaired.
 
+The production control plane is pinned to jazz-tools 2.0.0-alpha.53. Do not treat an in-place
+Jazz upgrade as a device-branch repair action. Upstream `garden-co/jazz`'s
+`packages/jazz-tools/CHANGELOG.md` states that 2.0.0-alpha.54 changes the storage format without
+automatic migration from alpha.53 and tells deployments with existing production data to obtain
+migration help before upgrading. Therefore, Jazz alpha.54+ evaluation is a separate migration
+track requiring copied-state testing and an explicit migration/rollback plan; it is not part of
+this repository cutover.
+
 Do not delete the old checkout after this step.
 
 ## 22. Post-cutover continuity tests

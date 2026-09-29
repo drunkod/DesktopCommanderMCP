@@ -94,6 +94,19 @@ repair. Manual authority/backend-branch maintenance from an independently contro
 SSH is required, followed by a fresh dry-run. Do not create the isolated config or start the unified
 local device until all four views converge.
 
+#### Jazz repair/upgrade boundary
+
+The current upstream jazz-tools CLI exposes validation, schema export/hash, deploy, permissions
+status, and migration create/push; it does not expose an operator row-history/branch-repair
+command. Jazz implements internal sync repair through row-version fetch and canonical known-state
+repair, but that is protocol/runtime machinery, not an operator maintenance surface. The production
+dependency is 2.0.0-alpha.53. Upstream 2.0.0-alpha.54 explicitly introduced a breaking
+storage-format change without automatic migration from alpha.53 and advises production users with
+existing data to get migration help. Therefore, do not upgrade production alpha.53 storage in place
+to solve this divergence. Any alpha.54+ experiment must use a copied snapshot or new isolated data
+directory, must never point at the production state directory, and needs a tested
+rollback/migration procedure before consideration.
+
 Exit codes are:
 
 - `0`: ready for public-ingress freeze;
