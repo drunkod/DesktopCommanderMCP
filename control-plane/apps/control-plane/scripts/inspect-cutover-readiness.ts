@@ -10,31 +10,50 @@ if (!expectedOwnerId) {
 }
 
 await runWorkerCliWithExitCode(async () => {
-  const [{ app }, { jazzBackendDb }] = await Promise.all([
+  const [{ app }, { createDb }, { env }, { jazzBackendDb }] = await Promise.all([
     import("../schema"),
+    import("jazz-tools"),
+    import("../lib/env"),
     import("../lib/jazz-principal"),
   ]);
 
-  const db = jazzBackendDb();
-  const [jobs, calls, sessions, devices] = await Promise.all([
-    db.all(app.chatJobs, { tier: "global" }),
-    db.all(app.remoteCalls, { tier: "global" }),
-    db.all(app.workerSessions, { tier: "global" }),
-    db.all(app.devices, { tier: "global" }),
-  ]);
-
-  const report = summarizeCutoverReadiness({
-    expectedOwnerId,
-    expectedOwnerKnownToAuth: expectedOwnerExistsInAuthDb(expectedOwnerId),
-    taskAdmissionFrozen: isTaskAdmissionFrozen(),
-    effectAdmissionFrozen: isEffectAdmissionFrozen(),
-    observedAt: new Date(),
-    jobs,
-    calls,
-    sessions,
-    devices,
+  const backendDb = jazzBackendDb();
+  const adminDb = await createDb({
+    appId: env.jazzAppId,
+    serverUrl: env.jazzInternalServerUrl,
+    adminSecret: env.jazzAdminSecret,
+    driver: { type: "memory" },
   });
 
-  console.log(JSON.stringify(report, null, 2));
-  return report.readyForIngressFreeze ? 0 : 2;
+  try {
+    const [jobs, calls, sessions, backendDevices, adminDevices] = await Promise.all([
+      backendDb.all(app.chatJobs, { tier: "global" }),
+      backendDb.all(app.remoteCalls, { tier: "global" }),
+      backendDb.all(app.workerSessions, { tier: "global" }),
+      backendDb.all(app.devices, { tier: "global" }),
+      adminDb.all(app.devices, { tier: "global" }),
+    ]);
+
+    const devicesById = new Map<string, (typeof backendDevices)[number]>();
+    for (const device of backendDevices) devicesById.set(device.id, device);
+    for (const device of adminDevices) devicesById.set(device.id, device);
+    const devices = [...devicesById.values()];
+
+    const report = summarizeCutoverReadiness({
+      expectedOwnerId,
+      expectedOwnerKnownToAuth: expectedOwnerExistsInAuthDb(expectedOwnerId),
+      taskAdmissionFrozen: isTaskAdmissionFrozen(),
+      effectAdmissionFrozen: isEffectAdmissionFrozen(),
+      observedAt: new Date(),
+      jobs,
+      calls,
+      sessions,
+      devices,
+    });
+
+    console.log(JSON.stringify(report, null, 2));
+    return report.readyForIngressFreeze ? 0 : 2;
+  } finally {
+    await adminDb.shutdown();
+  }
 });

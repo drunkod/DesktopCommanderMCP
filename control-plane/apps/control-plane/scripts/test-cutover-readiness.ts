@@ -313,11 +313,12 @@ try {
   const multipleOwners = await runCli({ ...env, CUTOVER_EXPECTED_OWNER_ID: owner });
   assert.equal(multipleOwners.code, 2, multipleOwners.stderr);
   const multipleOwnersReport = parseReport(multipleOwners);
+  assert.deepEqual(multipleOwnersReport.deploymentIdentity.activeOwnerIds, ["cutover-owner", "foreign-owner"]);
   assert.equal(multipleOwnersReport.deploymentIdentity.verified, true);
   assert.deepEqual(multipleOwnersReport.deploymentIdentity.observedOwnerIds, ["cutover-owner", "foreign-owner"]);
   assert.deepEqual(multipleOwnersReport.deploymentIdentity.unexpectedActiveOwnerIds, ["foreign-owner"]);
 
-  console.log("cutover readiness integration: ok (ready/blocked exits terminate, wrong owner fails closed)");
+  console.log("cutover readiness integration: ok (merged device catalogue with admin precedence, backend work state)");
 } finally {
   try {
     await globalThis.__remoteMcpJazzContext?.shutdown();

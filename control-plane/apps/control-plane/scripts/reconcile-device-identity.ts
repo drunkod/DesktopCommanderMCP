@@ -64,7 +64,8 @@ await runWorkerCliWithExitCode(async () => {
 
   const appId = process.env.JAZZ_APP_ID?.trim();
   const serverUrl = process.env.JAZZ_SERVER_URL?.trim();
-  if (!appId || !serverUrl) throw new Error("JAZZ_APP_ID and JAZZ_SERVER_URL are required");
+  const adminSecret = process.env.JAZZ_ADMIN_SECRET?.trim();
+  if (!appId || !serverUrl || !adminSecret) throw new Error("JAZZ_APP_ID, JAZZ_SERVER_URL and JAZZ_ADMIN_SECRET are required");
 
   const db = jazzBackendDb();
   const [backend, jobs, calls, sessions] = await Promise.all([
@@ -101,16 +102,23 @@ await runWorkerCliWithExitCode(async () => {
   ]);
   const deviceDb = await createDb({ appId, serverUrl, jwtToken: deviceToken });
   const dashboardDb = await createDb({ appId, serverUrl, jwtToken: dashboardToken });
+  const adminDb = await createDb({
+    appId,
+    serverUrl,
+    adminSecret,
+    driver: { type: "memory" },
+  });
 
   try {
-    const [deviceVisible, dashboardVisible] = await Promise.all([
+    const [deviceVisible, dashboardVisible, adminVisible] = await Promise.all([
       deviceDb.one(app.devices.where({ id: backend.id }), { tier: "global" }),
       dashboardDb.one(app.devices.where({ id: backend.id }), { tier: "global" }),
+      adminDb.one(app.devices.where({ id: backend.id }), { tier: "global" }),
     ]);
-    if (!deviceVisible || !dashboardVisible) {
-      throw new Error("Authenticated principals cannot both see the target device row");
+    if (!deviceVisible || !dashboardVisible || !adminVisible) {
+      throw new Error("Authenticated principals and authority admin cannot all see the target device row");
     }
-    for (const visible of [deviceVisible, dashboardVisible]) {
+    for (const visible of [deviceVisible, dashboardVisible, adminVisible]) {
       if (visible.revokedAt) throw new Error("Authenticated device view is revoked");
       if (visible.status !== "offline") throw new Error("Authenticated device view must be offline");
       if (visible.ownerId !== backend.ownerId) throw new Error("Device owner identity diverges");
@@ -119,8 +127,8 @@ await runWorkerCliWithExitCode(async () => {
         throw new Error("Authenticated Jazz view no longer matches the expected canonical stable ID");
       }
     }
-    if (deviceVisible.stableId !== dashboardVisible.stableId) {
-      throw new Error("Dashboard and device principals disagree on the canonical stable ID");
+    if (deviceVisible.stableId !== dashboardVisible.stableId || deviceVisible.stableId !== adminVisible.stableId) {
+      throw new Error("Dashboard, device, and authority admin views disagree on the canonical stable ID");
     }
 
     const config = await readIsolatedConfig();
@@ -136,12 +144,16 @@ await runWorkerCliWithExitCode(async () => {
     }
 
     const alreadyConverged = backend.stableId === expectedCanonicalStableId;
+    const applyBlockedReason = alreadyConverged ? null : "backend-branch-diverged-from-authority";
     console.log(JSON.stringify({
-      state: alreadyConverged ? "already-converged" : apply ? "applying" : "dry-run",
+      state: alreadyConverged ? "already-converged" : "blocked-backend-divergence",
+      applyRequested: apply,
+      applyBlockedReason,
       deviceId: backend.id,
       ownerId: backend.ownerId,
       oauthClientId: backend.oauthClientId,
       backendStableId: backend.stableId,
+      authorityAdminStableId: adminVisible.stableId,
       canonicalStableId: expectedCanonicalStableId,
       configPath,
       configExists: config.exists,
@@ -153,6 +165,7 @@ await runWorkerCliWithExitCode(async () => {
     }, null, 2));
 
     if (!apply) return 0;
+    if (!alreadyConverged) throw new Error("Automatic reconciliation is blocked because the backend branch diverges from the canonical authority branch; manual authority maintenance is required before writing the isolated device config");
 
     await mkdir(path.dirname(configPath), { recursive: true, mode: 0o700 });
     const timestamp = new Date().toISOString().replaceAll(":", "-");
@@ -171,25 +184,23 @@ await runWorkerCliWithExitCode(async () => {
     await chmod(stagedPath, 0o600);
 
     try {
-      if (!alreadyConverged) {
-        const update = db.update(app.devices, backend.id, { stableId: expectedCanonicalStableId });
-        await update.wait({ tier: "global" });
-      }
-
       const updatedBackend = await db.one(app.devices.where({ id: backend.id }), { tier: "global" });
       if (!updatedBackend || updatedBackend.stableId !== expectedCanonicalStableId) {
         throw new Error("Backend device row did not converge after globally acknowledged update");
       }
 
-      const [deviceAfter, dashboardAfter] = await Promise.all([
+      const [deviceAfter, dashboardAfter, adminAfter] = await Promise.all([
         deviceDb.one(app.devices.where({ id: backend.id }), { tier: "global" }),
         dashboardDb.one(app.devices.where({ id: backend.id }), { tier: "global" }),
+        adminDb.one(app.devices.where({ id: backend.id }), { tier: "global" }),
       ]);
       if (
         !deviceAfter
         || !dashboardAfter
+        || !adminAfter
         || deviceAfter.stableId !== expectedCanonicalStableId
         || dashboardAfter.stableId !== expectedCanonicalStableId
+        || adminAfter.stableId !== expectedCanonicalStableId
       ) {
         throw new Error("Authenticated Jazz views did not converge after reconciliation");
       }
@@ -209,6 +220,7 @@ await runWorkerCliWithExitCode(async () => {
       throw error;
     }
   } finally {
+    await adminDb.shutdown().catch(() => undefined);
     await dashboardDb.shutdown().catch(() => undefined);
     await deviceDb.shutdown().catch(() => undefined);
   }
