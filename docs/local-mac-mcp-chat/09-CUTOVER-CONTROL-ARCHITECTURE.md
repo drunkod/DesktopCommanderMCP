@@ -19,7 +19,7 @@ verified.
 5. Worker sessions are quiesced only after running jobs reach zero.
 6. Device-effect admission is frozen only after worker sessions are quiesced.
 7. Effect freeze blocks new remote-call rows but preserves retries/readback of an already-created idempotent call.
-8. Stack-wide readiness must verify the expected deployment owner and reject unexpected owners.
+8. Stack-wide readiness verifies the expected deployment owner against Better Auth and Jazz, while unexpected active owners block readiness.
 9. Public ingress is disabled only after task and effect admission are both frozen and the stack-wide readiness probe is green.
 10. The public-ingress maintenance marker survives supervisor restarts; launchd startup must not reopen Funnel while it exists.
 11. At most one production control-plane stack writes production Better Auth/Jazz state.
@@ -44,7 +44,7 @@ This is the first cutover freeze because remote workers still require public MCP
 ### Worker-session quiescence
 
 `pnpm cutover:quiesce-workers` is an operator action. It fails closed unless task admission is
-frozen, the deployment owner is verified stack-wide, and there are zero running jobs. Once those
+frozen, the expected deployment owner is verified against Better Auth and observed Jazz state, with no unexpected active owner, and there are zero running jobs. Once those
 conditions hold it closes stored active worker sessions through the authoritative Jazz backend.
 
 Because task freeze prevents new sessions and new claims, a successful quiesce establishes a stable
@@ -61,6 +61,11 @@ prevent an already-running worker from using device tools required to finish.
 
 `pnpm cutover:inspect` requires `CUTOVER_EXPECTED_OWNER_ID` and queries all worker jobs, remote
 calls, worker sessions, and devices. It does not filter the evidence to the supplied owner.
+`CUTOVER_EXPECTED_OWNER_ID` is checked read-only against the file-backed Better Auth user table,
+and the same owner must also be observed somewhere in durable Jazz state. Historical terminal-only
+owner IDs remain diagnostic and do not block readiness. Unexpected active owners block readiness
+when they own queued or running jobs, non-terminal remote calls, active worker sessions, or
+non-revoked devices. Entirely empty Jazz state fails closed.
 
 Exit codes are:
 
@@ -68,9 +73,9 @@ Exit codes are:
 - `2`: observed state is not cutover-ready;
 - `1`: configuration/runtime error.
 
-Ready means both task and effect admission are frozen, the expected non-revoked device owner is
-verified with no unexpected owner in observed state, no worker job is running, no remote call is
-non-terminal, and no effective worker session is active.
+Ready means both task and effect admission are frozen, the expected owner is verified against
+Better Auth and observed in Jazz, no unexpected active owner is present, no worker job is running,
+no remote call is non-terminal, and no effective worker session is active.
 
 Queued jobs may remain. They cannot be claimed while task admission is frozen and survive the
 repository migration as durable work.
@@ -258,7 +263,9 @@ queue state, remote-call state, and recovery writes.
 
 The cutover implementation is gated by:
 
-- stack-wide readiness integration, including wrong-owner fail-closed behavior;
+- stack-wide readiness integration, including wrong-owner fail-closed behavior, empty-state
+  fail-closed behavior, allowance for historical terminal-only foreign owners, and blocking of
+  unexpected active owners;
 - bounded CLI termination for ready and blocked results;
 - task freeze preserving completion of already-running work;
 - task freeze preventing new sessions/tasks/claims;

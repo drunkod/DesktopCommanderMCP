@@ -1,6 +1,6 @@
 # Unified repository migration and controlled cutover plan
 
-**Status:** execution-ready plan after credential-vault, quiescence, rollback and launchd-render safety review; docs-only until MIG execution begins.
+**Status:** repository consolidation implemented and validated through pre-cutover gates; production cutover remains blocked on an independently attested local/SSH control channel and the final quiesced-state snapshot.
 **Date:** 2026-09-29.
 **Target repository:** `drunkod/DesktopCommanderMCP`.
 **Target branch:** create a dedicated consolidation branch from the current clean Desktop Commander tip.
@@ -395,7 +395,7 @@ Before stopping production:
 - freeze **new worker/task admission first**, while keeping public MCP and device effects available so already-running workers can finish and call `save_task_result`;
 - after running jobs reach zero, quiesce stored active worker sessions;
 - then freeze **new device-effect admission**, preserving only reconciliation/retry of already-created idempotent call rows;
-- require the stack-wide cutover probe to verify the expected owner, both admission freezes, zero running jobs, zero non-terminal remote calls and zero active worker sessions;
+- require the stack-wide cutover probe to verify the expected owner read-only against Better Auth and observed in Jazz, allow historical terminal-only foreign owners as diagnostic, block unexpected active owners, and confirm both admission freezes, zero running jobs, zero non-terminal remote calls and zero active worker sessions;
 - only then freeze public Funnel ingress; wait at least 12 seconds (longer than the current 10-second worker long poll) and repeat the stack-wide probe to catch in-flight-request races;
 - if any effect cannot be proven terminal/acknowledged, abort cutover or record it as quarantined/indeterminate before proceeding;
 - identify and prepare the supervisor stop commands for both the control-plane stack and the independent device/execution path;
@@ -411,7 +411,7 @@ Immediately before cutover:
 2. Let already-running workers finish, including any required device calls and `save_task_result`; new worker sessions, task inserts and task claims are rejected.
 3. Run the worker-quiesce helper. It must refuse while running jobs remain and must exit successfully only after it can close the remaining active worker sessions.
 4. Activate the **effect admission freeze** so no new `remoteCalls` can be created; already-created idempotent receipts remain reconcilable.
-5. Run the stack-wide readiness probe with the authoritative expected owner. It must exit `0`.
+5. Run the stack-wide readiness probe with the authoritative expected owner, verified read-only against Better Auth and observed in Jazz. Historical terminal-only foreign owners are diagnostic; unexpected active owners block readiness. It must exit `0`.
 6. Freeze public ingress through the ownership-checking Funnel control. The persistent ingress marker must remain set across subsequent restarts.
 7. Wait at least 12 seconds, then run the stack-wide readiness probe again. If a request raced the Funnel transition, abort/reconcile and repeat the freeze sequence rather than guessing.
 8. If any effect cannot be proven terminal/acknowledged, abort the cutover or explicitly quarantine it as `indeterminate`; do not silently retry it after restart.
@@ -641,7 +641,7 @@ Run backup/restore, reboot/sleep/tunnel-loss/token-refresh/device-child recovery
 | Package isolation | npm/MCPB/release inventory excludes control plane | push/release |
 | Path resolution | nested flake/scripts resolve correct root | cutover |
 | State backup | consistent snapshot + restore/read verification | cutover |
-| Cutover controls | task/effect/readiness integration + bounded CLI exits green | cutover |
+| Cutover controls | task/effect/readiness integration + bounded CLI exits green; auth-backed expected-owner verification and unexpected active-owner blocking verified | cutover |
 | Restart-safe ingress | maintenance restart test proves Funnel remains closed | cutover |
 | Independent control | live local/SSH attestation independent of Remote Desktop Commander/Funnel | cutover |
 | Launchd dry inspection | non-activating render resolves Nix runtime and generated destination paths correctly | cutover |

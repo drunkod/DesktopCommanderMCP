@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
+import { DatabaseSync } from "node:sqlite";
 import { mkdir, mkdtemp, rm, writeFile, unlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -66,6 +67,7 @@ const deploymentRoot = join(temp, "deployment");
 const freezeFile = join(deploymentRoot, ".data", "task-admission.frozen");
 const effectFreezeFile = join(deploymentRoot, ".data", "effect-admission.frozen");
 const backendPath = join(temp, "writer", "runtime.db");
+const authPath = join(temp, "auth.sqlite");
 await mkdir(authorityDir, { recursive: true });
 await mkdir(join(deploymentRoot, ".data"), { recursive: true });
 await mkdir(join(temp, "writer"), { recursive: true });
@@ -76,6 +78,12 @@ const server = await startLocalJazzServer({
 });
 
 const owner = "cutover-owner";
+{
+  const authDb = new DatabaseSync(authPath);
+  authDb.exec('CREATE TABLE "user" (id TEXT PRIMARY KEY)');
+  authDb.prepare('INSERT INTO "user" (id) VALUES (?)').run(owner);
+  authDb.close();
+}
 const env: NodeJS.ProcessEnv = {
   ...process.env,
   NODE_ENV: "production",
@@ -85,7 +93,7 @@ const env: NodeJS.ProcessEnv = {
   REMOTE_MCP_TASK_ADMISSION_FREEZE_FILE: freezeFile,
   REMOTE_MCP_EFFECT_ADMISSION_FREEZE_FILE: effectFreezeFile,
   BETTER_AUTH_SECRET: "cutover-readiness-test-secret-32-bytes",
-  BETTER_AUTH_DB_PATH: ":memory:",
+  BETTER_AUTH_DB_PATH: authPath,
   JAZZ_APP_ID: server.appId,
   JAZZ_SERVER_URL: server.url,
   JAZZ_INTERNAL_SERVER_URL: server.url,
@@ -248,6 +256,38 @@ try {
   assert.equal(wrongOwnerReport.readyForIngressFreeze, false);
   assert.equal(wrongOwnerReport.deploymentIdentity.verified, false);
 
+  const { summarizeCutoverReadiness } = await import("../lib/cutover-readiness");
+  const emptyState = summarizeCutoverReadiness({
+    expectedOwnerId: owner,
+    expectedOwnerKnownToAuth: true,
+    taskAdmissionFrozen: true,
+    effectAdmissionFrozen: true,
+    observedAt: new Date(),
+    jobs: [],
+    calls: [],
+    sessions: [],
+    devices: [],
+  });
+  assert.equal(emptyState.readyForIngressFreeze, false);
+  assert.equal(emptyState.deploymentIdentity.expectedOwnerObservedInJazz, false);
+
+  const historicalForeignOwner = summarizeCutoverReadiness({
+    expectedOwnerId: owner,
+    expectedOwnerKnownToAuth: true,
+    taskAdmissionFrozen: true,
+    effectAdmissionFrozen: true,
+    observedAt: new Date(),
+    jobs: [
+      { id: "expected-history", ownerId: owner, status: "completed" },
+      { id: "foreign-history", ownerId: "historical-probe-owner", status: "completed" },
+    ],
+    calls: [],
+    sessions: [],
+    devices: [],
+  });
+  assert.equal(historicalForeignOwner.readyForIngressFreeze, true);
+  assert.deepEqual(historicalForeignOwner.deploymentIdentity.unexpectedActiveOwnerIds, []);
+
   await unlink(freezeFile);
   const admissionOpen = await runCli({ ...env, CUTOVER_EXPECTED_OWNER_ID: owner });
   assert.equal(admissionOpen.code, 2, admissionOpen.stderr);
@@ -273,8 +313,9 @@ try {
   const multipleOwners = await runCli({ ...env, CUTOVER_EXPECTED_OWNER_ID: owner });
   assert.equal(multipleOwners.code, 2, multipleOwners.stderr);
   const multipleOwnersReport = parseReport(multipleOwners);
-  assert.equal(multipleOwnersReport.deploymentIdentity.verified, false);
+  assert.equal(multipleOwnersReport.deploymentIdentity.verified, true);
   assert.deepEqual(multipleOwnersReport.deploymentIdentity.observedOwnerIds, ["cutover-owner", "foreign-owner"]);
+  assert.deepEqual(multipleOwnersReport.deploymentIdentity.unexpectedActiveOwnerIds, ["foreign-owner"]);
 
   console.log("cutover readiness integration: ok (ready/blocked exits terminate, wrong owner fails closed)");
 } finally {

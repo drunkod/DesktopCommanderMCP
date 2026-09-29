@@ -1,4 +1,5 @@
 import { isEffectAdmissionFrozen, isTaskAdmissionFrozen } from "../lib/cutover-mode";
+import { expectedOwnerExistsInAuthDb } from "../lib/cutover-owner";
 import { summarizeCutoverReadiness } from "../lib/cutover-readiness";
 import { runWorkerCliWithExitCode } from "./worker-cli";
 
@@ -24,6 +25,7 @@ await runWorkerCliWithExitCode(async () => {
 
   const report = summarizeCutoverReadiness({
     expectedOwnerId,
+    expectedOwnerKnownToAuth: expectedOwnerExistsInAuthDb(expectedOwnerId),
     taskAdmissionFrozen: isTaskAdmissionFrozen(),
     effectAdmissionFrozen: isEffectAdmissionFrozen(),
     observedAt: new Date(),

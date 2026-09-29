@@ -1,4 +1,6 @@
 import { isTaskAdmissionFrozen } from "../lib/cutover-mode";
+import { expectedOwnerExistsInAuthDb } from "../lib/cutover-owner";
+import { summarizeCutoverReadiness } from "../lib/cutover-readiness";
 import { runWorkerCliWithExitCode } from "./worker-cli";
 
 const expectedOwnerId = process.env.CUTOVER_EXPECTED_OWNER_ID?.trim();
@@ -26,20 +28,22 @@ await runWorkerCliWithExitCode(async () => {
     db.all(app.devices, { tier: "global" }),
   ]);
 
-  const ownerIds = new Set(
-    [...jobs, ...calls, ...sessions, ...devices].map((row) => row.ownerId),
-  );
-  const expectedDevicePresent = devices.some(
-    (device) => device.ownerId === expectedOwnerId && !device.revokedAt,
-  );
-  if (!expectedDevicePresent
-    || ownerIds.size !== 1
-    || !ownerIds.has(expectedOwnerId)) {
+  const identityReport = summarizeCutoverReadiness({
+    expectedOwnerId,
+    expectedOwnerKnownToAuth: expectedOwnerExistsInAuthDb(expectedOwnerId),
+    taskAdmissionFrozen: true,
+    effectAdmissionFrozen: false,
+    observedAt: new Date(),
+    jobs,
+    calls,
+    sessions,
+    devices,
+  });
+  if (!identityReport.deploymentIdentity.verified
+    || identityReport.deploymentIdentity.unexpectedActiveOwnerIds.length > 0) {
     console.error(JSON.stringify({
       error: "deployment identity is not verified",
-      expectedOwnerId,
-      observedOwnerIds: [...ownerIds].sort(),
-      expectedDevicePresent,
+      deploymentIdentity: identityReport.deploymentIdentity,
     }));
     return 2;
   }

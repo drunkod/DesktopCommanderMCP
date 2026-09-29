@@ -28,12 +28,12 @@ assert_absent() {
 
 assert_contains() {
   local file="$1" text="$2"
-  rg -Fq -- "$text" "$file" || fail "expected '$text' in $file"
+  grep -Fq -- "$text" "$file" || fail "expected '$text' in $file"
 }
 
 assert_not_contains() {
   local file="$1" text="$2"
-  if rg -Fq -- "$text" "$file"; then
+  if grep -Fq -- "$text" "$file"; then
     fail "did not expect '$text' in $file"
   fi
 }

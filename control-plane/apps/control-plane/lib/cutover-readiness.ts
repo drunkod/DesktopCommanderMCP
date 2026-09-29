@@ -34,6 +34,7 @@ type DeviceRow = OwnedRow & {
 
 export type CutoverReadinessInput = {
   expectedOwnerId: string;
+  expectedOwnerKnownToAuth: boolean;
   taskAdmissionFrozen: boolean;
   effectAdmissionFrozen: boolean;
   observedAt: Date;
@@ -49,12 +50,8 @@ export function summarizeCutoverReadiness(input: CutoverReadinessInput) {
     ownerIds.add(row.ownerId);
   }
   const observedOwnerIds = [...ownerIds].sort();
-  const expectedDevicePresent = input.devices.some(
-    (device) => device.ownerId === input.expectedOwnerId && !device.revokedAt,
-  );
-  const identityVerified = expectedDevicePresent
-    && observedOwnerIds.length === 1
-    && observedOwnerIds[0] === input.expectedOwnerId;
+  const expectedOwnerObservedInJazz = ownerIds.has(input.expectedOwnerId);
+  const identityVerified = input.expectedOwnerKnownToAuth && expectedOwnerObservedInJazz;
 
   const runningJobs = input.jobs.filter((job) => job.status === "running");
   const queuedJobs = input.jobs.filter((job) => job.status === "queued");
@@ -67,10 +64,22 @@ export function summarizeCutoverReadiness(input: CutoverReadinessInput) {
   const onlineDevices = input.devices.filter(
     (device) => device.status === "online" && !device.revokedAt,
   );
+  const nonRevokedDevices = input.devices.filter((device) => !device.revokedAt);
+  const activeOwnerIds = [...new Set([
+    ...queuedJobs,
+    ...runningJobs,
+    ...nonTerminalCalls,
+    ...activeWorkerSessions,
+    ...nonRevokedDevices,
+  ].map((row) => row.ownerId))].sort();
+  const unexpectedActiveOwnerIds = activeOwnerIds.filter(
+    (ownerId) => ownerId !== input.expectedOwnerId,
+  );
 
   const readyForIngressFreeze = input.taskAdmissionFrozen
     && input.effectAdmissionFrozen
     && identityVerified
+    && unexpectedActiveOwnerIds.length === 0
     && runningJobs.length === 0
     && nonTerminalCalls.length === 0
     && activeWorkerSessions.length === 0;
@@ -80,8 +89,11 @@ export function summarizeCutoverReadiness(input: CutoverReadinessInput) {
     readyForIngressFreeze,
     deploymentIdentity: {
       expectedOwnerId: input.expectedOwnerId,
+      expectedOwnerKnownToAuth: input.expectedOwnerKnownToAuth,
+      expectedOwnerObservedInJazz,
       observedOwnerIds,
-      expectedDevicePresent,
+      activeOwnerIds,
+      unexpectedActiveOwnerIds,
       verified: identityVerified,
     },
     taskAdmission: input.taskAdmissionFrozen ? "frozen" : "open",
@@ -97,6 +109,7 @@ export function summarizeCutoverReadiness(input: CutoverReadinessInput) {
       taskAdmissionOpen: !input.taskAdmissionFrozen,
       effectAdmissionOpen: !input.effectAdmissionFrozen,
       deploymentIdentityUnverified: !identityVerified,
+      unexpectedActiveOwnerIds,
       runningJobs: runningJobs.map((job) => ({
         id: job.id,
         ownerId: job.ownerId,
