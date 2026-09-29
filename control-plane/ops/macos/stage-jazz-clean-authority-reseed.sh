@@ -65,7 +65,30 @@ if [[ "${MODE}" == "production" ]]; then
   REAL_RECOVERY_LIVE_BASE="$(realpath_py "${RECOVERY_LIVE_BASE}")"
   case "${REAL_SOURCE_AUTHORITY}" in "${REAL_RECOVERY_LIVE_BASE}"/*) ;; *) fail "production authority snapshot must be under .data/recovery-live" ;; esac
   case "${REAL_SOURCE_BACKEND}" in "${REAL_RECOVERY_LIVE_BASE}"/*) ;; *) fail "production backend snapshot must be under .data/recovery-live" ;; esac
+  RECOVERY_MANIFEST="${DEVICE_RESEED_LIVE_RECOVERY_MANIFEST:-$(dirname "${REAL_SOURCE_AUTHORITY}")/recovery-manifest.json}"
+  [[ -f "${RECOVERY_MANIFEST}" ]] || fail "production recovery manifest is required"
+  REAL_RECOVERY_MANIFEST="$(realpath_py "${RECOVERY_MANIFEST}")"
+  "${SCRIPT_DIR}/verify-jazz-clean-reseed-frozen-state.sh" "${REAL_RECOVERY_MANIFEST}" >/dev/null
+  python3 - "${REAL_RECOVERY_MANIFEST}" "${REAL_SOURCE_AUTHORITY}" "${REAL_SOURCE_BACKEND}" <<'PY'
+import hashlib,json,os,sys
+m=json.load(open(sys.argv[1],encoding="utf-8"))
+a=os.path.realpath(sys.argv[2]); b=os.path.realpath(sys.argv[3])
+def sha(path):
+    h=hashlib.sha256()
+    with open(path,"rb") as f:
+        for c in iter(lambda:f.read(1024*1024),b""): h.update(c)
+    return h.hexdigest()
+def require(ok,msg):
+    if not ok: raise SystemExit("error: "+msg)
+require(os.path.realpath(m.get("authoritySnapshotPath",""))==a,"authority snapshot is not the manifest snapshot")
+require(os.path.realpath(m.get("backendSnapshotPath",""))==b,"backend snapshot is not the manifest snapshot")
+require(sha(a)==m.get("authoritySnapshotSha256"),"authority snapshot hash does not match recovery manifest")
+require(sha(b)==m.get("backendSnapshotSha256"),"backend snapshot hash does not match recovery manifest")
+PY
+  RECOVERY_MANIFEST_HASH="$("${SHASUM}" -a 256 "${REAL_RECOVERY_MANIFEST}" | awk '{print $1}')"
 else
+  REAL_RECOVERY_MANIFEST=""
+  RECOVERY_MANIFEST_HASH=""
   EVIDENCE_BASE="${ROOT}/.data/recovery-evidence"
   REAL_EVIDENCE_BASE="$(realpath_py "${EVIDENCE_BASE}")"
   case "${REAL_SOURCE_AUTHORITY}" in "${REAL_EVIDENCE_BASE}"/*) ;; *) fail "rehearsal authority snapshot must be under .data/recovery-evidence" ;; esac
@@ -97,10 +120,17 @@ RESULT="${STAGE_DIR}/stage-result.json"
 STDERR_LOG="${STAGE_DIR}/stage.stderr.log"
 
 set +e
-(
-  cd "${APP_DIR}"
-  exec env     DEVICE_RESEED_STAGE_SOURCE_AUTHORITY_DB="${REAL_SOURCE_AUTHORITY}"     DEVICE_RESEED_STAGE_SOURCE_BACKEND_DB="${REAL_SOURCE_BACKEND}"     DEVICE_RESEED_LIVE_AUTHORITY_DB="${LIVE_AUTHORITY_DB}"     DEVICE_RESEED_LIVE_BACKEND_DB="${LIVE_BACKEND_DB}"     DEVICE_RESEED_STAGE_AUTHORITY_DIR="${STAGE_AUTHORITY_DIR}"     DEVICE_RESEED_STAGE_MODE="${MODE}"     DEVICE_RESEED_DEVICE_ID="${DEVICE_RESEED_DEVICE_ID}"     DEVICE_RESEED_EXPECTED_BACKEND_STABLE_ID="${DEVICE_RESEED_EXPECTED_BACKEND_STABLE_ID}"     DEVICE_RESEED_EXPECTED_CANONICAL_STABLE_ID="${DEVICE_RESEED_EXPECTED_CANONICAL_STABLE_ID}"     NODE_ENV=production       node --env-file=.env.local --import tsx ./scripts/stage-clean-authority-reseed.ts
-) >"${RESULT}" 2>"${STDERR_LOG}" &
+if [[ "${MODE}" == "rehearsal" && "${REMOTE_MCP_TESTING:-}" == "1" && -n "${DEVICE_RESEED_STAGE_TEST_OUTPUT:-}" ]]; then
+  (
+    printf '%s\n' "${DEVICE_RESEED_STAGE_TEST_OUTPUT}"
+    exit "${DEVICE_RESEED_STAGE_TEST_EXIT:-0}"
+  ) >"${RESULT}" 2>"${STDERR_LOG}" &
+else
+  (
+    cd "${APP_DIR}"
+    exec env     DEVICE_RESEED_STAGE_SOURCE_AUTHORITY_DB="${REAL_SOURCE_AUTHORITY}"     DEVICE_RESEED_STAGE_SOURCE_BACKEND_DB="${REAL_SOURCE_BACKEND}"     DEVICE_RESEED_LIVE_AUTHORITY_DB="${LIVE_AUTHORITY_DB}"     DEVICE_RESEED_LIVE_BACKEND_DB="${LIVE_BACKEND_DB}"     DEVICE_RESEED_STAGE_AUTHORITY_DIR="${STAGE_AUTHORITY_DIR}"     DEVICE_RESEED_STAGE_MODE="${MODE}"     DEVICE_RESEED_DEVICE_ID="${DEVICE_RESEED_DEVICE_ID}"     DEVICE_RESEED_EXPECTED_BACKEND_STABLE_ID="${DEVICE_RESEED_EXPECTED_BACKEND_STABLE_ID}"     DEVICE_RESEED_EXPECTED_CANONICAL_STABLE_ID="${DEVICE_RESEED_EXPECTED_CANONICAL_STABLE_ID}"     NODE_ENV=production       node --env-file=.env.local --import tsx ./scripts/stage-clean-authority-reseed.ts
+  ) >"${RESULT}" 2>"${STDERR_LOG}" &
+fi
 stage_pid=$!
 
 (
@@ -131,10 +161,12 @@ PY
 
 if [[ "${stage_rc}" -ne 0 || "${STAGE_READY}" != "true" ]]; then
   chmod 400 "${RESULT}" "${STDERR_LOG}" 2>/dev/null || true
+  failure_rc="${stage_rc}"
+  [[ "${failure_rc}" -ne 0 ]] || failure_rc=2
   printf 'stage=%s\n' "${STAGE_DIR}"
   printf 'stageReady=false\n'
-  printf 'exitCode=%s\n' "${stage_rc}"
-  exit "${stage_rc}"
+  printf 'exitCode=%s\n' "${failure_rc}"
+  exit "${failure_rc}"
 fi
 
 STAGE_DB="${STAGE_AUTHORITY_DIR}/jazz.sqlite"
@@ -143,7 +175,7 @@ STAGE_DB="${STAGE_AUTHORITY_DIR}/jazz.sqlite"
 STAGE_DB_HASH="$("${SHASUM}" -a 256 "${STAGE_DB}" | awk '{print $1}')"
 GIT_SHA="$(git -C "${REPO_ROOT}" rev-parse HEAD)"
 export MODE STAMP STAGE_DIR STAGE_DB_HASH GIT_SHA SOURCE_AUTHORITY_HASH SOURCE_BACKEND_HASH
-export REAL_SOURCE_AUTHORITY REAL_SOURCE_BACKEND RESULT
+export REAL_SOURCE_AUTHORITY REAL_SOURCE_BACKEND REAL_RECOVERY_MANIFEST RECOVERY_MANIFEST_HASH RESULT
 python3 - <<'PY'
 import json, os
 result=json.load(open(os.environ["RESULT"],encoding="utf-8"))
@@ -157,6 +189,8 @@ manifest={
   "sourceBackendPath": os.environ["REAL_SOURCE_BACKEND"],
   "sourceAuthoritySha256": os.environ["SOURCE_AUTHORITY_HASH"],
   "sourceBackendSha256": os.environ["SOURCE_BACKEND_HASH"],
+  "recoveryManifestPath": os.environ["REAL_RECOVERY_MANIFEST"] or None,
+  "recoveryManifestSha256": os.environ["RECOVERY_MANIFEST_HASH"] or None,
   "stageAuthoritySqliteSha256": os.environ["STAGE_DB_HASH"],
   "stageAuthorityQuickCheck": "ok",
   "deviceId": os.environ["DEVICE_RESEED_DEVICE_ID"],

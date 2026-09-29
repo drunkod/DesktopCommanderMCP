@@ -53,10 +53,25 @@ PY
 
 git -C "${REPO_ROOT}" merge-base --is-ancestor "${EVIDENCE_SHA}" "${HEAD_SHA}"   || fail "accepted evidence Git SHA is not an ancestor of current HEAD"
 RECOVERY_PATHS=(
+  "control-plane/packages/protocol/src/application-schema.ts"
+  "control-plane/apps/control-plane/schema.ts"
+  "control-plane/apps/control-plane/permissions.ts"
+  "control-plane/apps/control-plane/lib/jazz-capability.ts"
   "control-plane/apps/control-plane/lib/reseed-recovery.ts"
   "control-plane/apps/control-plane/scripts/rehearse-clean-authority-reseed.ts"
+  "control-plane/apps/control-plane/scripts/stage-clean-authority-reseed.ts"
+  "control-plane/apps/control-plane/scripts/verify-clean-authority-post-handoff.ts"
   "control-plane/ops/macos/rehearse-jazz-clean-authority-reseed.sh"
+  "control-plane/ops/macos/verify-jazz-clean-reseed-live-preflight.sh"
+  "control-plane/ops/macos/independent-control-preflight.sh"
+  "control-plane/ops/macos/cutover-control.sh"
+  "control-plane/ops/macos/capture-jazz-clean-reseed-frozen-state.sh"
+  "control-plane/ops/macos/verify-jazz-clean-reseed-frozen-state.sh"
+  "control-plane/ops/macos/stage-jazz-clean-authority-reseed.sh"
+  "control-plane/ops/macos/apply-jazz-clean-authority-handoff.sh"
+  "control-plane/ops/macos/verify-jazz-clean-authority-post-handoff.sh"
   "control-plane/apps/control-plane/package.json"
+  "control-plane/pnpm-lock.yaml"
 )
 
 git -C "${REPO_ROOT}" diff --quiet "${EVIDENCE_SHA}..${HEAD_SHA}" -- "${RECOVERY_PATHS[@]}"   || fail "recovery implementation changed after accepted evidence; rerun copy-only rehearsal"
