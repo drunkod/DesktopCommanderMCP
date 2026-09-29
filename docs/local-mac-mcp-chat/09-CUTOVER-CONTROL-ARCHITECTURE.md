@@ -106,22 +106,43 @@ The committed command `pnpm device:rehearse-branch-repair` is copied-state-only.
 
 No tested row-level update/upsert is an accepted production repair. Do not weaken `blocked-backend-divergence` or create/start the isolated local device based on this evidence. Production remains pinned to Jazz alpha.53; do not in-place upgrade as a repair.
 
-#### Next repair track: clean-authority logical reseed rehearsal (COPY-ONLY first)
+#### Clean-authority logical reseed rehearsal — COPY-ONLY accepted (2026-09-29)
 
-The following is a proposed track, not an implemented or validated repair. Keep every step inside a copied-state rehearsal with isolated storage and ports:
+The clean-authority recovery path is now implemented as:
 
-1. Snapshot source authority and backend state.
-2. Start copied source authority read-only for canonical export.
-3. Create a new empty isolated authority using the same app ID/admin/backend secrets only inside rehearsal.
-4. Deploy the same schema and permissions.
-5. Export current canonical application rows from the authority-admin view for all app tables.
-6. Import rows to the new authority in dependency-safe order, preserving row IDs, references, timestamps/business fields, and current revoked/status state.
-7. Do not copy old row-history or internal storage files into the new authority.
-8. Restart the new authority and connect a brand-new empty backend cache.
-9. Verify complete table inventory and application-level content equivalence, device/dashboard/admin/backend visibility, owner/client invariants, no active-work drift, and stable canonical device identity.
-10. Only if all checks pass, separately design a production migration/cutover. The rehearsal itself authorizes no production migration.
+```bash
+pnpm device:rehearse-clean-reseed
+```
 
-Reseed rehearsal acceptance criteria are all mandatory: source snapshot remains untouched; schema and permissions match; every app table is inventoried and logically equivalent after reseed; row identity, references, timestamps/business fields, and revoked/status state are preserved; all four device views agree on canonical identity after authority restart and brand-new backend cache creation; owner/client invariants and active-work state are unchanged; and no production state is modified. Any mismatch fails the rehearsal and keeps branch divergence blocked.
+It is a **copy-only** recovery rehearsal. It does not authorize production migration, and every accepted result explicitly records `productionMigrationAuthorized=false`.
+
+The rehearsal closes the recovery gaps that blocked the earlier proposal:
+
+1. **Source completeness and provenance.** It takes transactionally consistent SQLite `.backup` snapshots of both authority and backend state, records immutable hashes/provenance, and compares logical application content across backend-service and authority-admin views. Principal-exclusive rows are accepted only when they match the current permission model: devices/remote calls/audit on the admin side, worker sessions/chat jobs on the backend side, plus exactly one explained target-device overlap. Any other overlap or wrong-side row blocks acceptance.
+2. **Canonical composite.** The target device is merged only for the explained fields: canonical `stableId` from admin/device/dashboard consensus and the newer `lastSeenAt` from the backend branch. All other fields must already agree, and reference closure must remain valid.
+3. **Principal-preserving reseed.** A fresh authority is deployed with the same schema and permissions before import. Backend-owned rows are seeded through the backend context; admin-owned rows through admin. The target device is deliberately materialized into both branches with the same canonical logical row so backend, admin, dashboard, and device-capability views all retain their required visibility.
+4. **Reconnect compatibility.** After authority restart, both fresh principal projections must match their expected logical snapshots exactly. A copy of the pre-reseed backend cache is then reconnected, required to synchronize exactly, and performs a canonical no-op write. The authority is restarted again and another brand-new backend cache must still converge. The production remote device uses `driver: { type: "memory" }`, so there is no persistent device Jazz cache to retire.
+5. **Immutable evidence.** The evidence snapshots are never opened by a Jazz server. Running authorities use separate working copies. Snapshot SHA-256 values and SQLite `quick_check` results are verified before/after the rehearsal.
+
+Accepted evidence:
+
+- evidence directory: `control-plane/.data/recovery-evidence/clean-reseed-20260929T214514Z`
+- process exit: `0`
+- `rehearsalAccepted=true`
+- `productionMigrationAuthorized=false`
+- fresh backend projection: exact
+- fresh admin projection: exact
+- backend/admin/dashboard/device target identity: canonical and exact
+- copied pre-reseed backend cache: exact synchronization and write acknowledged
+- post-reconnect fresh-cache convergence: exact
+- backend cache retirement required: `false`
+- persistent device Jazz cache: none
+- immutable authority/backend snapshot hashes: unchanged before/after
+- SQLite `quick_check`: `ok`
+
+This proves a **candidate recovery procedure on copied state**, not permission to execute it live. A production reseed still requires a separately reviewed operator runbook, current-state re-snapshot/revalidation, the independent human-controlled Terminal/SSH prerequisite, freeze/drain gates, rollback assets, and explicit verification before local-device activation.
+
+Do not use the older row-level update/upsert candidates. Do not copy old Jazz row-history into the new authority. Do not flatten all tables through one principal: alpha.53 preserves meaningful principal-specific visibility, and the accepted rehearsal depends on preserving that provenance.
 
 #### Jazz repair/upgrade boundary
 

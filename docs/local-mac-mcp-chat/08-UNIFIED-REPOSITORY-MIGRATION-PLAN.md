@@ -1,12 +1,20 @@
 # Unified repository migration and controlled cutover plan
 
-**Status:** repository consolidation implemented and validated through pre-cutover gates; production cutover and local-device activation remain blocked by device branch divergence. A copied-state row-repair rehearsal found no accepted row-level repair; a clean-authority logical reseed rehearsal is the next copy-only repair track.
+**Status:** repository consolidation is complete. Control-plane deployment relocation to the unified checkout is complete. Historical Jazz device-branch divergence remains a separate recovery concern: row-level repair is rejected, while the clean-authority logical reseed has now passed copy-only acceptance. No live reseed has been performed and the rehearsal explicitly records `productionMigrationAuthorized=false`. Isolated local-device activation and the end-to-end observation gate remain pending.
 **Date:** 2026-09-29.
 **Target repository:** `drunkod/DesktopCommanderMCP`.
 **Target branch:** create a dedicated consolidation branch from the current clean Desktop Commander tip.
 **Primary objective:** consolidate the product source into one Git repository without changing the accepted MVP behavior, losing runtime state, rotating identities, or making rollback ambiguous.
 
 This plan supersedes only the earlier **repository-placement** decision that kept the control plane in a separate Git repository. It does **not** collapse the architectural boundary between the control plane and Desktop Commander.
+
+Current stage separation:
+
+- **Repository consolidation:** complete.
+- **Control-plane deployment relocation:** complete; the deployed stack runs from the unified repository.
+- **Jazz branch recovery:** copy-only clean-authority reseed rehearsal accepted; live maintenance not executed.
+- **Isolated local-device activation:** pending live branch-recovery maintenance and four-view verification.
+- **End-to-end continuity / 24-hour observation acceptance:** pending.
 
 ## 1. Decision
 
