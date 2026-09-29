@@ -25,6 +25,7 @@
     "worker:inspect": "NODE_ENV=production node --env-file=.env.local --import tsx ./scripts/inspect-worker-session.ts",
     "cutover:inspect": "NODE_ENV=production node --env-file=.env.local --import tsx ./scripts/inspect-cutover-readiness.ts",
     "cutover:quiesce-workers": "NODE_ENV=production node --env-file=.env.local --import tsx ./scripts/quiesce-worker-sessions.ts",
+    "device:registry": "NODE_ENV=production node --env-file=.env.local --import tsx ./scripts/inspect-device-registry.ts",
     "test:cutover-readiness": "tsx ./scripts/test-cutover-readiness.ts",
     "test:cutover-control": "bash ../../ops/macos/test-cutover-control.sh",
     "test:cutover-runner": "bash ../../ops/macos/test-run-local-stack-maintenance.sh",

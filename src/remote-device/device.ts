@@ -20,9 +20,21 @@ export interface MCPDeviceOptions {
     persistSession?: boolean;
     identity?: RemoteIdentityConfig;
     providerTokenVerifier?: ProviderTokenVerifier;
+    configPath?: string;
 }
 
 const SEEN_CALL_IDS_MAX = 2000;
+
+function resolveDeviceConfigPath(explicit?: string): string {
+    const override = explicit ?? process.env.DC_REMOTE_DEVICE_CONFIG_PATH;
+    if (override !== undefined) {
+        if (!path.isAbsolute(override)) {
+            throw new Error('DC_REMOTE_DEVICE_CONFIG_PATH must be an absolute path');
+        }
+        return override;
+    }
+    return path.join(os.homedir(), '.desktop-commander-device', 'device.json');
+}
 
 export class MCPDevice {
     private baseServerUrl: string;
@@ -54,7 +66,7 @@ export class MCPDevice {
             identity.runtimeProfile,
         );
         this.remoteChannel = new RemoteChannel(this.tokens, controlPlane);
-        this.configPath = path.join(os.homedir(), '.desktop-commander-device', 'device.json');
+        this.configPath = resolveDeviceConfigPath(options.configPath);
         this.desktop = new DesktopCommanderIntegration();
         this.statusArbiter = new DeviceStatusArbiter({
             write: async (status) => {
