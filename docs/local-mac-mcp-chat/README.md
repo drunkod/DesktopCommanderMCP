@@ -1,10 +1,10 @@
 # Local Mac MCP + family chat implementation plan
 
-**Status:** planning pack plus implementation-status supplements. The original task checkboxes remain planning artifacts; `06-MVP-WITHOUT-CHAT.md` and `07-SERVICE-OVERVIEW-IMPLEMENTATION-REPORT.md` record the separately implemented and tested MVP state.
+**Status:** planning pack plus implementation-status and repository-consolidation supplements. The original task checkboxes remain planning artifacts; `06-MVP-WITHOUT-CHAT.md` and `07-SERVICE-OVERVIEW-IMPLEMENTATION-REPORT.md` record the implemented/tested MVP state, while `08-UNIFIED-REPOSITORY-MIGRATION-PLAN.md` supersedes the earlier separate-repository placement decision.
 
 **Date:** 2026-09-08. **Planning branch:** `docs/local-mac-mcp-chat-plan`.
 
-**Branch base:** `19addf3c7fb5af82bb36424ccca3c003030c4832`, branched from `feat/passkey-only-registration`. Pre-existing staged, unstaged and untracked work was retained; the branch is not an isolated clean implementation baseline. No commit, push, stash, reset or dependency installation is part of this planning task.
+**Historical branch base:** `19addf3c7fb5af82bb36424ccca3c003030c4832`, branched from `feat/passkey-only-registration`. The planning pack was originally docs-only. As of 2026-09-29, Plan 08 is the reviewed migration execution plan; its README/plan update is committed first to establish the consolidation baseline before any history import.
 
 ## The result we are planning
 
@@ -29,7 +29,8 @@ Every application-owned process and persistent store runs on the owner's MacBook
 5. [Continued review findings](05-CONTINUED-REVIEW-FINDINGS.md) — second-pass code-backed findings, explicit P0 blockers, startup/config split and decisions that survived review.
 6. [MVP without chat](06-MVP-WITHOUT-CHAT.md) — implemented private-MVP scope and accepted runtime state.
 7. [Service overview and implementation status](07-SERVICE-OVERVIEW-IMPLEMENTATION-REPORT.md) — current codebase review, user-facing capabilities, implemented/planned matrix and implementation roadmap.
-8. Diagrams: [architecture](architecture.mmd), [job sequence](job-sequence.mmd), plus the [service overview diagram set](diagrams/).
+8. [Unified repository migration and cutover plan](08-UNIFIED-REPOSITORY-MIGRATION-PLAN.md) — history-preserving import, publication audit, persistent-state migration, isolated validation, launchd cutover, rollback and post-migration product sequencing.
+9. Diagrams: [architecture](architecture.mmd), [job sequence](job-sequence.mmd), plus the [service overview diagram set](diagrams/).
 
 This pack has **27 top-level tasks**, with detailed checklist subtasks, dependencies, proposed file locations, examples and acceptance criteria. All implementation checkboxes start unchecked. These are repository documents, not automatically created external task-tracker entries.
 
@@ -37,7 +38,7 @@ This pack has **27 top-level tasks**, with detailed checklist subtasks, dependen
 
 | Decision | Choice and reason |
 | --- | --- |
-| Application home | Extend the existing separate `implementation/apps/control-plane`; do not scaffold another chat platform in DC |
+| Application home | Consolidate the existing `implementation` repository into this repository as `control-plane/`, preserving the control-plane architectural boundary and its own pnpm/Nix workspace; see Plan 08 |
 | UI reference | `garden-co/jazz/examples/auth-betterauth-chat`, full reference SHA `6d352663f8e03278b0007752e27213a6062d5917` |
 | Port boundary | Borrow presentation/composer/permission-aware UX, not demo auth, anonymous accounts, browser Jazz connection or direct row mutations |
 | Authentication | Preserve existing SQLite-backed Better Auth/passkeys/OAuth; server-side session and grant enforcement |
