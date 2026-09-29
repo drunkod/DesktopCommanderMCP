@@ -1,0 +1,16 @@
+{
+  "name": "remote-mcp-jazz",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.22.0",
+  "scripts": {
+    "dev": "pnpm --filter @remote-dc/control-plane dev",
+    "check": "pnpm -r check",
+    "build": "pnpm -r build",
+    "jazz:validate": "pnpm --filter @remote-dc/control-plane jazz:validate",
+    "cleanup:calls": "pnpm --filter @remote-dc/control-plane cleanup:calls",
+    "auth:plan": "pnpm --filter @remote-dc/control-plane auth:plan",
+    "auth:migrate": "pnpm --filter @remote-dc/control-plane auth:migrate",
+    "jazz:deploy": "pnpm --filter @remote-dc/control-plane jazz:deploy"
+  }
+}

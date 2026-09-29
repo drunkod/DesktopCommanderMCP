@@ -1,0 +1,18 @@
+[Unit]
+Description=Desktop Commander Jazz remote device
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=desktopcommander
+EnvironmentFile=/etc/desktop-commander-jazz.env
+WorkingDirectory=/opt/DesktopCommanderMCP
+ExecStart=/usr/bin/node /opt/DesktopCommanderMCP/dist/remote-device/device.js
+Restart=always
+RestartSec=3
+KillSignal=SIGTERM
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target

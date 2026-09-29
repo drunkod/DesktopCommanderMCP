@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+LABEL="com.remote-mcp.local-stack"
+DOMAIN="gui/$(id -u)"
+PLIST_DIR="$HOME/Library/LaunchAgents"
+PLIST="$PLIST_DIR/$LABEL.plist"
+RUNNER="$ROOT/ops/macos/run-local-stack.sh"
+BASH_BIN="/run/current-system/sw/bin/bash"
+NIX_BIN="/nix/var/nix/profiles/default/bin/nix"
+TAILSCALE_BIN="/etc/profiles/per-user/$(id -un)/bin/tailscale"
+RUNTIME_PROFILE="$ROOT/.data/launchd-dev-profile"
+RUNTIME_ENV="$ROOT/.data/launchd-runtime.env"
+
+case "${1:-install}" in
+  uninstall)
+    launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
+    rm -f "$PLIST"
+    echo "Removed $LABEL"
+    exit 0
+    ;;
+  status)
+    launchctl print "$DOMAIN/$LABEL"
+    exit $?
+    ;;
+  install) ;;
+  *) echo "usage: $0 [install|uninstall|status]" >&2; exit 2 ;;
+esac
+for required in "$RUNNER" "$BASH_BIN" "$NIX_BIN" "$TAILSCALE_BIN"; do
+  [[ -e "$required" ]] || { echo "missing required path: $required" >&2; exit 1; }
+done
+
+mkdir -p "$PLIST_DIR" "$HOME/Library/Logs" "$ROOT/.data"
+chmod +x "$RUNNER"
+
+echo "Resolving pinned runtime from the repository Nix dev shell..."
+RUNTIME_LINES="$($NIX_BIN develop "$ROOT" --profile "$RUNTIME_PROFILE" --command bash -c \
+  'printf "__NODE__=%s\n__PNPM__=%s\n" "$(command -v node)" "$(command -v pnpm)"')"
+NODE_BIN="$(printf '%s\n' "$RUNTIME_LINES" | sed -n 's/^__NODE__=//p' | tail -n 1)"
+PNPM_BIN="$(printf '%s\n' "$RUNTIME_LINES" | sed -n 's/^__PNPM__=//p' | tail -n 1)"
+
+[[ -x "$NODE_BIN" ]] || { echo "resolved node is not executable: $NODE_BIN" >&2; exit 1; }
+[[ -x "$PNPM_BIN" ]] || { echo "resolved pnpm is not executable: $PNPM_BIN" >&2; exit 1; }
+
+cat >"$RUNTIME_ENV" <<EOF
+NODE_BIN=$NODE_BIN
+PNPM_BIN=$PNPM_BIN
+EOF
+chmod 600 "$RUNTIME_ENV"
+echo "Pinned runtime: $($NODE_BIN --version), pnpm $($PNPM_BIN --version)"
+
+TMP="$PLIST.tmp.$$"
+cat >"$TMP" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>$LABEL</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>$BASH_BIN</string>
+    <string>$RUNNER</string>
+  </array>
+  <key>WorkingDirectory</key><string>$ROOT</string>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ThrottleInterval</key><integer>10</integer>
+  <key>ProcessType</key><string>Background</string>
+  <key>StandardOutPath</key><string>$HOME/Library/Logs/remote-mcp-local-stack.log</string>
+  <key>StandardErrorPath</key><string>$HOME/Library/Logs/remote-mcp-local-stack.error.log</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>REMOTE_MCP_ROOT</key><string>$ROOT</string>
+    <key>REMOTE_MCP_RUNTIME_ENV</key><string>$RUNTIME_ENV</string>
+    <key>TAILSCALE_BIN</key><string>$TAILSCALE_BIN</string>
+    <key>HOME</key><string>$HOME</string>
+    <key>TERM_PROGRAM</key><string>remote-mcp-launchd</string>
+  </dict>
+</dict>
+</plist>
+EOF
+/usr/bin/plutil -lint "$TMP"
+launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
+mv "$TMP" "$PLIST"
+chmod 600 "$PLIST"
+launchctl bootstrap "$DOMAIN" "$PLIST"
+launchctl enable "$DOMAIN/$LABEL"
+launchctl kickstart -k "$DOMAIN/$LABEL"
+
+echo "Installed and started $LABEL"
+echo "Status: $0 status"
+echo "Logs:   $HOME/Library/Logs/remote-mcp-local-stack.log"
+echo "Errors: $HOME/Library/Logs/remote-mcp-local-stack.error.log"

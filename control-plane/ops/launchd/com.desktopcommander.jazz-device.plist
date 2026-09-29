@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.desktopcommander.jazz-device</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/node</string>
+    <string>/Users/REPLACE/RemoteMCP-Jazz/repositories/DesktopCommanderMCP/dist/remote-device/device.js</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/REPLACE/RemoteMCP-Jazz/repositories/DesktopCommanderMCP</string>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>StandardOutPath</key>
+  <string>/Users/REPLACE/Library/Logs/desktop-commander-jazz-device.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/REPLACE/Library/Logs/desktop-commander-jazz-device.error.log</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>APP_ORIGIN</key>
+    <string>https://remote.example.com</string>
+    <key>REMOTE_MCP_RESOURCE</key>
+    <string>https://remote.example.com/mcp</string>
+    <key>JAZZ_APP_ID</key>
+    <string>REPLACE</string>
+    <key>JAZZ_SERVER_URL</key>
+    <string>https://sync.remote.example.com</string>
+  </dict>
+</dict>
+</plist>

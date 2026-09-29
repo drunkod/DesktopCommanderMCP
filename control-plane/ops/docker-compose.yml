@@ -1,0 +1,44 @@
+services:
+  jazz:
+    build:
+      context: ..
+      dockerfile: ops/Dockerfile.jazz
+    env_file: .env
+    environment:
+      JAZZ_JWKS_URL: http://web:3000/api/auth/jwks
+      JAZZ_ALLOW_LOCAL_FIRST_AUTH: "false"
+    volumes:
+      - jazz-data:/data/jazz
+    ports:
+      - "127.0.0.1:1625:1625"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ..
+      dockerfile: ops/Dockerfile.web
+    env_file: .env
+    environment:
+      JAZZ_INTERNAL_SERVER_URL: http://jazz:1625
+      BETTER_AUTH_DB_PATH: /data/auth/better-auth.sqlite
+    volumes:
+      - better-auth-data:/data/auth
+    depends_on:
+      - jazz
+    ports:
+      - "127.0.0.1:3000:3000"
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --config /etc/cloudflared/config.yml run
+    depends_on:
+      - web
+      - jazz
+    volumes:
+      - ./cloudflared:/etc/cloudflared:ro
+    restart: unless-stopped
+
+volumes:
+  jazz-data:
+  better-auth-data:

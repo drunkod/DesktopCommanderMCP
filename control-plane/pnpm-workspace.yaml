@@ -1,0 +1,13 @@
+packages:
+  - apps/*
+  - packages/*
+
+# pnpm 11 supply-chain policy: dependency lifecycle scripts are denied unless
+# explicitly decided here. esbuild's postinstall selects/validates its native
+# binary and is required by our toolchain. protobufjs only emits a compatibility
+# warning, so its postinstall is intentionally disabled.
+allowBuilds:
+  esbuild: true
+  protobufjs: false
+patchedDependencies:
+  '@better-auth/passkey@1.7.1': patches/@better-auth__passkey@1.7.1.patch

@@ -1,0 +1,57 @@
+set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
+
+_default:
+  @just --list
+
+doctor:
+  bash scripts/doctor.sh
+
+bootstrap:
+  pnpm install
+
+env:
+  bash scripts/init-local-env.sh
+
+env-force:
+  bash scripts/init-local-env.sh --force
+
+env-upgrade:
+  bash scripts/upgrade-local-env.sh
+
+auth-plan:
+  set -a; source apps/control-plane/.env.local; set +a; pnpm auth:plan
+
+auth-migrate:
+  set -a; source apps/control-plane/.env.local; set +a; pnpm auth:migrate
+
+auth-db-info:
+  bash scripts/auth-db-info.sh
+
+jazz-validate:
+  set -a; source apps/control-plane/.env.local; set +a; pnpm jazz:validate
+
+jazz-deploy:
+  set -a; source apps/control-plane/.env.local; set +a; pnpm jazz:deploy
+
+jazz:
+  bash scripts/jazz-server.sh
+web:
+  set -a; source apps/control-plane/.env.local; set +a; pnpm dev
+
+check:
+  set -a; source apps/control-plane/.env.local; set +a; pnpm check
+
+build:
+  set -a; source apps/control-plane/.env.local; set +a; pnpm build
+
+smoke:
+  bash scripts/smoke.sh
+
+cleanup-calls:
+  set -a; source apps/control-plane/.env.local; set +a; pnpm cleanup:calls
+
+fmt-nix:
+  nix fmt flake.nix
+
+reconcile-revocations:
+  set -a; source apps/control-plane/.env.local; set +a; pnpm --filter @remote-dc/control-plane reconcile:revocations

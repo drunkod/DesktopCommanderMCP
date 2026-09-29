@@ -1,0 +1,255 @@
+{
+  "auditEvents": {
+    "columns": [
+      {
+        "name": "kind",
+        "column_type": {
+          "type": "Text"
+        },
+        "nullable": false
+      },
+      {
+        "name": "deviceId",
+        "column_type": {
+          "type": "Uuid"
+        },
+        "nullable": true,
+        "references": "devices"
+      },
+      {
+        "name": "remoteCallId",
+        "column_type": {
+          "type": "Uuid"
+        },
+        "nullable": true,
+        "references": "remoteCalls"
+      },
+      {
+        "name": "summary",
+        "column_type": {
+          "type": "Text"
+        },
+        "nullable": false
+      },
+      {
+        "name": "details",
+        "column_type": {
+          "type": "Json"
+        },
+        "nullable": false
+      },
+      {
+        "name": "occurredAt",
+        "column_type": {
+          "type": "Timestamp"
+        },
+        "nullable": false
+      }
+    ]
+  },
+  "remoteCalls": {
+    "columns": [
+      {
+        "name": "requestId",
+        "column_type": {
+          "type": "Text"
+        },
+        "nullable": false
+      },
+      {
+        "name": "requestFingerprint",
+        "column_type": {
+          "type": "Text"
+        },
+        "nullable": false
+      },
+      {
+        "name": "deviceId",
+        "column_type": {
+          "type": "Uuid"
+        },
+        "nullable": false,
+        "references": "devices"
+      },
+      {
+        "name": "toolName",
+        "column_type": {
+          "type": "Text"
+        },
+        "nullable": false
+      },
+      {
+        "name": "toolArgs",
+        "column_type": {
+          "type": "Json"
+        },
+        "nullable": false
+      },
+      {
+        "name": "metadata",
+        "column_type": {
+          "type": "Json"
+        },
+        "nullable": false
+      },
+      {
+        "name": "status",
+        "column_type": {
+          "type": "Text"
+        },
+        "nullable": false
+      },
+      {
+        "name": "result",
+        "column_type": {
+          "type": "Json"
+        },
+        "nullable": true
+      },
+      {
+        "name": "error",
+        "column_type": {
+          "type": "Text"
+        },
+        "nullable": true
+      },
+      {
+        "name": "claimedByClientId",
+        "column_type": {
+          "type": "Text"
+        },
+        "nullable": true
+      },
+      {
+        "name": "claimedAt",
+        "column_type": {
+          "type": "Timestamp"
+        },
+        "nullable": true
+      },
+      {
+        "name": "completedAt",
+        "column_type": {
+          "type": "Timestamp"
+        },
+        "nullable": true
+      },
+      {
+        "name": "expiresAt",
+        "column_type": {
+          "type": "Timestamp"
+        },
+        "nullable": false
+      }
+    ]
+  },
+  "devices": {
+    "columns": [
+      {
+        "name": "stableId",
+        "column_type": {
+          "type": "Text"
+        },
+        "nullable": false
+      },
+      {
+        "name": "oauthClientId",
+        "column_type": {
+          "type": "Text"
+        },
+        "nullable": false
+      },
+      {
+        "name": "name",
+        "column_type": {
+          "type": "Text"
+        },
+        "nullable": false
+      },
+      {
+        "name": "platform",
+        "column_type": {
+          "type": "Text"
+        },
+        "nullable": false
+      },
+      {
+        "name": "appVersion",
+        "column_type": {
+          "type": "Text"
+        },
+        "nullable": false
+      },
+      {
+        "name": "capabilities",
+        "column_type": {
+          "type": "Json"
+        },
+        "nullable": false
+      },
+      {
+        "name": "status",
+        "column_type": {
+          "type": "Text"
+        },
+        "nullable": false
+      },
+      {
+        "name": "lastSeenAt",
+        "column_type": {
+          "type": "Timestamp"
+        },
+        "nullable": false
+      },
+      {
+        "name": "lastError",
+        "column_type": {
+          "type": "Text"
+        },
+        "nullable": true
+      },
+      {
+        "name": "reconnectGeneration",
+        "column_type": {
+          "type": "Integer"
+        },
+        "nullable": false
+      },
+      {
+        "name": "reconnectRequestedAt",
+        "column_type": {
+          "type": "Timestamp"
+        },
+        "nullable": true
+      },
+      {
+        "name": "revokedAt",
+        "column_type": {
+          "type": "Timestamp"
+        },
+        "nullable": true
+      },
+      {
+        "name": "authRevocationState",
+        "column_type": {
+          "type": "Text"
+        },
+        "nullable": true
+      },
+      {
+        "name": "authRevocationLastAttemptAt",
+        "column_type": {
+          "type": "Timestamp"
+        },
+        "nullable": true
+      },
+      {
+        "name": "authRevocationError",
+        "column_type": {
+          "type": "Text"
+        },
+        "nullable": true
+      }
+    ]
+  }
+}

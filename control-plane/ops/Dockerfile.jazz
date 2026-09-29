@@ -1,0 +1,21 @@
+FROM node:24-bookworm-slim
+WORKDIR /app
+ENV NODE_ENV=production
+RUN corepack enable \
+  && apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates socat \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/control-plane/package.json ./apps/control-plane/package.json
+COPY packages/protocol/package.json ./packages/protocol/package.json
+RUN pnpm install --frozen-lockfile --prod
+
+COPY ops/jazz-authority.mjs ./apps/control-plane/jazz-authority.mjs
+RUN mkdir -p /data/jazz
+
+ENV JAZZ_DATA_DIR=/data/jazz
+ENV JAZZ_LOOPBACK_PORT=1626
+EXPOSE 1625
+
+CMD ["sh", "-lc", "socat TCP-LISTEN:1625,fork,reuseaddr,bind=0.0.0.0 TCP:127.0.0.1:$JAZZ_LOOPBACK_PORT & exec node /app/apps/control-plane/jazz-authority.mjs"]
