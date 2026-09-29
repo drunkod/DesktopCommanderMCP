@@ -395,7 +395,8 @@ Before stopping production:
 - freeze **new worker/task admission first**, while keeping public MCP and device effects available so already-running workers can finish and call `save_task_result`;
 - after running jobs reach zero, quiesce stored active worker sessions;
 - then freeze **new device-effect admission**, preserving only reconciliation/retry of already-created idempotent call rows;
-- require the stack-wide cutover probe to verify the expected owner read-only against Better Auth and observed in Jazz, allow historical terminal-only foreign owners as diagnostic, block unexpected active owners, and confirm both admission freezes, zero running jobs, zero non-terminal remote calls and zero active worker sessions;
+- require the stack-wide cutover probe to verify the expected owner read-only against Better Auth and observed in Jazz, use trusted backend-service runtime evidence for worker jobs/remote calls/worker sessions plus the conservative backend-service/authority-admin device union, allow historical terminal-only foreign owners as diagnostic, block unexpected active owners, and confirm both admission freezes, zero running jobs, zero non-terminal remote calls and zero active worker sessions;
+- require a non-divergent four-view device-identity reconciliation dry-run before local-device activation; `blocked-backend-divergence` means stop for manual authority/backend-branch maintenance, not automatic rewrite;
 - only then freeze public Funnel ingress; wait at least 12 seconds (longer than the current 10-second worker long poll) and repeat the stack-wide probe to catch in-flight-request races;
 - if any effect cannot be proven terminal/acknowledged, abort cutover or record it as quarantined/indeterminate before proceeding;
 - identify and prepare the supervisor stop commands for both the control-plane stack and the independent device/execution path;
@@ -411,7 +412,7 @@ Immediately before cutover:
 2. Let already-running workers finish, including any required device calls and `save_task_result`; new worker sessions, task inserts and task claims are rejected.
 3. Run the worker-quiesce helper. It must refuse while running jobs remain and must exit successfully only after it can close the remaining active worker sessions.
 4. Activate the **effect admission freeze** so no new `remoteCalls` can be created; already-created idempotent receipts remain reconcilable.
-5. Run the stack-wide readiness probe with the authoritative expected owner, verified read-only against Better Auth and observed in Jazz. Historical terminal-only foreign owners are diagnostic; unexpected active owners block readiness. It must exit `0`.
+5. Run the stack-wide readiness probe with the authoritative expected owner, verified read-only against Better Auth and observed in Jazz. Use trusted backend-service evidence for worker jobs, remote calls, and worker sessions, plus the conservative union of backend-service and authority-admin device inventory. Historical terminal-only foreign owners are diagnostic; unexpected active owners block readiness. It must exit `0`.
 6. Freeze public ingress through the ownership-checking Funnel control. The persistent ingress marker must remain set across subsequent restarts.
 7. Wait at least 12 seconds, then run the stack-wide readiness probe again. If a request raced the Funnel transition, abort/reconcile and repeat the freeze sequence rather than guessing.
 8. If any effect cannot be proven terminal/acknowledged, abort the cutover or explicitly quarantine it as `indeterminate`; do not silently retry it after restart.
@@ -440,6 +441,12 @@ Review every path-valued setting, especially:
 Preserve identity-bearing values such as `JAZZ_APP_ID`, signing keys, OAuth secrets, public origin/resource and Jazz secrets.
 The move must not force users or devices to re-pair merely because the Git checkout changed.
 
+Local device state and its non-secret config belong under `control-plane/.data/device-agent`.
+Generate the dedicated credential service `com.desktopcommander.remote-mcp.local-jazz` and local
+DPAPI/lock paths there. Do not reuse the default/shared native vault or
+`~/.desktop-commander-device` paths. Do not copy or rewrite the legacy default `device.json` as
+part of migration.
+
 ## 21. Launchd cutover
 
 Only after the destination build and state are ready:
@@ -450,11 +457,14 @@ Only after the destination build and state are ready:
 4. Run the destination launch-agent installer as the explicit cutover action.
 5. Confirm the generated plist points to `DesktopCommanderMCP/control-plane`, not the historical implementation path.
 6. Confirm new `launchd-runtime.env` and Nix profile paths were regenerated under the destination.
-7. Confirm Jazz and Next listen on the expected loopback ports while Funnel remains closed.
-8. Confirm only one production stack owns the state and ports.
-9. Verify loopback auth/state/device continuity while public ingress is still closed.
-10. Reopen effect admission and task admission only after loopback continuity passes.
-11. Reopen Funnel **last** using the explicit ingress-open control, then verify the same intended public identity and target.
+7. Before activating or starting the local device, require successful four-view identity convergence across backend-service, device capability, dashboard capability, and admin authority; create the isolated config only after convergence.
+8. Confirm Jazz and Next listen on the expected loopback ports while Funnel remains closed.
+9. Confirm only one production stack owns the state and ports.
+10. Verify loopback auth/state/device continuity while public ingress is still closed.
+11. Reopen effect admission and task admission only after loopback continuity passes.
+12. Reopen Funnel **last** using the explicit ingress-open control, then verify the same intended public identity and target.
+
+Device identity convergence is a cutover gate; this plan does not claim the current production device branch is repaired.
 
 Do not delete the old checkout after this step.
 

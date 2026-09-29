@@ -19,7 +19,7 @@ verified.
 5. Worker sessions are quiesced only after running jobs reach zero.
 6. Device-effect admission is frozen only after worker sessions are quiesced.
 7. Effect freeze blocks new remote-call rows but preserves retries/readback of an already-created idempotent call.
-8. Stack-wide readiness verifies the expected deployment owner against Better Auth and Jazz, while unexpected active owners block readiness.
+8. Stack-wide readiness uses the trusted backend-service view for worker jobs, remote calls, and worker sessions, and the conservative union of backend-service and authority-admin views for device inventory. An active row visible in either device view remains a readiness blocker.
 9. Public ingress is disabled only after task and effect admission are both frozen and the stack-wide readiness probe is green.
 10. The public-ingress maintenance marker survives supervisor restarts; launchd startup must not reopen Funnel while it exists.
 11. At most one production control-plane stack writes production Better Auth/Jazz state.
@@ -27,6 +27,8 @@ verified.
 13. A pre-cutover snapshot is never restored over newer persistent mutations without reconciliation.
 14. The native device credential vault is not copied, cleared, refreshed for testing, or re-paired.
 15. OAuth semantics, Jazz schema, accepted worker protocol, and device ownership semantics do not change during repository consolidation.
+16. The unified local Jazz device uses an isolated non-secret config under `control-plane/.data/device-agent` and a dedicated native credential namespace; it must not share the default Desktop Commander OAuth vault or lock paths.
+17. If backend-service device history disagrees with the canonical identity in authority-admin/device/dashboard views, local-device activation is blocked until manual authority/backend-branch maintenance resolves it.
 
 ## Cutover control layers
 
@@ -62,10 +64,35 @@ prevent an already-running worker from using device tools required to finish.
 `pnpm cutover:inspect` requires `CUTOVER_EXPECTED_OWNER_ID` and queries all worker jobs, remote
 calls, worker sessions, and devices. It does not filter the evidence to the supplied owner.
 `CUTOVER_EXPECTED_OWNER_ID` is checked read-only against the file-backed Better Auth user table,
-and the same owner must also be observed somewhere in durable Jazz state. Historical terminal-only
-owner IDs remain diagnostic and do not block readiness. Unexpected active owners block readiness
-when they own queued or running jobs, non-terminal remote calls, active worker sessions, or
-non-revoked devices. Entirely empty Jazz state fails closed.
+and the same owner must also be observed somewhere in durable Jazz state. The principal model is
+split: worker jobs, remote calls, and worker sessions come from the trusted backend-service view;
+device inventory is the conservative union of backend-service and authority-admin views. Device
+rows are deduplicated only when `id`, `ownerId`, `status`, and revocation state agree; a
+`stableId` disagreement alone does not double-count an otherwise identical activation record. If
+the same row disagrees on owner, status, or revocation across views, both evidence records are
+retained so readiness fails closed. Historical terminal-only owner IDs remain diagnostic, but any
+non-revoked device in either view contributes an active owner. Unexpected active owners block
+readiness when they own queued or running jobs, non-terminal remote calls, active worker sessions,
+or non-revoked devices. Entirely empty Jazz state fails closed.
+
+### Device identity continuity and Jazz branch divergence
+
+The isolated non-secret local-device config is
+`control-plane/.data/device-agent/device.json` and must contain only `stableId`. Generated
+local-device environment uses the dedicated credential service
+`com.desktopcommander.remote-mcp.local-jazz` plus DPAPI and lock paths under
+`.data/device-agent`. `run-local-device` refuses the shared default namespace and
+`~/.desktop-commander-device` paths. The legacy default
+`~/.desktop-commander-device/device.json` is not a migration or stable-ID source and must remain
+untouched because older installations may contain credential-format data.
+
+Reconciliation compares backend-service, device capability, dashboard capability, and admin
+authority views. When capability/admin views agree on canonical identity but backend-service
+differs, dry-run reports `blocked-backend-divergence`; apply must fail before mkdir, config
+staging, or database mutation. Automatic backend-history rewriting/upsert is not an accepted
+repair. Manual authority/backend-branch maintenance from an independently controlled terminal or
+SSH is required, followed by a fresh dry-run. Do not create the isolated config or start the unified
+local device until all four views converge.
 
 Exit codes are:
 
@@ -154,7 +181,8 @@ NORMAL
 ### Phase 1 — prepare while production remains normal
 
 Complete builds/tests/package isolation, render the destination launchd configuration without
-activation, prepare rollback assets, and record old/new SHAs. Establish and attest the independent
+activation, check the device branch-convergence dry run before cutover, prepare rollback assets,
+and record old/new SHAs. Establish and attest the independent
 terminal/SSH control path while the current production system remains fully available.
 
 ### Phase 2 — freeze new worker work, not MCP
@@ -230,7 +258,8 @@ maintenance marker is already present.
 
 Verify loopback Jazz/Next health, resource identity, state visibility, existing auth database,
 device stable identity, device reconnect/heartbeat behavior, and absence of unexpected pending or
-running calls. Do not reopen Funnel to make a failed loopback check pass.
+running calls. Device continuity requires four-view convergence before starting or resuming the
+unified local device. Do not reopen Funnel to make a failed loopback check pass.
 
 After loopback continuity is accepted, reopen local admissions while public ingress is still closed:
 
@@ -273,6 +302,11 @@ The cutover implementation is gated by:
 - stack-wide readiness integration, including wrong-owner fail-closed behavior, empty-state
   fail-closed behavior, allowance for historical terminal-only foreign owners, and blocking of
   unexpected active owners;
+- backend/admin device-union coverage, including a backend-only foreign active device blocking
+  readiness;
+- reconciliation apply-guard proof that divergent backend state exits nonzero before filesystem or
+  database writes;
+- dedicated credential namespace enforcement and legacy-path refusal;
 - bounded CLI termination for ready and blocked results;
 - task freeze preserving completion of already-running work;
 - task freeze preventing new sessions/tasks/claims;
