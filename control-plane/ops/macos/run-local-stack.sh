@@ -7,6 +7,9 @@ CONTROL="$ROOT/apps/control-plane"
 ENV_FILE="$CONTROL/.env.local"
 RUNTIME_ENV="${REMOTE_MCP_RUNTIME_ENV:-$ROOT/.data/launchd-runtime.env}"
 TAILSCALE_BIN="${TAILSCALE_BIN:-}"
+TASK_FREEZE_FILE="${REMOTE_MCP_TASK_ADMISSION_FREEZE_FILE:-$ROOT/.data/task-admission.frozen}"
+EFFECT_FREEZE_FILE="${REMOTE_MCP_EFFECT_ADMISSION_FREEZE_FILE:-$ROOT/.data/effect-admission.frozen}"
+INGRESS_FREEZE_FILE="${REMOTE_MCP_PUBLIC_INGRESS_FREEZE_FILE:-$ROOT/.data/public-ingress.frozen}"
 
 JAZZ_PID=""
 WEB_PID=""
@@ -57,6 +60,10 @@ source "$RUNTIME_ENV"
 export PATH="$(dirname "$NODE_BIN"):$(dirname "$PNPM_BIN"):$(dirname "$TAILSCALE_BIN"):/run/current-system/sw/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 export HOME="${HOME:-/Users/test}"
 export TERM_PROGRAM="${TERM_PROGRAM:-remote-mcp-launchd}"
+export REMOTE_MCP_ROOT="$ROOT"
+export REMOTE_MCP_TASK_ADMISSION_FREEZE_FILE="$TASK_FREEZE_FILE"
+export REMOTE_MCP_EFFECT_ADMISSION_FREEZE_FILE="$EFFECT_FREEZE_FILE"
+export REMOTE_MCP_PUBLIC_INGRESS_FREEZE_FILE="$INGRESS_FREEZE_FILE"
 set -a
 # shellcheck disable=SC1090
 source "$ENV_FILE"
@@ -103,9 +110,14 @@ log "starting production Next control plane"
 WEB_PID=$!
 wait_for_port "control plane" 127.0.0.1 "$WEB_PORT" "$WEB_PID" 45
 
-log "reasserting Tailscale Funnel -> http://127.0.0.1:$WEB_PORT"
-"$TAILSCALE_BIN" funnel --bg --yes "$WEB_PORT"
-"$TAILSCALE_BIN" funnel status
+if [[ -e "$INGRESS_FREEZE_FILE" ]]; then
+  log "public ingress maintenance is active"
+  "$ROOT/ops/macos/cutover-control.sh" ingress-enforce-frozen
+else
+  log "reasserting Tailscale Funnel -> http://127.0.0.1:$WEB_PORT"
+  "$TAILSCALE_BIN" funnel --bg --yes "$WEB_PORT"
+  "$TAILSCALE_BIN" funnel status
+fi
 
 log "stack is healthy; monitoring child processes"
 while :; do

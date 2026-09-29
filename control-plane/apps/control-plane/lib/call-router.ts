@@ -4,6 +4,7 @@ import { app, type RemoteCall } from "../schema";
 import { jazzBackendDb } from "./jazz-principal";
 import { toJsonValue } from "./json";
 import { deterministicUuid } from "./ids";
+import { EffectAdmissionFrozenError, isEffectAdmissionFrozen } from "./cutover-mode";
 
 const ONLINE_MAX_AGE_MS = 45_000;
 
@@ -54,6 +55,7 @@ async function createOrdinaryCall(
   fingerprint: string,
   timeoutMs: number,
 ): Promise<string> {
+  if (isEffectAdmissionFrozen()) throw new EffectAdmissionFrozenError();
   const write = db.insert(app.remoteCalls, {
     ownerId: subject,
     requestId: crypto.randomUUID(),
@@ -91,6 +93,7 @@ async function getOrCreateIdempotentCall(
         assertSameRequest(existing, fingerprint, key);
         return existing.id;
       }
+      if (isEffectAdmissionFrozen()) throw new EffectAdmissionFrozenError();
       const row = tx.insert(app.remoteCalls, {
         ownerId: subject,
         requestId: key,

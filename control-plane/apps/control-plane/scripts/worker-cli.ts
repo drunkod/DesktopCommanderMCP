@@ -24,7 +24,22 @@ export async function withWorkerBackend(run: () => Promise<void>): Promise<void>
 
 
 /** CLI entrypoints exit explicitly after Jazz cleanup because alpha.53 NAPI can retain process handles. */
-export async function runWorkerCli(run: () => Promise<void>): Promise<void> {
-  await withWorkerBackend(run);
-  process.exit(0);
+export async function runWorkerCliWithExitCode(run: () => Promise<number>): Promise<never> {
+  let exitCode = 1;
+  try {
+    await withWorkerBackend(async () => {
+      exitCode = await run();
+    });
+  } catch (error) {
+    console.error(error instanceof Error ? error.stack ?? error.message : String(error));
+    process.exit(1);
+  }
+  process.exit(exitCode);
+}
+
+export async function runWorkerCli(run: () => Promise<void>): Promise<never> {
+  return runWorkerCliWithExitCode(async () => {
+    await run();
+    return 0;
+  });
 }

@@ -3,6 +3,7 @@ import * as z from "zod";
 import { app, type ChatJob, type WorkerSession } from "../schema";
 import { jazzBackendDb } from "./jazz-principal";
 import { dispatchRemoteCall } from "./call-router";
+import { TaskAdmissionFrozenError } from "./cutover-mode";
 import {
   WorkerSessionExpiredError,
   WorkerTaskUnavailableError,
@@ -114,11 +115,18 @@ export function buildServer(subject: string): McpServer {
     inputSchema: z.object({}),
     annotations: closedWorldWrite,
   }, async () => {
-    const session = await openWorkerSession(subject);
-    return jsonToolResult({
-      workerSession: sessionView(session),
-      next: "Call wait_for_task repeatedly. When a task is available, claim it with claim_task, solve it, then record it with submit_task_answer.",
-    });
+    try {
+      const session = await openWorkerSession(subject);
+      return jsonToolResult({
+        workerSession: sessionView(session),
+        next: "Call wait_for_task repeatedly. When a task is available, claim it with claim_task, solve it, then record it with submit_task_answer.",
+      });
+    } catch (error) {
+      if (error instanceof TaskAdmissionFrozenError) {
+        return errorToolResult("New worker sessions are temporarily frozen for a controlled cutover.");
+      }
+      throw error;
+    }
   });
 
   server.registerTool("enqueue_task", {
@@ -129,8 +137,15 @@ export function buildServer(subject: string): McpServer {
     }),
     annotations: closedWorldWrite,
   }, async ({ prompt, idempotencyKey }) => {
-    const job = await enqueueWorkerTask(subject, prompt, idempotencyKey);
-    return jsonToolResult({ task: jobView(job) });
+    try {
+      const job = await enqueueWorkerTask(subject, prompt, idempotencyKey);
+      return jsonToolResult({ task: jobView(job) });
+    } catch (error) {
+      if (error instanceof TaskAdmissionFrozenError) {
+        return errorToolResult("Task admission is temporarily frozen for a controlled cutover.");
+      }
+      throw error;
+    }
   });
 
   server.registerTool("wait_for_task", {
@@ -187,6 +202,7 @@ export function buildServer(subject: string): McpServer {
         next: "Solve this task, call save_task_result, then return to wait_for_task.",
       });
     } catch (error) {
+      if (error instanceof TaskAdmissionFrozenError) return errorToolResult("New task claims are temporarily frozen for a controlled cutover.");
       if (error instanceof WorkerSessionExpiredError) return errorToolResult("The 25-minute worker session has expired.");
       if (error instanceof WorkerTaskUnavailableError) {
         return jsonToolResult({
@@ -229,6 +245,7 @@ export function buildServer(subject: string): McpServer {
         await new Promise((resolve) => setTimeout(resolve, Math.min(500, Math.max(1, deadline - Date.now()))));
       }
     } catch (error) {
+      if (error instanceof TaskAdmissionFrozenError) return errorToolResult("New task claims are temporarily frozen for a controlled cutover.");
       if (error instanceof WorkerSessionExpiredError) return errorToolResult("The 25-minute worker session has expired.");
       throw error;
     }

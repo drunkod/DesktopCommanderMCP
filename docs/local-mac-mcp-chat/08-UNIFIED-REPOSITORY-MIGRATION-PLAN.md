@@ -391,9 +391,13 @@ Before stopping production:
 - prepare but do not activate destination environment configuration;
 - verify the rollback checkout and old LaunchAgent runner still exist;
 - capture current service status, public origin, device identity and queue counts;
-- enable an explicit admission freeze so no new worker jobs or remote calls can be admitted for the cutover window;
-- drain active worker/device calls and require durable result acknowledgment;
-- if a call cannot be proven terminal and acknowledged, abort cutover or record it as quarantined/indeterminate before proceeding;
+- establish and attest a live local-terminal or SSH control channel that is independent of Remote Desktop Commander and the public Funnel;
+- freeze **new worker/task admission first**, while keeping public MCP and device effects available so already-running workers can finish and call `save_task_result`;
+- after running jobs reach zero, quiesce stored active worker sessions;
+- then freeze **new device-effect admission**, preserving only reconciliation/retry of already-created idempotent call rows;
+- require the stack-wide cutover probe to verify the expected owner, both admission freezes, zero running jobs, zero non-terminal remote calls and zero active worker sessions;
+- only then freeze public Funnel ingress; wait at least 12 seconds (longer than the current 10-second worker long poll) and repeat the stack-wide probe to catch in-flight-request races;
+- if any effect cannot be proven terminal/acknowledged, abort cutover or record it as quarantined/indeterminate before proceeding;
 - identify and prepare the supervisor stop commands for both the control-plane stack and the independent device/execution path;
 - establish a short change freeze so no intentional work is submitted during the final snapshot.
 
@@ -403,19 +407,23 @@ Do not invoke `install-launch-agent.sh install` during preparation. That command
 
 Immediately before cutover:
 
-1. Activate the admission freeze: reject or hold all new worker-job and remote-call admission.
-2. Drain active worker sessions and remote calls; verify terminal state **and durable result acknowledgment** for every admitted effect.
-3. If any effect cannot be proven terminal/acknowledged, abort the cutover or explicitly quarantine it as `indeterminate`; do not silently retry it after restart.
-4. Stop the independent Desktop Commander remote device/execution path **without clearing credentials** and verify its supervisor will not immediately restart it.
-5. Stop the launchd-managed control-plane stack with the supervisor itself (for launchd, use `launchctl bootout` for the service), not merely by killing child PIDs.
-6. Verify device, Next and Jazz writer processes remain stopped and the production ports are no longer owned.
-7. Record the stop time and final queue/call state.
-8. Take a consistent backup of Better Auth SQLite, Jazz authority data and required backend state.
-9. Back up `.env.local` and deployment configuration with restrictive permissions.
-10. Record checksums and file ownership/modes for restored files where useful.
-11. Verify the backup can at least be opened/read by the appropriate tooling.
-12. Copy/restore state to the destination or configure the destination to the chosen stable state path.
-13. Before resuming the device/execution path, inspect restored remote-call state and ensure quarantined/indeterminate effects are not re-executed automatically.
+1. From the independently attested local/SSH control channel, activate the **task admission freeze**. Do not disable public MCP yet.
+2. Let already-running workers finish, including any required device calls and `save_task_result`; new worker sessions, task inserts and task claims are rejected.
+3. Run the worker-quiesce helper. It must refuse while running jobs remain and must exit successfully only after it can close the remaining active worker sessions.
+4. Activate the **effect admission freeze** so no new `remoteCalls` can be created; already-created idempotent receipts remain reconcilable.
+5. Run the stack-wide readiness probe with the authoritative expected owner. It must exit `0`.
+6. Freeze public ingress through the ownership-checking Funnel control. The persistent ingress marker must remain set across subsequent restarts.
+7. Wait at least 12 seconds, then run the stack-wide readiness probe again. If a request raced the Funnel transition, abort/reconcile and repeat the freeze sequence rather than guessing.
+8. If any effect cannot be proven terminal/acknowledged, abort the cutover or explicitly quarantine it as `indeterminate`; do not silently retry it after restart.
+9. Using the independent control channel, stop the Desktop Commander remote device/execution path **without clearing credentials** and verify its supervisor will not immediately restart it.
+10. Stop the launchd-managed control-plane stack with the supervisor itself (for launchd, use `launchctl bootout`), not merely by killing child PIDs.
+11. Verify device, Next and Jazz writer processes remain stopped and the production ports are no longer owned.
+12. Record the stop time and final queue/call state.
+13. Take a consistent backup of Better Auth SQLite, Jazz authority data and required backend state, including the cutover marker state needed by the destination.
+14. Back up `.env.local` and deployment configuration with restrictive permissions.
+15. Record checksums and file ownership/modes for restored files where useful and verify the backup is readable.
+16. Copy/restore state to the destination or configure the destination to the chosen stable state path.
+17. Before resuming the device/execution path, inspect restored remote-call state and ensure quarantined/indeterminate effects are not re-executed automatically.
 
 If SQLite WAL mode is active, do not copy only the main database file from a live writer and assume consistency.
 
@@ -438,12 +446,15 @@ Only after the destination build and state are ready:
 
 1. Build the production Next application in the destination.
 2. Verify the destination runtime script resolves the intended control-plane root.
-3. Run the destination launch-agent installer as the explicit cutover action.
-4. Confirm the generated plist points to `DesktopCommanderMCP/control-plane`, not the historical implementation path.
-5. Confirm new `launchd-runtime.env` and Nix profile paths were regenerated under the destination.
-6. Confirm Jazz and Next listen on the expected loopback ports.
-7. Confirm the Funnel still exposes the same intended public identity and target.
+3. Ensure the destination has the persistent public-ingress maintenance marker **before** activation.
+4. Run the destination launch-agent installer as the explicit cutover action.
+5. Confirm the generated plist points to `DesktopCommanderMCP/control-plane`, not the historical implementation path.
+6. Confirm new `launchd-runtime.env` and Nix profile paths were regenerated under the destination.
+7. Confirm Jazz and Next listen on the expected loopback ports while Funnel remains closed.
 8. Confirm only one production stack owns the state and ports.
+9. Verify loopback auth/state/device continuity while public ingress is still closed.
+10. Reopen effect admission and task admission only after loopback continuity passes.
+11. Reopen Funnel **last** using the explicit ingress-open control, then verify the same intended public identity and target.
 
 Do not delete the old checkout after this step.
 
@@ -630,6 +641,9 @@ Run backup/restore, reboot/sleep/tunnel-loss/token-refresh/device-child recovery
 | Package isolation | npm/MCPB/release inventory excludes control plane | push/release |
 | Path resolution | nested flake/scripts resolve correct root | cutover |
 | State backup | consistent snapshot + restore/read verification | cutover |
+| Cutover controls | task/effect/readiness integration + bounded CLI exits green | cutover |
+| Restart-safe ingress | maintenance restart test proves Funnel remains closed | cutover |
+| Independent control | live local/SSH attestation independent of Remote Desktop Commander/Funnel | cutover |
 | Launchd dry inspection | non-activating render resolves Nix runtime and generated destination paths correctly | cutover |
 | Runtime health | Jazz + Next + tunnel healthy | continuity tests |
 | Identity continuity | passkey/OAuth/device identity preserved | completion |

@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { app, type ChatJob, type WorkerSession } from "../schema";
 import { deterministicUuid } from "./ids";
+import { isTaskAdmissionFrozen, TaskAdmissionFrozenError } from "./cutover-mode";
 import { jazzBackendDb } from "./jazz-principal";
 
 export const WORKER_SESSION_MS = 25 * 60 * 1000;
@@ -31,6 +32,7 @@ export type WorkerQueueCounts = {
 };
 
 export async function openWorkerSession(subject: string): Promise<WorkerSession> {
+  if (isTaskAdmissionFrozen()) throw new TaskAdmissionFrozenError();
   await recoverStaleWorkerTasks(subject);
   const db = jazzBackendDb();
   const now = new Date();
@@ -88,6 +90,7 @@ export async function enqueueWorkerTask(
       }
       return existing;
     }
+    if (isTaskAdmissionFrozen()) throw new TaskAdmissionFrozenError();
     return tx.insert(app.chatJobs, {
       ownerId: subject,
       requesterId: subject,
@@ -107,6 +110,7 @@ export async function claimNextWorkerTask(
   subject: string,
   sessionId: string,
 ): Promise<ChatJob | null> {
+  if (isTaskAdmissionFrozen()) throw new TaskAdmissionFrozenError();
   const db = jazzBackendDb();
   const candidates = await db.all(
     app.chatJobs
@@ -197,6 +201,16 @@ export async function claimWorkerTask(
   nowMs: () => number = Date.now,
 ): Promise<ChatJob> {
   const db = jazzBackendDb();
+  if (isTaskAdmissionFrozen()) {
+    await readWorkerSession(subject, sessionId);
+    const current = await db.one(app.chatJobs.where({ id: taskId }), { tier: "global" });
+    if (current?.ownerId === subject
+      && current.status === "running"
+      && current.claimedBySessionId === sessionId) {
+      return current;
+    }
+    throw new TaskAdmissionFrozenError();
+  }
 
   for (let attempt = 0; attempt < CLAIM_TRANSACTION_RETRIES; attempt += 1) {
     try {
