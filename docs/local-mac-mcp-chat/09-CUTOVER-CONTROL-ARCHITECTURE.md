@@ -115,6 +115,13 @@ cd /path/to/DesktopCommanderMCP/control-plane
 ./ops/macos/independent-control-preflight.sh attest
 ```
 
+**Human-controlled terminal requirement:** this command must be typed by the operator in an
+already-open independent terminal or SSH session. Remote Desktop Commander automation must not
+create Terminal.app windows with AppleScript (`tell application "Terminal"` / `do script`), must
+not use `open -a Terminal`, and must not append `exec zsh` to keep an automation-created window
+alive. If no independent terminal/SSH session already exists, stop and ask the operator to open one.
+An automation-created Terminal window is not accepted as the independent control channel.
+
 The attestation records the repository SHA, live session PID, TTY, channel type, and timestamp. It
 expires and fails if the process/TTY disappears or the checkout SHA changes. The attestation path
 also rejects Remote Desktop Commander process ancestry.
