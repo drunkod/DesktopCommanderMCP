@@ -318,7 +318,7 @@ try {
   assert.deepEqual(multipleOwnersReport.deploymentIdentity.observedOwnerIds, ["cutover-owner", "foreign-owner"]);
   assert.deepEqual(multipleOwnersReport.deploymentIdentity.unexpectedActiveOwnerIds, ["foreign-owner"]);
 
-  console.log("cutover readiness integration: ok (merged device catalogue with admin precedence, backend work state)");
+  console.log("cutover readiness integration: ok (conservative backend/admin device catalogue, backend work state)");
 } finally {
   try {
     await globalThis.__remoteMcpJazzContext?.shutdown();

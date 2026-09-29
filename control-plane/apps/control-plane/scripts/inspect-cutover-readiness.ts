@@ -34,10 +34,17 @@ await runWorkerCliWithExitCode(async () => {
       adminDb.all(app.devices, { tier: "global" }),
     ]);
 
-    const devicesById = new Map<string, (typeof backendDevices)[number]>();
-    for (const device of backendDevices) devicesById.set(device.id, device);
-    for (const device of adminDevices) devicesById.set(device.id, device);
-    const devices = [...devicesById.values()];
+    const devicesBySecurityState = new Map<string, (typeof backendDevices)[number]>();
+    const deviceSecurityKey = (device: (typeof backendDevices)[number]) =>
+      [
+        device.id,
+        device.ownerId,
+        device.status,
+        device.revokedAt?.toISOString() ?? "",
+      ].join("\\0");
+    for (const device of backendDevices) devicesBySecurityState.set(deviceSecurityKey(device), device);
+    for (const device of adminDevices) devicesBySecurityState.set(deviceSecurityKey(device), device);
+    const devices = [...devicesBySecurityState.values()];
 
     const report = summarizeCutoverReadiness({
       expectedOwnerId,
