@@ -8,11 +8,60 @@ import { parseDeviceOAuthSessionStructure } from "./device-oauth-session.js";
 import type { DeviceCredentialSnapshot, DeviceCredentialStore, LockedDeviceCredentialStore, PairingLease, RefreshLease } from "./credential-store.js";
 import { loadRemoteIdentityFromEnv, type RemoteIdentityConfig } from "./remote-identity.js";
 
-const SERVICE = "com.desktopcommander.remote-mcp";
-const ACCOUNT = "device-oauth-session";
-const VAULT_LOCK_PATH = process.env.DC_DEVICE_VAULT_LOCK_PATH ?? path.join(os.homedir(), ".desktop-commander-device", "device-oauth.lock");
-const PAIRING_LOCK_PATH = process.env.DC_DEVICE_PAIRING_LOCK_PATH ?? path.join(os.homedir(), ".desktop-commander-device", "device-oauth-pairing.lock");
-const REFRESH_LOCK_PATH = process.env.DC_DEVICE_REFRESH_LOCK_PATH ?? path.join(os.homedir(), ".desktop-commander-device", "device-oauth-refresh.lock");
+export type NativeCredentialConfig = Readonly<{
+  service: string;
+  account: string;
+  vaultLockPath: string;
+  pairingLockPath: string;
+  refreshLockPath: string;
+  dpapiPath: string;
+}>;
+
+const DEFAULT_SERVICE = "com.desktopcommander.remote-mcp";
+const DEFAULT_ACCOUNT = "device-oauth-session";
+
+function resolveIdentifier(env: NodeJS.ProcessEnv, name: string, fallback: string): string {
+  const value = env[name];
+  if (value === undefined) return fallback;
+  if (value.trim() === "" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(value)) {
+    throw new Error(`${name} is invalid`);
+  }
+  return value;
+}
+
+function resolveAbsolutePath(env: NodeJS.ProcessEnv, name: string, fallback: string): string {
+  const value = env[name];
+  if (value === undefined) return fallback;
+  if (value.trim() === "" || !path.isAbsolute(value)) throw new Error(`${name} must be an absolute path`);
+  return value;
+}
+
+export function resolveNativeCredentialConfig(
+  env: NodeJS.ProcessEnv = process.env,
+  home: string = os.homedir(),
+): NativeCredentialConfig {
+  const stateDir = path.join(home, ".desktop-commander-device");
+  const localAppDataValue = env.LOCALAPPDATA?.trim();
+  const localAppData = localAppDataValue ? localAppDataValue : home;
+  if (localAppDataValue && !path.isAbsolute(localAppDataValue)) {
+    throw new Error("LOCALAPPDATA must be an absolute path");
+  }
+  return {
+    service: resolveIdentifier(env, "DC_DEVICE_CREDENTIAL_SERVICE", DEFAULT_SERVICE),
+    account: resolveIdentifier(env, "DC_DEVICE_CREDENTIAL_ACCOUNT", DEFAULT_ACCOUNT),
+    vaultLockPath: resolveAbsolutePath(env, "DC_DEVICE_VAULT_LOCK_PATH", path.join(stateDir, "device-oauth.lock")),
+    pairingLockPath: resolveAbsolutePath(env, "DC_DEVICE_PAIRING_LOCK_PATH", path.join(stateDir, "device-oauth-pairing.lock")),
+    refreshLockPath: resolveAbsolutePath(env, "DC_DEVICE_REFRESH_LOCK_PATH", path.join(stateDir, "device-oauth-refresh.lock")),
+    dpapiPath: resolveAbsolutePath(env, "DC_DEVICE_DPAPI_PATH", path.join(localAppData, "DesktopCommander", "jazz-oauth.dpapi")),
+  };
+}
+
+const NATIVE_CREDENTIAL_CONFIG = resolveNativeCredentialConfig();
+const SERVICE = NATIVE_CREDENTIAL_CONFIG.service;
+const ACCOUNT = NATIVE_CREDENTIAL_CONFIG.account;
+const VAULT_LOCK_PATH = NATIVE_CREDENTIAL_CONFIG.vaultLockPath;
+const PAIRING_LOCK_PATH = NATIVE_CREDENTIAL_CONFIG.pairingLockPath;
+const REFRESH_LOCK_PATH = NATIVE_CREDENTIAL_CONFIG.refreshLockPath;
 const VAULT_LOCK_TIMEOUT_MS = 15_000;
 const VAULT_LOCK_RETRY_MS = 50;
 const PAIRING_LEASE_TTL_MS = 30_000;
@@ -529,11 +578,7 @@ const linuxSecretService = {
   },
 };
 
-const dpapiPath = path.join(
-  process.env.LOCALAPPDATA ?? os.homedir(),
-  "DesktopCommander",
-  "jazz-oauth.dpapi",
-);
+const dpapiPath = NATIVE_CREDENTIAL_CONFIG.dpapiPath;
 const windowsDpapi = {
   async load() {
     try {
