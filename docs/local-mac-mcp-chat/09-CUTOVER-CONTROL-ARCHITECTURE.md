@@ -126,7 +126,8 @@ The rehearsal closes the recovery gaps that blocked the earlier proposal:
 
 Accepted evidence:
 
-- evidence directory: `control-plane/.data/recovery-evidence/clean-reseed-20260929T214514Z`
+- evidence directory: `control-plane/.data/recovery-evidence/clean-reseed-20260929T215309Z`
+- committed recovery-code SHA recorded by the evidence manifest: `5c843ea80c47824183ed2a4f255224572d58db7d`
 - process exit: `0`
 - `rehearsalAccepted=true`
 - `productionMigrationAuthorized=false`
@@ -140,7 +141,7 @@ Accepted evidence:
 - immutable authority/backend snapshot hashes: unchanged before/after
 - SQLite `quick_check`: `ok`
 
-This proves a **candidate recovery procedure on copied state**, not permission to execute it live. A production reseed still requires a separately reviewed operator runbook, current-state re-snapshot/revalidation, the independent human-controlled Terminal/SSH prerequisite, freeze/drain gates, rollback assets, and explicit verification before local-device activation.
+This proves a **candidate recovery procedure on copied state**, not permission to execute it live. The operator handoff is documented in `10-JAZZ-CLEAN-RESEED-PRODUCTION-RUNBOOK.md`. Before any freeze, `ops/macos/verify-jazz-clean-reseed-live-preflight.sh` must pass from a human-controlled independent Terminal/SSH session. A production reseed still requires current-state re-snapshot/revalidation, freeze/drain gates, rollback assets, a separately reviewed live stage/apply implementation, and explicit verification before local-device activation.
 
 Do not use the older row-level update/upsert candidates. Do not copy old Jazz row-history into the new authority. Do not flatten all tables through one principal: alpha.53 preserves meaningful principal-specific visibility, and the accepted rehearsal depends on preserving that provenance.
 
