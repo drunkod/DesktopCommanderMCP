@@ -27,6 +27,7 @@
     "cutover:quiesce-workers": "NODE_ENV=production node --env-file=.env.local --import tsx ./scripts/quiesce-worker-sessions.ts",
     "device:registry": "NODE_ENV=production node --env-file=.env.local --import tsx ./scripts/inspect-device-registry.ts",
     "device:reconcile-identity": "NODE_ENV=production node --env-file=.env.local --import tsx ./scripts/reconcile-device-identity.ts",
+    "device:rehearse-branch-repair": "bash ../../ops/macos/rehearse-jazz-device-branch-repair.sh",
     "test:cutover-readiness": "tsx ./scripts/test-cutover-readiness.ts",
     "test:cutover-control": "bash ../../ops/macos/test-cutover-control.sh",
     "test:cutover-runner": "bash ../../ops/macos/test-run-local-stack-maintenance.sh",
