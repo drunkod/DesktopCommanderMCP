@@ -6,8 +6,8 @@
 
 The accepted copy-only recovery evidence is:
 
-- evidence: `control-plane/.data/recovery-evidence/clean-reseed-20260929T234323Z`
-- recovery-code SHA recorded by the evidence: `ae06bd3e93f17dced59c2db9ae565a270d66c24d`
+- evidence: `control-plane/.data/recovery-evidence/clean-reseed-20260930T042753Z`
+- recovery-code SHA recorded by the evidence: `c872470262362f9bdadde33f595465c618f3c8f7`
 - `rehearsalAccepted=true`
 - `productionMigrationAuthorized=false`
 - old backend cache reconnect: compatible
@@ -36,7 +36,7 @@ From an already-open local Terminal or independent SSH session:
 cd /Users/test/Documents/RemoteMCP-Jazz/repositories/DesktopCommanderMCP/control-plane
 ./ops/macos/independent-control-preflight.sh attest
 
-export DEVICE_RESEED_ACCEPTED_EVIDENCE_DIR="$PWD/.data/recovery-evidence/clean-reseed-20260929T234323Z"
+export DEVICE_RESEED_ACCEPTED_EVIDENCE_DIR="$PWD/.data/recovery-evidence/clean-reseed-20260930T042753Z"
 ./ops/macos/verify-jazz-clean-reseed-live-preflight.sh
 ```
 
@@ -162,19 +162,21 @@ The implemented stager `pnpm device:stage-clean-reseed -- production` reproduces
 
 The production stage/apply boundary is implemented, but **has not been executed against live Jazz state**.
 
-Current hardened recovery implementation SHA: `ae06bd3e93f17dced59c2db9ae565a270d66c24d`.
+Current hardened recovery implementation SHA: `c872470262362f9bdadde33f595465c618f3c8f7`.
 
 Committed-code rehearsal evidence:
 
-- staged authority: `control-plane/.data/recovery-stage/rehearsal-20260929T234452Z`
+- staged authority: `control-plane/.data/recovery-stage/rehearsal-20260930T042846Z`
 - `stageReady=true`
-- stage manifest Git SHA: `ae06bd3e93f17dced59c2db9ae565a270d66c24d`
+- stage manifest Git SHA: `c872470262362f9bdadde33f595465c618f3c8f7`
 - returning backend cache compatible: `true`
 - post-returning-cache fresh convergence: `true`
 - `productionApplyAuthorized=false`
 - handoff rehearsal using copies of the accepted old and staged SQLite authority: new-stage hash landed at the live rehearsal path and the old-authority hash landed at rollback;
 - journal phase after successful rehearsal handoff: `awaiting-validation`;
-- journal recovery restored both the old live authority and the staged new authority exactly.
+- supervised startup barrier transition: `startup-attempted` with `startupAttempted=true` before any Jazz/Next/pnpm runtime subprocess is invoked;
+- copied-state startup-failure rehearsal: Jazz exited before opening a listener, all processes were stopped, and automatic `recover` still refused to move either authority directory;
+- journal recovery before any startup attempt restored both the old live authority and the staged new authority exactly.
 
 Production staging, from the independently controlled shell **after Phase 6 frozen snapshots exist**, is:
 
@@ -208,7 +210,9 @@ Before the first rename it durably creates and fsyncs `.data/reseed-handoff-pend
 2. staged authority -> active `.data/jazz`; journal phase `new-live`;
 3. after filesystem sync, journal phase `awaiting-validation`.
 
-Ordinary errors trigger in-process rollback and preserve the stage. For an abrupt interruption where traps cannot run, the journal exists before mutation and `pnpm device:apply-clean-reseed -- recover` reconstructs the safe rollback action from both the journal and actual directory state while writers are still stopped. Recovery has tests for interruption after each rename and failures after each journal phase. Automatic filesystem rollback is refused once services have started after handoff.
+Ordinary errors trigger in-process rollback and preserve the stage. For an abrupt interruption where traps cannot run, the journal exists before mutation and `pnpm device:apply-clean-reseed -- recover` reconstructs the safe rollback action from both the journal and actual directory state while writers are still stopped. Recovery has tests for interruption after each rename and failures after each journal phase.
+
+On the first supervised start after handoff, `run-local-stack.sh` invokes `mark-jazz-clean-reseed-startup-attempted.sh` **before any Jazz/Next/pnpm runtime subprocess is invoked**. That helper atomically writes and fsyncs `startupAttempted=true`, `startupAttemptedAt=<timestamp>`, and phase `startup-attempted`. If the journal update fails, the runner exits before starting Jazz or Next. Every later restart requires the already-persisted startup barrier. `recover` refuses automatic filesystem rollback once `startupAttempted=true` (or any startup/validation phase is present), even if startup failed before opening a listener and the stack is fully stopped.
 
 Do not manually point the copy-only rehearsal at production paths or bypass the frozen-state, journal, stage/apply, or independent-control guards.
 
@@ -222,7 +226,7 @@ From the same independently controlled shell run:
 pnpm device:verify-clean-reseed
 ```
 
-This command requires the independent-control attestation, all freeze markers, launchd running, and loopback ports 3000/1625 listening. As soon as the running stack is confirmed, it durably changes the handoff journal to phase `validating` and records `servicesStartedAfterHandoff=true`; from that point automatic filesystem rollback is intentionally disabled.
+This command requires the independent-control attestation, all freeze markers, launchd running, loopback ports 3000/1625 listening, and the pre-existing `startupAttempted=true` barrier written by the supervised runner. It refuses to validate a journal that skipped the startup barrier. Once the running stack is confirmed, it durably advances the journal from `startup-attempted` to `validating` and records `servicesStartedAfterHandoff=true`. Automatic filesystem rollback was already disabled at the earlier startup-attempt boundary.
 
 The verifier does **not** open the web process's configured backend-cache file. It creates a dedicated verifier cache under the selected recovery directory, connects it to the live authority, and verifies:
 
