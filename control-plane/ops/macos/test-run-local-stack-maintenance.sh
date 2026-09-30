@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_RUNNER="$SCRIPT_DIR/run-local-stack.sh"
 SOURCE_CUTOVER="$SCRIPT_DIR/cutover-control.sh"
+SOURCE_STARTUP_BARRIER="$SCRIPT_DIR/mark-jazz-clean-reseed-startup-attempted.sh"
 NODE_EXECUTABLE="$(command -v node)"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
@@ -50,7 +51,8 @@ run_case() {
   mkdir -p "$control/.next" "$data" "$ops"
   cp "$SOURCE_RUNNER" "$ops/run-local-stack.sh"
   cp "$SOURCE_CUTOVER" "$ops/cutover-control.sh"
-  chmod +x "$ops/run-local-stack.sh" "$ops/cutover-control.sh"
+  cp "$SOURCE_STARTUP_BARRIER" "$ops/mark-jazz-clean-reseed-startup-attempted.sh"
+  chmod +x "$ops/run-local-stack.sh" "$ops/cutover-control.sh" "$ops/mark-jazz-clean-reseed-startup-attempted.sh"
   : >"$control/.env.local"
   printf 'fixture\n' >"$control/.next/BUILD_ID"
   : >"$tailscale_log"

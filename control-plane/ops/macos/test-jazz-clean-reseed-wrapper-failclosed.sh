@@ -45,10 +45,11 @@ import json,sys
 path,stage,rollback,recovery=sys.argv[1:5]
 json.dump({
   "mode":"rehearsal",
-  "phase":"awaiting-validation",
+  "phase":"startup-attempted",
   "stageDir":stage,
   "rollbackAuthorityDir":rollback,
   "recoveryDir":recovery,
+  "startupAttempted":True,
   "servicesStartedAfterHandoff":False,
   "validationComplete":False,
 },open(path,"w"))
@@ -62,6 +63,7 @@ PY
 import json,sys
 x=json.load(open(sys.argv[1]))
 assert x["phase"]=="validating"
+assert x["startupAttempted"] is True
 assert x["servicesStartedAfterHandoff"] is True
 assert x["validationComplete"] is False
 PY

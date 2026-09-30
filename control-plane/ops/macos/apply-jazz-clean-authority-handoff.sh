@@ -41,6 +41,7 @@ else:
       "recoveryDir":os.environ["RECOVERY_DIR"],
       "recoveryManifest":os.environ["RECOVERY_MANIFEST"] or None,
       "stageManifest":os.environ["STAGE_MANIFEST"] or None,
+      "startupAttempted":False,
       "servicesStartedAfterHandoff":False,
       "validationComplete":False,
     }
@@ -102,6 +103,7 @@ for k,j in {
  "LIVE_AUTHORITY_DIR":"liveAuthorityDir","STAGED_AUTHORITY_DIR":"stagedAuthorityDir",
  "ROLLBACK_AUTHORITY_DIR":"rollbackAuthorityDir","RECOVERY_DIR":"recoveryDir",
  "RECOVERY_MANIFEST":"recoveryManifest","STAGE_MANIFEST":"stageManifest",
+ "PHASE":"phase","STARTUP_ATTEMPTED":"startupAttempted",
  "SERVICES_STARTED":"servicesStartedAfterHandoff","VALIDATION_COMPLETE":"validationComplete",
 }.items():
     v=x.get(j,"")
@@ -109,7 +111,9 @@ for k,j in {
     print(k+"="+shlex.quote(str(v or "")))
 PY
 )"
-  [[ "${SERVICES_STARTED}" != "true" && "${VALIDATION_COMPLETE}" != "true" ]] || fail "automatic recovery is forbidden after services start or validation completes"
+  if [[ "${STARTUP_ATTEMPTED}" == "true" || "${SERVICES_STARTED}" == "true" || "${VALIDATION_COMPLETE}" == "true"     || "${PHASE}" == "startup-attempted" || "${PHASE}" == "validating" || "${PHASE}" == "validated" ]]; then
+    fail "automatic recovery is forbidden after post-handoff startup is attempted"
+  fi
   if [[ "${HANDOFF_MODE}" == "apply" ]]; then
     "${SCRIPT_DIR}/independent-control-preflight.sh" check >/dev/null
     for marker in "${ROOT}/.data/task-admission.frozen" "${ROOT}/.data/effect-admission.frozen" "${ROOT}/.data/public-ingress.frozen"; do

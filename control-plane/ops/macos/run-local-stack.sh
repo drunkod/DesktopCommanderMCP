@@ -93,6 +93,11 @@ wait_for_port() {
   log "$name is ready on $host:$port"
 }
 
+# If a clean-reseed handoff is pending, durably record that this recovered
+# authority is about to be started before any supervised runtime subprocess is
+# invoked. Recovery must never infer "never started" from process absence alone.
+"$ROOT/ops/macos/mark-jazz-clean-reseed-startup-attempted.sh"
+
 log "runtime node=$($NODE_BIN --version) pnpm=$($PNPM_BIN --version)"
 log "Jazz backend runtime path=$JAZZ_BACKEND_DATA_PATH"
 log "starting Jazz authority"

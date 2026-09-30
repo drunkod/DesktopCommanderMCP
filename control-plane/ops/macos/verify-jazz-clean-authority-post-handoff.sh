@@ -43,7 +43,8 @@ if x.get("validationComplete"):
     raise SystemExit("error: handoff is already marked validated")
 for k,j in {
  "STAGE_DIR":"stageDir","ROLLBACK_AUTHORITY":"rollbackAuthorityDir","RECOVERY_DIR":"recoveryDir",
- "PHASE":"phase","SERVICES_STARTED":"servicesStartedAfterHandoff"
+ "PHASE":"phase","STARTUP_ATTEMPTED":"startupAttempted",
+ "SERVICES_STARTED":"servicesStartedAfterHandoff"
 }.items():
     v=x.get(j,"")
     if isinstance(v,bool): v="true" if v else "false"
@@ -51,7 +52,8 @@ for k,j in {
 PY
 )"
 
-[[ "${PHASE}" == "awaiting-validation" || "${PHASE}" == "validating" ]] || fail "handoff journal is not awaiting validation"
+[[ "${STARTUP_ATTEMPTED}" == "true" ]] || fail "startup-attempted barrier is missing"
+[[ "${PHASE}" == "startup-attempted" || "${PHASE}" == "validating" ]] || fail "handoff journal is not at a post-startup validation phase"
 STAGE_MANIFEST="${STAGE_DIR}/stage-manifest.json"
 [[ -f "${STAGE_MANIFEST}" ]] || fail "stage manifest is missing"
 [[ -d "${ROLLBACK_AUTHORITY}" ]] || fail "rollback authority directory is missing"

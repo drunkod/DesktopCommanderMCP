@@ -65,6 +65,8 @@ RECOVERY_PATHS=(
   "control-plane/ops/macos/verify-jazz-clean-reseed-live-preflight.sh"
   "control-plane/ops/macos/independent-control-preflight.sh"
   "control-plane/ops/macos/cutover-control.sh"
+  "control-plane/ops/macos/run-local-stack.sh"
+  "control-plane/ops/macos/mark-jazz-clean-reseed-startup-attempted.sh"
   "control-plane/ops/macos/capture-jazz-clean-reseed-frozen-state.sh"
   "control-plane/ops/macos/verify-jazz-clean-reseed-frozen-state.sh"
   "control-plane/ops/macos/stage-jazz-clean-authority-reseed.sh"
