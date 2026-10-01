@@ -50,7 +50,8 @@ BACKEND_SNAPSHOT="${EVIDENCE_DIR}/source-backend.sqlite"
 
 "${SQLITE}" "${AUTHORITY_DB}" ".backup '${AUTH_SNAPSHOT}'"
 "${SQLITE}" "${BACKEND_DB}" ".backup '${BACKEND_SNAPSHOT}'"
-VERIFY_DIR="$(mktemp -d /tmp/remote-mcp-jazz-clean-reseed-verify.XXXXXX)"
+TMP_ROOT="${TMPDIR:-/tmp}"
+VERIFY_DIR="$(mktemp -d "${TMP_ROOT%/}/remote-mcp-jazz-clean-reseed-verify.XXXXXX")"
 cp -- "${AUTH_SNAPSHOT}" "${VERIFY_DIR}/authority.sqlite"
 cp -- "${BACKEND_SNAPSHOT}" "${VERIFY_DIR}/backend.sqlite"
 AUTH_CHECK="$("${SQLITE}" "${VERIFY_DIR}/authority.sqlite" 'PRAGMA quick_check;')"
@@ -98,7 +99,7 @@ with open(os.path.join(os.environ["EVIDENCE_DIR"], "manifest.json"), "w", encodi
 PY
 chmod 400 "${EVIDENCE_DIR}/manifest.json"
 
-TEMP_DIR="$(mktemp -d /tmp/remote-mcp-jazz-clean-reseed.XXXXXX)"
+TEMP_DIR="$(mktemp -d "${TMP_ROOT%/}/remote-mcp-jazz-clean-reseed.XXXXXX")"
 cleanup() { rm -rf -- "${TEMP_DIR}"; }
 trap cleanup EXIT
 cp -- "${AUTH_SNAPSHOT}" "${TEMP_DIR}/source-authority.sqlite"
