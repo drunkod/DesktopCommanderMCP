@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     issuer: env.authIssuer,
     authorization_endpoint: `${env.authIssuer}/authorize`,
     device_authorization_endpoint: `${env.authIssuer}/oauth2/device-authorization`,
-    token_endpoint_auth_methods_supported: ["none"],
+    token_endpoint_auth_methods_supported: ["none", "private_key_jwt"],
     scopes_supported: ["openid", "profile", "email", "offline_access", "mcp:tools", "device:sync"],
   };
   return Response.json(metadata, {

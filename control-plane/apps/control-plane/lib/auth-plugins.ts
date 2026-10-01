@@ -8,10 +8,10 @@ import {
   type OAuthProviderExtension,
 } from "@better-auth/oauth-provider";
 import { cimd } from "@better-auth/cimd";
-import { fetchClientMetadataResource } from "@better-auth/cimd/node";
 import { mcp } from "@better-auth/mcp";
 import { passkey } from "@better-auth/passkey";
 import { env } from "./env";
+import { fetchOAuthClientMetadataResource } from "./cimd-fetch";
 import { consumePasskeyEnrollmentIntent, resolvePasskeyEnrollmentIntent } from "./passkey-enrollment";
 import { passkeyOnlyIdentitySchemaPlugin } from "./passkey-only-identity";
 
@@ -138,7 +138,7 @@ function deviceGrantPlugin() {
 
 function cimdPlugin() {
   return cimd({
-    fetchClientMetadataResource,
+    fetchClientMetadataResource: fetchOAuthClientMetadataResource,
     metadataProfile: "mcp-2026-07-28",
   });
 }
