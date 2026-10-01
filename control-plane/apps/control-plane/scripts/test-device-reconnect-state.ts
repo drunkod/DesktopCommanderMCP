@@ -17,7 +17,7 @@ assert.deepEqual(
   }),
   {
     reconnectGeneration: 8,
-    reconnectRequestedAt: undefined,
+    reconnectRequestedAt: null,
   },
 );
 assert.deepEqual(
@@ -27,7 +27,7 @@ assert.deepEqual(
   }),
   {
     reconnectGeneration: 7,
-    reconnectRequestedAt: undefined,
+    reconnectRequestedAt: null,
   },
 );
 

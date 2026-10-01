@@ -9,13 +9,13 @@ export function registrationReconnectPatch(
   device: Pick<ReconnectState, "reconnectGeneration" | "reconnectRequestedAt">,
 ): {
   reconnectGeneration: number;
-  reconnectRequestedAt: undefined;
+  reconnectRequestedAt: null;
 } {
   return {
     reconnectGeneration: device.reconnectRequestedAt
       ? device.reconnectGeneration + 1
       : device.reconnectGeneration,
-    reconnectRequestedAt: undefined,
+    reconnectRequestedAt: null,
   };
 }
 
