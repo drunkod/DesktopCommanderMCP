@@ -3,12 +3,14 @@ import { app } from './jazz-schema.js';
 import type { DeviceTokenManager } from './token-manager.js';
 import { DeviceHeartbeat } from './heartbeat.js';
 import { ReconnectSupervisor } from './reconnect-supervisor.js';
-import type { DeviceControlPlaneClient } from './control-plane-client.js';
+import type { DeviceControlPlaneClient, DevicePendingCall } from './control-plane-client.js';
 import { toJsonValue } from './json.js';
 import { VERSION } from '../version.js';
 
 const NUL_CHAR = String.fromCharCode(0);
 const NUL_RE = new RegExp(NUL_CHAR, 'g');
+const CALL_POLL_INTERVAL_MS = 500;
+const CALL_POLL_RECONNECT_THRESHOLD = 3;
 
 /** Preserve the existing remote-result sanitization contract across transports. */
 export function stripNullBytes<T>(value: T): T {
@@ -40,20 +42,23 @@ export type RemoteCallPayload = {
 };
 
 /**
- * Jazz-backed remote transport.
+ * Remote transport with Jazz-backed device identity and HTTP call delivery.
  *
  * Security boundary:
  * - Better Auth OAuth access tokens are used only against strict control-plane HTTP APIs.
  * - Jazz receives only the short-lived jazz:device capability returned by the server.
- * - The Jazz connection is read/subscription-only by policy.
- * - pending -> executing claim and terminal completion are server-mediated HTTP operations.
+ * - The Jazz connection validates the server-owned device identity row only.
+ * - Pending-call discovery, claim-before-execution, and terminal completion are server-mediated HTTP operations.
  */
 export class RemoteChannel {
     private db: Db | null = null;
     private deviceId: string | null = null;
     private stableId: string | null = null;
     private deviceName: string | null = null;
-    private unsubscribeCalls: (() => void) | null = null;
+    private callPollTimer: NodeJS.Timeout | null = null;
+    private callPollInFlight = false;
+    private callPollFailures = 0;
+    private readonly deliveringCallIds = new Set<string>();
     private onToolCall: ((payload: RemoteCallPayload) => void | Promise<void>) | null = null;
     private channelHealthReporter: ((ready: boolean) => void) | null = null;
     private shuttingDown = false;
@@ -176,40 +181,72 @@ export class RemoteChannel {
             throw new Error('Registered device identity does not match OAuth credential');
         }
 
-        this.subscribeToCalls();
+        this.startCallPolling();
         this.heartbeat.start();
         this.reportChannelHealth(true);
     }
 
-    private subscribeToCalls(): void {
-        if (!this.db || !this.deviceId || !this.onToolCall) throw new Error('Remote channel is not connected');
-        const callback = this.onToolCall;
+    private startCallPolling(): void {
+        this.stopCallPolling();
+        this.callPollFailures = 0;
+        void this.pollPendingCalls();
+    }
+
+    private stopCallPolling(): void {
+        if (this.callPollTimer) clearTimeout(this.callPollTimer);
+        this.callPollTimer = null;
+    }
+
+    private scheduleCallPoll(): void {
+        if (this.shuttingDown || !this.db || !this.deviceId || this.callPollTimer) return;
+        this.callPollTimer = setTimeout(() => {
+            this.callPollTimer = null;
+            void this.pollPendingCalls();
+        }, CALL_POLL_INTERVAL_MS);
+    }
+
+    private async pollPendingCalls(): Promise<void> {
+        if (this.callPollInFlight || this.shuttingDown || !this.db || !this.deviceId || !this.onToolCall) return;
+        this.callPollInFlight = true;
+        let reconnectReason: string | null = null;
+        try {
+            const accessToken = await this.tokens.getAccessToken();
+            const calls = await this.controlPlane.listPendingCalls(accessToken, { deviceId: this.deviceId });
+            this.callPollFailures = 0;
+            for (const call of calls) this.deliverPendingCall(call);
+        } catch (error) {
+            this.callPollFailures += 1;
+            const reason = `pending call poll failed: ${error instanceof Error ? error.message : String(error)}`;
+            console.error(`[remote] ${reason}`);
+            if (this.callPollFailures >= CALL_POLL_RECONNECT_THRESHOLD) {
+                this.callPollFailures = 0;
+                reconnectReason = reason;
+            }
+        } finally {
+            this.callPollInFlight = false;
+            if (reconnectReason) void this.reconnect.request(reconnectReason);
+            else this.scheduleCallPoll();
+        }
+    }
+
+    private deliverPendingCall(call: DevicePendingCall): void {
+        if (!this.deviceId || !this.onToolCall || this.deliveringCallIds.has(call.id)) return;
         const deviceId = this.deviceId;
-        this.unsubscribeCalls = this.db.subscribeAll(
-            app.remoteCalls.where({ deviceId, status: 'pending' }),
-            (delta) => {
-                for (const call of delta.all) {
-                    const payload: RemoteCallPayload = {
-                        new: {
-                            id: call.id,
-                            tool_name: call.toolName,
-                            tool_args: call.toolArgs,
-                            device_id: deviceId,
-                            metadata: call.metadata,
-                        },
-                    };
-                    try {
-                        const result = callback(payload);
-                        if (result instanceof Promise) {
-                            result.catch((error) => console.error('[remote] tool callback rejected:', error));
-                        }
-                    } catch (error) {
-                        console.error('[remote] tool callback threw:', error);
-                    }
-                }
+        const callback = this.onToolCall;
+        this.deliveringCallIds.add(call.id);
+        const payload: RemoteCallPayload = {
+            new: {
+                id: call.id,
+                tool_name: call.toolName,
+                tool_args: call.toolArgs,
+                device_id: deviceId,
+                metadata: call.metadata,
             },
-            { tier: 'global' },
-        );
+        };
+        void Promise.resolve()
+            .then(() => callback(payload))
+            .catch((error) => console.error('[remote] tool callback rejected:', error))
+            .finally(() => this.deliveringCallIds.delete(call.id));
     }
 
     /** Fail closed: a network/auth error throws and the tool MUST NOT execute. */
@@ -247,7 +284,7 @@ export class RemoteChannel {
         });
     }
 
-    /** Jazz row subscriptions make result doorbells unnecessary. */
+    /** HTTP polling discovers pending calls; explicit result doorbells are unnecessary. */
     async notifyResult(_callId: string): Promise<void> { }
 
     startHeartbeat(_deviceId: string): void {
@@ -288,10 +325,7 @@ export class RemoteChannel {
 
     private async disconnectOnce(): Promise<void> {
         this.heartbeat.stop();
-        const unsubscribe = this.unsubscribeCalls;
-        this.unsubscribeCalls = null;
-        // alpha.53 can panic if unsubscribe is called re-entrantly from a WASM callback.
-        if (unsubscribe) await new Promise<void>((resolve) => queueMicrotask(() => { unsubscribe(); resolve(); }));
+        this.stopCallPolling();
         const db = this.db;
         this.db = null;
         await db?.shutdown().catch(() => undefined);

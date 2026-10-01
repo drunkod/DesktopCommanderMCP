@@ -188,6 +188,37 @@ await assert.rejects(
     return true;
   },
 );
+globalThis.fetch = async () => new Response(JSON.stringify({
+  ok: true,
+  calls: [{
+    id: '11111111-1111-4111-8111-111111111111',
+    toolName: 'get_config',
+    toolArgs: { origin: 'llm' },
+    metadata: { source: 'test' },
+    expiresAt: '2026-10-01T11:00:00.000Z',
+  }],
+}), {
+  status: 200,
+  headers: { 'content-type': 'application/json' },
+});
+assert.deepEqual(
+  await controlPlane.listPendingCalls('access', { deviceId: 'device' }),
+  [{
+    id: '11111111-1111-4111-8111-111111111111',
+    toolName: 'get_config',
+    toolArgs: { origin: 'llm' },
+    metadata: { source: 'test' },
+    expiresAt: '2026-10-01T11:00:00.000Z',
+  }],
+);
+globalThis.fetch = async () => new Response(JSON.stringify({ ok: true, calls: 'invalid' }), {
+  status: 200,
+  headers: { 'content-type': 'application/json' },
+});
+await assert.rejects(
+  () => controlPlane.listPendingCalls('access', { deviceId: 'device' }),
+  /invalid calls/,
+);
 globalThis.fetch = originalFetch;
 
 const store = new MemoryCredentialStore(identity);

@@ -30,6 +30,14 @@ export type DeviceHeartbeatInput = Readonly<{
   lastError?: string | null;
 }>;
 
+export type DevicePendingCall = Readonly<{
+  id: string;
+  toolName: string;
+  toolArgs: unknown;
+  metadata: unknown;
+  expiresAt: string;
+}>;
+
 export type DeviceCallCompletion =
   | Readonly<{ callId: string; deviceId: string; status: "completed"; result: unknown }>
   | Readonly<{ callId: string; deviceId: string; status: "failed"; error: string }>;
@@ -38,6 +46,7 @@ export interface DeviceControlPlaneClient {
   register(accessToken: string, input: DeviceRegistrationInput): Promise<DeviceRegistration>;
   getJazzToken(accessToken: string, deviceId: string): Promise<string>;
   heartbeat(accessToken: string, input: DeviceHeartbeatInput): Promise<void>;
+  listPendingCalls(accessToken: string, input: { deviceId: string }): Promise<DevicePendingCall[]>;
   claim(accessToken: string, input: { callId: string; deviceId: string }): Promise<boolean>;
   complete(accessToken: string, input: DeviceCallCompletion): Promise<void>;
 }
@@ -78,6 +87,23 @@ function parseJazzToken(value: unknown): string {
   text(body.jazzToken, "jazzToken");
   positiveNumber(body.expiresIn, "expiresIn");
   return body.jazzToken as string;
+}
+
+function parsePendingCalls(value: unknown): DevicePendingCall[] {
+  const body = record(value, "pending calls");
+  if (!Array.isArray(body.calls)) {
+    throw new Error("Control-plane response has invalid calls");
+  }
+  return body.calls.map((value, index) => {
+    const call = record(value, `pending call ${index}`);
+    return {
+      id: text(call.id, `pending call ${index} id`),
+      toolName: text(call.toolName, `pending call ${index} toolName`),
+      toolArgs: call.toolArgs,
+      metadata: call.metadata,
+      expiresAt: text(call.expiresAt, `pending call ${index} expiresAt`),
+    };
+  });
 }
 
 function parseClaim(value: unknown): boolean {
@@ -172,6 +198,10 @@ export class HttpDeviceControlPlaneClient implements DeviceControlPlaneClient {
 
   async heartbeat(accessToken: string, input: DeviceHeartbeatInput): Promise<void> {
     await this.post("/api/device/heartbeat", accessToken, input, parseAck);
+  }
+
+  listPendingCalls(accessToken: string, input: { deviceId: string }): Promise<DevicePendingCall[]> {
+    return this.post("/api/device/calls/pending", accessToken, input, parsePendingCalls);
   }
 
   claim(accessToken: string, input: { callId: string; deviceId: string }): Promise<boolean> {

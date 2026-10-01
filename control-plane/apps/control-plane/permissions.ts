@@ -38,21 +38,7 @@ const appPermissions = definePermissions(
     policy.devices.allowUpdate.never();
     policy.devices.allowDelete.never();
 
-    policy.remoteCalls.allowRead.where((call) =>
-      anyOf([
-        allOf([owned, userControl]),
-        allOf([
-          owned,
-          device,
-          { deviceId: session["claims.device_id"] },
-          policy.devices.exists.where({
-            id: call.deviceId,
-            oauthClientId: session["claims.client_id"],
-            revokedAt: null,
-          }),
-        ]),
-      ]),
-    );
+    policy.remoteCalls.allowRead.where(allOf([owned, userControl]));
     policy.remoteCalls.allowInsert.never();
     policy.remoteCalls.allowUpdate.never();
     policy.remoteCalls.allowDelete.never();
