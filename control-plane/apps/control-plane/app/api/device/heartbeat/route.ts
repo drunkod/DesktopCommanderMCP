@@ -1,6 +1,6 @@
 import * as z from "zod";
 import { app } from "../../../../schema";
-import { jazzBackendDb } from "../../../../lib/jazz-principal";
+import { jazzAuthorityDb } from "../../../../lib/jazz-authority";
 import { createDeviceProtectedHandler } from "../../../../lib/device-request-auth";
 
 const heartbeatSchema = z.object({
@@ -15,7 +15,7 @@ const POST = createDeviceProtectedHandler(async (request, principal) => {
     return Response.json({ ok: false, error: "Invalid heartbeat" }, { status: 400 });
   }
 
-  const backend = jazzBackendDb();
+  const backend = await jazzAuthorityDb();
   const device = await backend.one(
     app.devices.where({ id: parsed.data.deviceId }),
     { tier: "global" },

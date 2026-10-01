@@ -28,7 +28,7 @@ await runWorkerCliWithExitCode(async () => {
   try {
     const [jobs, calls, sessions, backendDevices, adminDevices] = await Promise.all([
       backendDb.all(app.chatJobs, { tier: "global" }),
-      backendDb.all(app.remoteCalls, { tier: "global" }),
+      adminDb.all(app.remoteCalls, { tier: "global" }),
       backendDb.all(app.workerSessions, { tier: "global" }),
       backendDb.all(app.devices, { tier: "global" }),
       adminDb.all(app.devices, { tier: "global" }),

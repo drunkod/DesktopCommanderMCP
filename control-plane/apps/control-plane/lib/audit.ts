@@ -1,5 +1,5 @@
 import { app } from "../schema";
-import { jazzBackendDb } from "./jazz-principal";
+import { jazzAuthorityDb } from "./jazz-authority";
 import { toJsonValue } from "./json";
 
 export type AuditInput = {
@@ -14,7 +14,7 @@ export async function writeAuditEvent(
   subject: string,
   input: AuditInput,
 ): Promise<void> {
-  const db = jazzBackendDb();
+  const db = await jazzAuthorityDb();
   const write = db.insert(app.auditEvents, {
     ownerId: subject,
     kind: input.kind,

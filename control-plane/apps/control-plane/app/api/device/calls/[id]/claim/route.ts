@@ -1,7 +1,7 @@
 import * as z from "zod";
 import { app } from "../../../../../../schema";
 import { createDeviceProtectedHandler } from "../../../../../../lib/device-request-auth";
-import { jazzBackendDb } from "../../../../../../lib/jazz-principal";
+import { jazzAuthorityDb } from "../../../../../../lib/jazz-authority";
 
 const bodySchema = z.object({ deviceId: z.string().uuid() }).strict();
 const POST = createDeviceProtectedHandler(async (request, principal) => {
@@ -11,7 +11,7 @@ const POST = createDeviceProtectedHandler(async (request, principal) => {
     return Response.json({ ok: false, error: "Invalid claim request" }, { status: 400 });
   }
 
-  const backend = jazzBackendDb();
+  const backend = await jazzAuthorityDb();
   const visibleCall = await waitForGlobalRow(() => backend.one(
     app.remoteCalls.where({ id: callId }),
     { tier: "global" },

@@ -1,12 +1,12 @@
 import { runWorkerCliWithExitCode } from "./worker-cli";
 
 await runWorkerCliWithExitCode(async () => {
-  const [{ app }, { jazzBackendDb }] = await Promise.all([
+  const [{ app }, { jazzAuthorityDb }] = await Promise.all([
     import("../schema"),
-    import("../lib/jazz-principal"),
+    import("../lib/jazz-authority"),
   ]);
 
-  const devices = await jazzBackendDb().all(
+  const devices = await (await jazzAuthorityDb()).all(
     app.devices.orderBy("lastSeenAt", "asc"),
     { tier: "global" },
   );

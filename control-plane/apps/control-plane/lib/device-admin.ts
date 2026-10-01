@@ -1,14 +1,14 @@
 import { app, type Device } from "../schema";
 import { disableOAuthClient } from "./authorization-service";
 import { dispatchRemoteCall } from "./call-router";
-import { jazzBackendDb } from "./jazz-principal";
+import { jazzAuthorityDb } from "./jazz-authority";
 import { writeAuditEvent } from "./audit";
 
 export async function getOwnedDevice(
   subject: string,
   rowId: string,
 ): Promise<Device> {
-  const db = jazzBackendDb();
+  const db = await jazzAuthorityDb();
   const device = await db.one(app.devices.where({ id: rowId }), {
     tier: "global",
   });
@@ -43,7 +43,7 @@ export async function revokeDevice(
   rowId: string,
 ): Promise<void> {
   const device = await getOwnedDevice(subject, rowId);
-  const backend = jazzBackendDb();
+  const backend = await jazzAuthorityDb();
 
   if (!device.revokedAt) {
     const write = backend.update(app.devices, device.id, {

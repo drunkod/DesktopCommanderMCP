@@ -18,6 +18,8 @@ chmod +x "$ROOT/ops/macos/prepare-local-device-env.sh" "$ROOT/ops/macos/run-loca
 cat >"$ROOT/apps/control-plane/.env.local" <<'EOF'
 APP_ORIGIN=https://example.test
 REMOTE_MCP_RESOURCE=https://example.test/mcp
+JAZZ_APP_ID=fixture-app-id
+JAZZ_SERVER_URL=http://127.0.0.1:1625
 SECRET_SHOULD_NOT_LEAK=fixture-secret
 EOF
 printf 'NODE_BIN=%q\n' "$NODE_EXECUTABLE" >"$ROOT/.data/launchd-runtime.env"
@@ -32,6 +34,8 @@ CONFIG="$ROOT/.data/device-agent/device.json"
 grep -Fq 'DC_REMOTE_RUNTIME_PROFILE=production' "$DEVICE_ENV"
 grep -Fq 'DC_REMOTE_AUTH_ISSUER=https://example.test/api/auth' "$DEVICE_ENV"
 grep -Fq 'REMOTE_MCP_RESOURCE=https://example.test/mcp' "$DEVICE_ENV"
+grep -Fq 'JAZZ_APP_ID=fixture-app-id' "$DEVICE_ENV"
+grep -Fq 'JAZZ_SERVER_URL=http://127.0.0.1:1625' "$DEVICE_ENV"
 grep -Fq 'MCP_SERVER_URL=http://127.0.0.1:3000' "$DEVICE_ENV"
 grep -Fq 'DC_DEVICE_CREDENTIAL_SERVICE=com.desktopcommander.remote-mcp.local-jazz' "$DEVICE_ENV"
 grep -Fq 'DC_DEVICE_CREDENTIAL_ACCOUNT=device-oauth-session' "$DEVICE_ENV"
@@ -71,6 +75,8 @@ const result = {
   profile: process.env.DC_REMOTE_RUNTIME_PROFILE,
   issuer: process.env.DC_REMOTE_AUTH_ISSUER,
   resource: process.env.REMOTE_MCP_RESOURCE,
+  jazzAppId: process.env.JAZZ_APP_ID,
+  jazzServer: process.env.JAZZ_SERVER_URL,
   server: process.env.MCP_SERVER_URL,
   config: process.env.DC_REMOTE_DEVICE_CONFIG_PATH,
   service: process.env.DC_DEVICE_CREDENTIAL_SERVICE,
@@ -96,6 +102,8 @@ if (JSON.stringify(result.argv) !== JSON.stringify(expectedArgv)) throw new Erro
 if (result.profile !== "production") throw new Error("unexpected runtime profile");
 if (result.issuer !== "https://example.test/api/auth") throw new Error("unexpected issuer");
 if (result.resource !== "https://example.test/mcp") throw new Error("unexpected resource");
+if (result.jazzAppId !== "fixture-app-id") throw new Error("unexpected Jazz app id");
+if (result.jazzServer !== "http://127.0.0.1:1625") throw new Error("unexpected Jazz server");
 if (result.server !== "http://127.0.0.1:3000") throw new Error("unexpected loopback server");
 if (result.config !== config) throw new Error("unexpected device config path");
 if (result.service !== "com.desktopcommander.remote-mcp.local-jazz") throw new Error("unexpected credential service");

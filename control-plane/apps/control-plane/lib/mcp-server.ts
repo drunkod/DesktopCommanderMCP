@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/server";
 import * as z from "zod";
 import { app, type ChatJob, type WorkerSession } from "../schema";
 import { jazzBackendDb } from "./jazz-principal";
+import { jazzAuthorityDb } from "./jazz-authority";
 import { dispatchRemoteCall } from "./call-router";
 import { TaskAdmissionFrozenError } from "./cutover-mode";
 import {
@@ -347,7 +348,7 @@ export function buildServer(subject: string): McpServer {
     description: "List the caller's paired Desktop Commander devices.",
     inputSchema: z.object({}),
   }, async () => {
-    const db = jazzBackendDb();
+    const db = await jazzAuthorityDb();
     const rows = await db.all(app.devices.where({ ownerId: subject }), { tier: "global" });
     const devices = rows.map((row) => ({
       id: row.id,

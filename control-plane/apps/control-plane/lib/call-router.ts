@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import type { Db } from "jazz-tools";
 import { app, type RemoteCall } from "../schema";
-import { jazzBackendDb } from "./jazz-principal";
+import { jazzAuthorityDb } from "./jazz-authority";
 import { toJsonValue } from "./json";
 import { deterministicUuid } from "./ids";
 import { EffectAdmissionFrozenError, isEffectAdmissionFrozen } from "./cutover-mode";
@@ -21,7 +21,7 @@ export async function dispatchRemoteCall(
   subject: string,
   input: DispatchInput,
 ): Promise<RemoteCall> {
-  const db = jazzBackendDb();
+  const db = await jazzAuthorityDb();
   const device = await db.one(
     app.devices.where({ id: input.deviceId }),
     { tier: "global" },
@@ -132,19 +132,27 @@ async function waitForTerminal(db: Db, callId: string, timeoutMs: number): Promi
     let done = false;
     let unsubscribe: (() => void) | null = null;
     let timer: NodeJS.Timeout | null = null;
+    const deferUnsubscribe = (stop: () => void) => { setTimeout(stop, 0); };
     const finish = (fn: () => void) => {
       if (done) return;
       done = true;
       if (timer) clearTimeout(timer);
-      unsubscribe?.();
+      const stop = unsubscribe;
+      unsubscribe = null;
       fn();
+      if (stop) deferUnsubscribe(stop);
     };
-    unsubscribe = db.subscribeAll(query, (delta) => {
+    const stop = db.subscribeAll(query, (delta) => {
       const row = delta.all[0];
       if (row && isTerminal(row.status)) finish(() => resolve(row));
     }, { tier: "global" });
+    unsubscribe = stop;
+    if (done) {
+      unsubscribe = null;
+      deferUnsubscribe(stop);
+    }
     timer = setTimeout(() => {
-      finish(() => reject(new Error(`Remote call ${callId} timed out`)));
+      finish(() => reject(new Error("Remote call " + callId + " timed out")));
     }, timeoutMs);
   });
 }

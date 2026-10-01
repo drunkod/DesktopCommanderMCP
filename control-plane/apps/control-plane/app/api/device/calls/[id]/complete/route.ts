@@ -1,7 +1,7 @@
 import * as z from "zod";
 import { app } from "../../../../../../schema";
 import { createDeviceProtectedHandler } from "../../../../../../lib/device-request-auth";
-import { jazzBackendDb } from "../../../../../../lib/jazz-principal";
+import { jazzAuthorityDb } from "../../../../../../lib/jazz-authority";
 import { toJsonValue } from "../../../../../../lib/json";
 
 const bodySchema = z.discriminatedUnion("status", [
@@ -23,7 +23,7 @@ const POST = createDeviceProtectedHandler(async (request, principal) => {
     return Response.json({ ok: false, error: "Invalid completion request" }, { status: 400 });
   }
 
-  const backend = jazzBackendDb();
+  const backend = await jazzAuthorityDb();
   const visibleCall = await waitForGlobalRow(() => backend.one(
     app.remoteCalls.where({ id: callId }),
     { tier: "global" },

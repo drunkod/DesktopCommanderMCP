@@ -30,6 +30,8 @@ source "$RUNTIME_ENV"
 
 : "${APP_ORIGIN:?APP_ORIGIN is required}"
 : "${REMOTE_MCP_RESOURCE:?REMOTE_MCP_RESOURCE is required}"
+: "${JAZZ_APP_ID:?JAZZ_APP_ID is required}"
+: "${JAZZ_SERVER_URL:?JAZZ_SERVER_URL is required}"
 : "${NODE_BIN:?NODE_BIN is required}"
 [[ -x "$NODE_BIN" ]] || { echo "NODE_BIN is not executable: $NODE_BIN" >&2; exit 1; }
 [[ "$CONFIG_PATH" = /* ]] || { echo "device config path must be absolute" >&2; exit 1; }
@@ -53,6 +55,8 @@ tmp="$OUTPUT.tmp.$$"
   printf 'DC_REMOTE_RUNTIME_PROFILE=%q\n' "production"
   printf 'DC_REMOTE_AUTH_ISSUER=%q\n' "$ISSUER"
   printf 'REMOTE_MCP_RESOURCE=%q\n' "$REMOTE_MCP_RESOURCE"
+  printf 'JAZZ_APP_ID=%q\n' "$JAZZ_APP_ID"
+  printf 'JAZZ_SERVER_URL=%q\n' "$JAZZ_SERVER_URL"
   printf 'MCP_SERVER_URL=%q\n' "$MCP_SERVER_URL"
   printf 'DC_REMOTE_DEVICE_CONFIG_PATH=%q\n' "$CONFIG_PATH"
   printf 'DC_DEVICE_CREDENTIAL_SERVICE=%q\n' "$CREDENTIAL_SERVICE"

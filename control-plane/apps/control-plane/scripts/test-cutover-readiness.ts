@@ -120,14 +120,16 @@ try {
     permissions,
   });
 
-  const [{ jazzBackendDb }, queue, { dispatchRemoteCall }] = await Promise.all([
+  const [{ jazzBackendDb }, { jazzAuthorityDb }, queue, { dispatchRemoteCall }] = await Promise.all([
     import("../lib/jazz-principal"),
+    import("../lib/jazz-authority"),
     import("../lib/worker-queue"),
     import("../lib/call-router"),
   ]);
   const db = jazzBackendDb();
+  const authority = await jazzAuthorityDb();
 
-  const deviceWrite = db.insert(app.devices, {
+  const deviceWrite = authority.insert(app.devices, {
     ownerId: owner,
     stableId: "cutover-device-stable",
     oauthClientId: "cutover-device-client",
@@ -152,7 +154,7 @@ try {
     () => dispatchRemoteCall(owner, remoteInput),
     /timed out/,
   );
-  const callsBeforeFreeze = await db.all(app.remoteCalls.where({ ownerId: owner }), { tier: "global" });
+  const callsBeforeFreeze = await authority.all(app.remoteCalls.where({ ownerId: owner }), { tier: "global" });
   assert.equal(callsBeforeFreeze.length, 1);
 
   const runningTask = await queue.enqueueWorkerTask(owner, "Running task may finish after freeze", "cutover-running-0001");
@@ -171,11 +173,11 @@ try {
     /timed out/,
     "task admission freeze must not block device remote calls needed by running work",
   );
-  const callsAfterFreeze = await db.all(app.remoteCalls.where({ ownerId: owner }), { tier: "global" });
+  const callsAfterFreeze = await authority.all(app.remoteCalls.where({ ownerId: owner }), { tier: "global" });
   assert.equal(callsAfterFreeze.length, 2, "task admission freeze must leave device-call admission available");
 
   for (const call of callsAfterFreeze) {
-    const cancelRemote = await db.transaction(async (tx) => {
+    const cancelRemote = await authority.transaction(async (tx) => {
       const current = await tx.one(app.remoteCalls.where({ id: call.id }), { tier: "global" });
       assert.ok(current);
       tx.update(app.remoteCalls, current.id, {
@@ -296,7 +298,7 @@ try {
   assert.equal(admissionOpenReport.blockers.taskAdmissionOpen, true);
 
   await writeFile(freezeFile, "frozen_at=test\n", { mode: 0o600 });
-  const foreignDeviceWrite = db.insert(app.devices, {
+  const foreignDeviceWrite = authority.insert(app.devices, {
     ownerId: "foreign-owner",
     stableId: "foreign-device-stable",
     oauthClientId: "foreign-device-client",
@@ -323,8 +325,12 @@ try {
   try {
     await globalThis.__remoteMcpJazzContext?.shutdown();
     globalThis.__remoteMcpJazzContext = undefined;
+    const { shutdownJazzAuthorityDb } = await import("../lib/jazz-authority");
+    await shutdownJazzAuthorityDb();
   } finally {
     await server.stop();
     await rm(temp, { recursive: true, force: true });
   }
 }
+
+process.exit(0);

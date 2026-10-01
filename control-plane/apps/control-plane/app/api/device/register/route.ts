@@ -3,7 +3,7 @@ import { deterministicUuid } from "../../../../lib/ids";
 import { app } from "../../../../schema";
 import { toJsonValue } from "../../../../lib/json";
 import { jazzContext } from "../../../../lib/jazz-context";
-import { jazzBackendDb } from "../../../../lib/jazz-principal";
+import { jazzAuthorityDb } from "../../../../lib/jazz-authority";
 import { mintJazzDeviceToken } from "../../../../lib/jazz-capability";
 import { createDeviceProtectedHandler } from "../../../../lib/device-request-auth";
 
@@ -21,7 +21,7 @@ const POST = createDeviceProtectedHandler(async (request, principal) => {
     return Response.json({ ok: false, error: "Invalid device registration" }, { status: 400 });
   }
 
-  const db = jazzBackendDb();
+  const db = await jazzAuthorityDb();
   const byClient = await db.all(
     app.devices.where({ oauthClientId: principal.clientId }),
     { tier: "global" },

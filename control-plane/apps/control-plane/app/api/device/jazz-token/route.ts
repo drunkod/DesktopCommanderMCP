@@ -1,7 +1,7 @@
 import * as z from "zod";
 import { app } from "../../../../schema";
 import { createDeviceProtectedHandler } from "../../../../lib/device-request-auth";
-import { jazzBackendDb } from "../../../../lib/jazz-principal";
+import { jazzAuthorityDb } from "../../../../lib/jazz-authority";
 import { mintJazzDeviceToken } from "../../../../lib/jazz-capability";
 
 const schema = z.object({ deviceId: z.string().uuid() }).strict();
@@ -12,7 +12,7 @@ const POST = createDeviceProtectedHandler(async (request, principal) => {
     return Response.json({ ok: false, error: "Invalid Jazz token request" }, { status: 400 });
   }
 
-  const db = jazzBackendDb();
+  const db = await jazzAuthorityDb();
   const device = await db.one(app.devices.where({ id: parsed.data.deviceId }), { tier: "global" });
   if (!device || device.ownerId !== principal.subject || device.revokedAt || device.oauthClientId !== principal.clientId) {
     return Response.json({ ok: false, error: "Device is not active" }, { status: 403 });
