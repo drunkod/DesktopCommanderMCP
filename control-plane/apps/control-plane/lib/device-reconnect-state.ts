@@ -29,11 +29,26 @@ export function heartbeatStatusDuringReconnect(
   return requestedStatus;
 }
 
+export function reconnectTargetGeneration(toolArgs: unknown): number | null {
+  if (!toolArgs || typeof toolArgs !== "object" || Array.isArray(toolArgs)) return null;
+  const value = (toolArgs as Record<string, unknown>).reconnectGeneration;
+  return typeof value === "number"
+    && Number.isSafeInteger(value)
+    && value > 0
+    ? value
+    : null;
+}
+
 export function isReconnectReady(
-  device: Pick<ReconnectState, "reconnectRequestedAt" | "status" | "lastSeenAt">,
+  device: Pick<
+    ReconnectState,
+    "reconnectGeneration" | "reconnectRequestedAt" | "status" | "lastSeenAt"
+  >,
   completedAt: Date,
+  targetGeneration: number,
 ): boolean {
   return device.status === "online"
     && !device.reconnectRequestedAt
+    && device.reconnectGeneration >= targetGeneration
     && device.lastSeenAt.getTime() > completedAt.getTime();
 }

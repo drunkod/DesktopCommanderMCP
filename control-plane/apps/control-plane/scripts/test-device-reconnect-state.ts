@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {
   heartbeatStatusDuringReconnect,
   isReconnectReady,
+  reconnectTargetGeneration,
   registrationReconnectPatch,
 } from "../lib/device-reconnect-state";
 
@@ -52,31 +53,74 @@ assert.equal(
   "online",
 );
 
+assert.equal(reconnectTargetGeneration({ reconnectGeneration: 8 }), 8);
+assert.equal(reconnectTargetGeneration({ reconnectGeneration: 0 }), null);
+assert.equal(reconnectTargetGeneration({ reconnectGeneration: 1.5 }), null);
+assert.equal(reconnectTargetGeneration({}), null);
+assert.equal(reconnectTargetGeneration(null), null);
+
 assert.equal(
   isReconnectReady(
-    { status: "online", reconnectRequestedAt: marker, lastSeenAt: newer },
+    {
+      status: "online",
+      reconnectGeneration: 8,
+      reconnectRequestedAt: marker,
+      lastSeenAt: newer,
+    },
     completedAt,
+    8,
   ),
   false,
 );
 assert.equal(
   isReconnectReady(
-    { status: "reconnecting", reconnectRequestedAt: null, lastSeenAt: newer },
+    {
+      status: "reconnecting",
+      reconnectGeneration: 8,
+      reconnectRequestedAt: null,
+      lastSeenAt: newer,
+    },
     completedAt,
+    8,
   ),
   false,
 );
 assert.equal(
   isReconnectReady(
-    { status: "online", reconnectRequestedAt: null, lastSeenAt: completedAt },
+    {
+      status: "online",
+      reconnectGeneration: 7,
+      reconnectRequestedAt: null,
+      lastSeenAt: newer,
+    },
     completedAt,
+    8,
   ),
   false,
 );
 assert.equal(
   isReconnectReady(
-    { status: "online", reconnectRequestedAt: null, lastSeenAt: newer },
+    {
+      status: "online",
+      reconnectGeneration: 8,
+      reconnectRequestedAt: null,
+      lastSeenAt: completedAt,
+    },
     completedAt,
+    8,
+  ),
+  false,
+);
+assert.equal(
+  isReconnectReady(
+    {
+      status: "online",
+      reconnectGeneration: 8,
+      reconnectRequestedAt: null,
+      lastSeenAt: newer,
+    },
+    completedAt,
+    8,
   ),
   true,
 );
