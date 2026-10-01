@@ -42,7 +42,27 @@ let lastIterativeMetrics: FuzzySearchMetrics['iterative'] = null;
 export function runFuzzySearch(text: string, query: string): { result: FuzzyMatch; metrics: FuzzySearchMetrics } {
     const startTime = performance.now();
     lastIterativeMetrics = null;
-    const result = recursiveFuzzyIndexOf(text, query);
+
+    // First try to localize likely matches from exact fragments of the query.
+    // The legacy recursive search compares very large text halves against the
+    // short query, so edit distance can be dominated by segment length and the
+    // recursion can discard the half that actually contains a near-match.
+    const anchoredResult = anchoredFuzzyIndexOf(text, query);
+    let result: FuzzyMatch;
+
+    if (anchoredResult && getSimilarityRatio(query, anchoredResult.value) >= 0.5) {
+        result = anchoredResult;
+    } else {
+        const recursiveResult = recursiveFuzzyIndexOf(text, query);
+        if (!anchoredResult) {
+            result = recursiveResult;
+        } else {
+            const anchoredSimilarity = getSimilarityRatio(query, anchoredResult.value);
+            const recursiveSimilarity = getSimilarityRatio(query, recursiveResult.value);
+            result = anchoredSimilarity >= recursiveSimilarity ? anchoredResult : recursiveResult;
+        }
+    }
+
     return {
         result,
         metrics: {
@@ -55,6 +75,88 @@ export function runFuzzySearch(text: string, query: string): { result: FuzzyMatc
             iterative: lastIterativeMetrics
         }
     };
+}
+
+function anchoredFuzzyIndexOf(text: string, query: string): FuzzyMatch | null {
+    if (query.length < 16 || text.length < query.length) {
+        return null;
+    }
+
+    const anchorLength = Math.min(64, Math.max(12, Math.floor(query.length / 4)));
+    const span = Math.max(0, query.length - anchorLength);
+    const anchorOffsets = Array.from(new Set([
+        0,
+        Math.floor(span / 4),
+        Math.floor(span / 2),
+        Math.floor((span * 3) / 4),
+        span,
+    ]));
+
+    // Allow small insertions/deletions around the predicted window while
+    // keeping the candidate slices tightly bounded for large-file searches.
+    const drift = Math.min(64, Math.max(4, Math.ceil(query.length * 0.02)));
+    const seenRanges = new Set<string>();
+    const maxAnchorHits = 64;
+    const maxCandidates = 128;
+
+    let candidates = 0;
+    let best: FuzzyMatch | null = null;
+    let bestSimilarity = -1;
+
+    for (const anchorOffset of anchorOffsets) {
+        const anchor = query.slice(anchorOffset, anchorOffset + anchorLength);
+        if (anchor.trim().length < 4) {
+            continue;
+        }
+
+        let fromIndex = 0;
+        let hits = 0;
+
+        while (hits < maxAnchorHits && candidates < maxCandidates) {
+            const anchorIndex = text.indexOf(anchor, fromIndex);
+            if (anchorIndex < 0) {
+                break;
+            }
+
+            hits++;
+            fromIndex = anchorIndex + 1;
+
+            const predictedStart = anchorIndex - anchorOffset;
+            const segmentStart = Math.max(0, predictedStart - drift);
+            const segmentEnd = Math.min(text.length, predictedStart + query.length + drift);
+            const rangeKey = segmentStart + ':' + segmentEnd;
+
+            if (segmentEnd <= segmentStart || seenRanges.has(rangeKey)) {
+                continue;
+            }
+
+            seenRanges.add(rangeKey);
+            candidates++;
+
+            const candidate = iterativeReduction(
+                text,
+                query,
+                segmentStart,
+                segmentEnd,
+                Infinity,
+            );
+            const similarity = getSimilarityRatio(query, candidate.value);
+
+            if (similarity > bestSimilarity) {
+                best = candidate;
+                bestSimilarity = similarity;
+                if (similarity === 1) {
+                    return best;
+                }
+            }
+        }
+
+        if (candidates >= maxCandidates) {
+            break;
+        }
+    }
+
+    return best;
 }
 
 /**
