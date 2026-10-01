@@ -5,8 +5,20 @@ const isProduction = process.env.NODE_ENV === "production";
 const scriptSrc = isProduction
   ? "'self' 'unsafe-inline' 'wasm-unsafe-eval'"
   : "'self' 'unsafe-inline' 'unsafe-eval'";
+const jazzLoopbackConnectSources = (() => {
+  if (!isProduction || !process.env.NEXT_PUBLIC_JAZZ_SERVER_URL) return "";
+  try {
+    const jazzUrl = new URL(process.env.NEXT_PUBLIC_JAZZ_SERVER_URL);
+    if (jazzUrl.protocol !== "http:" || !["127.0.0.1", "localhost", "[::1]"].includes(jazzUrl.hostname)) return "";
+    const jazzWebSocketUrl = new URL(jazzUrl);
+    jazzWebSocketUrl.protocol = "ws:";
+    return ` ${jazzUrl.origin} ${jazzWebSocketUrl.origin}`;
+  } catch {
+    return "";
+  }
+})();
 const connectSrc = isProduction
-  ? "'self' https: wss:"
+  ? `'self' https: wss:${jazzLoopbackConnectSources}`
   : "'self' http: https: ws: wss:";
 const csp = [
   "default-src 'self'",
