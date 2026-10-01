@@ -27,6 +27,9 @@ export async function dispatchRemoteCall(
     { tier: "global" },
   );
   if (!device || device.ownerId !== subject || device.revokedAt) throw new Error("Device not found or revoked");
+  if (device.status !== "online") {
+    throw new Error("Device is offline; refusing remote execution");
+  }
   if (Date.now() - device.lastSeenAt.getTime() > ONLINE_MAX_AGE_MS) {
     throw new Error("Device heartbeat is stale; refusing remote execution");
   }

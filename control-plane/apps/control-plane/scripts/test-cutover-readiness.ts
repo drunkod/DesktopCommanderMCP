@@ -143,6 +143,30 @@ try {
   });
   await deviceWrite.wait({ tier: "global" });
 
+  await authority.update(app.devices, deviceWrite.value.id, {
+    status: "offline",
+  }).wait({ tier: "global" });
+  const offlineInput = {
+    deviceId: deviceWrite.value.id,
+    toolName: "fixture.remote",
+    toolArgs: { value: 0 },
+    timeoutMs: 20,
+    idempotencyKey: "cutover-offline-call-0001",
+  };
+  await assert.rejects(
+    () => dispatchRemoteCall(owner, offlineInput),
+    /Device is offline/,
+  );
+  assert.equal(
+    (await authority.all(app.remoteCalls.where({ ownerId: owner }), { tier: "global" })).length,
+    0,
+    "offline devices must reject calls before durable admission",
+  );
+  await authority.update(app.devices, deviceWrite.value.id, {
+    status: "online",
+    lastSeenAt: new Date(),
+  }).wait({ tier: "global" });
+
   const remoteInput = {
     deviceId: deviceWrite.value.id,
     toolName: "fixture.remote",

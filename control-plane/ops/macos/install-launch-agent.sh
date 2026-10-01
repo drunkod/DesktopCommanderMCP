@@ -12,6 +12,22 @@ NIX_BIN="/nix/var/nix/profiles/default/bin/nix"
 RUNTIME_PROFILE="$ROOT/.data/launchd-dev-profile"
 RUNTIME_ENV="$ROOT/.data/launchd-runtime.env"
 
+bootstrap_launch_agent() {
+  local attempt
+  for attempt in 1 2 3 4 5; do
+    if launchctl bootstrap "$DOMAIN" "$PLIST"; then
+      return 0
+    fi
+    if (( attempt == 5 )); then
+      echo "launchd bootstrap failed after $attempt attempts: $LABEL" >&2
+      return 1
+    fi
+    echo "launchd bootstrap attempt $attempt failed; clearing partial state and retrying..." >&2
+    launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
+    sleep "$attempt"
+  done
+}
+
 ACTION="${1:-install}"
 case "$ACTION" in
   uninstall)
@@ -103,7 +119,7 @@ if [[ "$ACTION" == "render" ]]; then
 fi
 
 launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
-launchctl bootstrap "$DOMAIN" "$PLIST"
+bootstrap_launch_agent
 launchctl enable "$DOMAIN/$LABEL"
 launchctl kickstart -k "$DOMAIN/$LABEL"
 
