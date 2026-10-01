@@ -6,7 +6,15 @@ SOURCE_PREPARE="$SCRIPT_DIR/prepare-local-device-env.sh"
 SOURCE_RUNNER="$SCRIPT_DIR/run-local-device.sh"
 NODE_EXECUTABLE="$(command -v node)"
 TMP_DIR="$(mktemp -d)"
-trap 'rm -rf "$TMP_DIR"' EXIT
+READY_SERVER_PID=""
+cleanup() {
+  if [[ -n "$READY_SERVER_PID" ]]; then
+    kill "$READY_SERVER_PID" 2>/dev/null || true
+    wait "$READY_SERVER_PID" 2>/dev/null || true
+  fi
+  rm -rf "$TMP_DIR"
+}
+trap cleanup EXIT
 
 REPO="$TMP_DIR/repo"
 ROOT="$REPO/control-plane"
@@ -90,8 +98,44 @@ const result = {
 fs.writeFileSync(output, JSON.stringify(result));
 EOF
 
+set +e
+REMOTE_MCP_DEVICE_READY_URL="http://127.0.0.1:1/.well-known/oauth-authorization-server/api/auth" \
+REMOTE_MCP_DEVICE_READY_TIMEOUT_SECONDS=1 \
+REMOTE_MCP_ROOT="$ROOT" REMOTE_MCP_DEVICE_ENV="$DEVICE_ENV" \
+  "$ROOT/ops/macos/run-local-device.sh" >/dev/null 2>"$TMP_DIR/not-ready.err"
+not_ready_rc=$?
+set -e
+[[ "$not_ready_rc" -ne 0 ]]
+grep -Fq 'timed out waiting for local control plane OAuth metadata' "$TMP_DIR/not-ready.err"
+
+READY_PORT_FILE="$TMP_DIR/ready-port"
+"$NODE_EXECUTABLE" -e '
+const fs = require("node:fs");
+const http = require("node:http");
+const portFile = process.argv[1];
+const server = http.createServer((req, res) => {
+  if (req.url !== "/.well-known/oauth-authorization-server/api/auth") {
+    res.writeHead(404).end();
+    return;
+  }
+  res.writeHead(200, { "content-type": "application/json" });
+  res.end(JSON.stringify({ issuer: "https://example.test/api/auth" }));
+});
+server.listen(0, "127.0.0.1", () => fs.writeFileSync(portFile, String(server.address().port)));
+' "$READY_PORT_FILE" &
+READY_SERVER_PID=$!
+for _ in $(seq 1 40); do
+  [[ -s "$READY_PORT_FILE" ]] && break
+  sleep 0.05
+done
+[[ -s "$READY_PORT_FILE" ]] || { echo "readiness fixture server failed to start" >&2; exit 1; }
+READY_PORT="$(cat "$READY_PORT_FILE")"
+
 OUTPUT="$TMP_DIR/device-launch.json"
-DEVICE_LAUNCH_TEST_OUTPUT="$OUTPUT" REMOTE_MCP_ROOT="$ROOT" REMOTE_MCP_DEVICE_ENV="$DEVICE_ENV"   "$ROOT/ops/macos/run-local-device.sh"
+DEVICE_LAUNCH_TEST_OUTPUT="$OUTPUT" \
+REMOTE_MCP_DEVICE_READY_URL="http://127.0.0.1:$READY_PORT/.well-known/oauth-authorization-server/api/auth" \
+REMOTE_MCP_ROOT="$ROOT" REMOTE_MCP_DEVICE_ENV="$DEVICE_ENV" \
+  "$ROOT/ops/macos/run-local-device.sh"
 
 "$NODE_EXECUTABLE" - "$OUTPUT" "$CONFIG" "$GENERATED_DPAPI_PATH" "$GENERATED_VAULT_LOCK_PATH" "$GENERATED_PAIRING_LOCK_PATH" "$GENERATED_REFRESH_LOCK_PATH" <<'NODE'
 const fs = require("node:fs");

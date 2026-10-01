@@ -144,6 +144,13 @@ export class RemoteChannel {
             // Keep local-first persistence disabled so stale local branches cannot
             // be replayed under the short-lived read-only device capability.
             driver: { type: 'memory' },
+            // alpha.53 logs expected subscription branch-materialization rejects
+            // as WARN even though this client never writes through Jazz. Keep the
+            // runtime quiet, but surface any real local mutation rejection below.
+            logLevel: 'error',
+        });
+        db.onMutationError((event) => {
+            console.error('[remote] unexpected Jazz mutation rejected: ' + event.code + ': ' + event.reason);
         });
         this.db = db;
         this.deviceId = registration.deviceId;

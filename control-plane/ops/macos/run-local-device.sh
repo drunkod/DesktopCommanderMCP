@@ -83,4 +83,33 @@ export DC_DEVICE_VAULT_LOCK_PATH
 export DC_DEVICE_PAIRING_LOCK_PATH
 export DC_DEVICE_REFRESH_LOCK_PATH
 
+READY_URL="${REMOTE_MCP_DEVICE_READY_URL:-${MCP_SERVER_URL%/}/.well-known/oauth-authorization-server/api/auth}"
+READY_TIMEOUT_SECONDS="${REMOTE_MCP_DEVICE_READY_TIMEOUT_SECONDS:-45}"
+[[ "$READY_TIMEOUT_SECONDS" =~ ^[0-9]+$ ]] || { echo "device readiness timeout must be an integer" >&2; exit 1; }
+
+wait_for_control_plane() {
+  local deadline=$((SECONDS + READY_TIMEOUT_SECONDS))
+  while :; do
+    if "$NODE_BIN" -e '
+const [url, expectedIssuer] = process.argv.slice(1);
+fetch(url, { signal: AbortSignal.timeout(1500) })
+  .then(async (response) => {
+    if (!response.ok) process.exit(1);
+    const metadata = await response.json();
+    if (!metadata || metadata.issuer !== expectedIssuer) process.exit(1);
+  })
+  .catch(() => process.exit(1));
+' "$READY_URL" "$DC_REMOTE_AUTH_ISSUER"; then
+      echo "local control plane is ready for device OAuth"
+      return 0
+    fi
+    if (( SECONDS >= deadline )); then
+      echo "timed out waiting for local control plane OAuth metadata: $READY_URL" >&2
+      return 1
+    fi
+    sleep 0.5
+  done
+}
+
+wait_for_control_plane
 exec "$NODE_BIN" "$DESKTOP_COMMANDER_REPO/dist/index.js" remote --tunnel none --disable-no-sleep
