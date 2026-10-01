@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 const isProduction = process.env.NODE_ENV === "production";
 const scriptSrc = isProduction
-  ? "'self' 'unsafe-inline'"
+  ? "'self' 'unsafe-inline' 'wasm-unsafe-eval'"
   : "'self' 'unsafe-inline' 'unsafe-eval'";
 const connectSrc = isProduction
   ? "'self' https: wss:"
