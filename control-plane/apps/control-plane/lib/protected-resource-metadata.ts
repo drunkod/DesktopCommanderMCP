@@ -4,9 +4,10 @@ const metadata = {
   resource: env.remoteResource,
   authorization_servers: [env.authIssuer],
   bearer_methods_supported: ["header"],
-  // One protected resource serves both MCP tool traffic and device control.
-  // Route handlers still enforce their own exact required scope.
-  scopes_supported: ["mcp:tools", "device:sync"],
+  // ChatGPT discovers this document for the MCP endpoint and needs only the
+  // MCP tool scope. The authorization server still supports device:sync for
+  // the separately bootstrapped headless-device OAuth flow.
+  scopes_supported: ["mcp:tools"],
 };
 
 export function protectedResourceMetadata(head = false): Response {
@@ -14,7 +15,7 @@ export function protectedResourceMetadata(head = false): Response {
     status: 200,
     headers: {
       "content-type": "application/json; charset=utf-8",
-      "cache-control": "public, max-age=300",
+      "cache-control": "no-store",
     },
   });
 }
