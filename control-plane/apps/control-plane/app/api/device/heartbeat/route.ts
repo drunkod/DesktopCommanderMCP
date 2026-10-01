@@ -2,6 +2,7 @@ import * as z from "zod";
 import { app } from "../../../../schema";
 import { jazzAuthorityDb } from "../../../../lib/jazz-authority";
 import { createDeviceProtectedHandler } from "../../../../lib/device-request-auth";
+import { heartbeatStatusDuringReconnect } from "../../../../lib/device-reconnect-state";
 
 const heartbeatSchema = z.object({
   deviceId: z.string().min(1).max(200),
@@ -30,7 +31,7 @@ const POST = createDeviceProtectedHandler(async (request, principal) => {
   }
 
   const write = backend.update(app.devices, device.id, {
-    status: parsed.data.status,
+    status: heartbeatStatusDuringReconnect(device, parsed.data.status),
     lastSeenAt: new Date(),
     lastError: parsed.data.lastError ?? undefined,
   });

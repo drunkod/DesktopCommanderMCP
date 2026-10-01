@@ -55,19 +55,26 @@ const POST = createDeviceProtectedHandler(async (request, principal) => {
       return "not_claimed" as const;
     }
 
+    const completedAt = new Date();
     if (parsed.data.status === "completed") {
       tx.update(app.remoteCalls, callId, {
         status: "completed",
         result: toJsonValue(parsed.data.result, "remote call result"),
         error: undefined,
-        completedAt: new Date(),
+        completedAt,
       });
+      if (current.toolName === "__control.reconnect") {
+        tx.update(app.devices, parsed.data.deviceId, {
+          status: "reconnecting",
+          reconnectRequestedAt: completedAt,
+        });
+      }
     } else {
       tx.update(app.remoteCalls, callId, {
         status: "failed",
         result: undefined,
         error: parsed.data.error,
-        completedAt: new Date(),
+        completedAt,
       });
     }
     return "completed" as const;

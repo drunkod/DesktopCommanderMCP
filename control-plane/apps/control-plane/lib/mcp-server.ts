@@ -4,6 +4,7 @@ import { app, type ChatJob, type WorkerSession } from "../schema";
 import { jazzBackendDb } from "./jazz-principal";
 import { jazzAuthorityDb } from "./jazz-authority";
 import { dispatchRemoteCall } from "./call-router";
+import { requestReconnect } from "./device-admin";
 import { TaskAdmissionFrozenError } from "./cutover-mode";
 import {
   WorkerSessionExpiredError,
@@ -375,15 +376,15 @@ export function buildServer(subject: string): McpServer {
   })));
 
   server.registerTool("reconnect_device", {
-    description: "Ask an online device to rebuild Jazz and local MCP connectivity.",
+    description: "Rebuild device connectivity and return only after the device is online again.",
     inputSchema: deviceInput,
-  }, async ({ deviceId, idempotencyKey }) => asToolResult(await dispatchRemoteCall(subject, {
-    deviceId,
-    toolName: "__control.reconnect",
-    toolArgs: {},
-    timeoutMs: 30_000,
-    idempotencyKey,
-  })));
+  }, async ({ deviceId, idempotencyKey }) => {
+    try {
+      return asToolResult(await requestReconnect(subject, deviceId, idempotencyKey));
+    } catch (error) {
+      return errorToolResult(error instanceof Error ? error.message : String(error));
+    }
+  });
 
   server.registerTool("shutdown_device", {
     description: "Gracefully stop a device after its result is globally durable.",

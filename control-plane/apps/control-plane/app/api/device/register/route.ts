@@ -1,11 +1,12 @@
 import * as z from "zod";
 import { deterministicUuid } from "../../../../lib/ids";
-import { app } from "../../../../schema";
+import { app, type Device } from "../../../../schema";
 import { toJsonValue } from "../../../../lib/json";
 import { jazzContext } from "../../../../lib/jazz-context";
 import { jazzAuthorityDb } from "../../../../lib/jazz-authority";
 import { mintJazzDeviceToken } from "../../../../lib/jazz-capability";
 import { createDeviceProtectedHandler } from "../../../../lib/device-request-auth";
+import { registrationReconnectPatch } from "../../../../lib/device-reconnect-state";
 
 const registrationSchema = z.object({
   stableId: z.string().min(8).max(200),
@@ -38,7 +39,7 @@ const POST = createDeviceProtectedHandler(async (request, principal) => {
     if (existing.stableId !== parsed.data.stableId) {
       return Response.json({ ok: false, error: "OAuth client is already bound to another device identity" }, { status: 409 });
     }
-    await refreshDevice(db, existing.id, parsed.data);
+    await refreshDevice(db, existing, parsed.data);
     const jazzToken = await mintJazzDeviceToken(principal.subject, principal.clientId, existing.id);
     return Response.json({ ok: true, deviceId: existing.id, oauthClientId: principal.clientId, jazzToken, expiresIn: 90 });
   }
@@ -77,7 +78,7 @@ const POST = createDeviceProtectedHandler(async (request, principal) => {
     ) {
       return Response.json({ ok: false, error: "Device registration conflict" }, { status: 409 });
     }
-    await refreshDevice(db, winner.id, parsed.data);
+    await refreshDevice(db, winner, parsed.data);
   }
 
   const jazzToken = await mintJazzDeviceToken(principal.subject, principal.clientId, rowId);
@@ -86,10 +87,10 @@ const POST = createDeviceProtectedHandler(async (request, principal) => {
 
 async function refreshDevice(
   db: Awaited<ReturnType<ReturnType<typeof jazzContext>["withAttributionForRequest"]>>,
-  rowId: string,
+  row: Device,
   input: z.infer<typeof registrationSchema>,
 ): Promise<void> {
-  const write = db.update(app.devices, rowId, {
+  const write = db.update(app.devices, row.id, {
     name: input.name,
     platform: input.platform,
     appVersion: input.appVersion,
@@ -97,6 +98,7 @@ async function refreshDevice(
     status: "online",
     lastSeenAt: new Date(),
     lastError: undefined,
+    ...registrationReconnectPatch(row),
   });
   await write.wait({ tier: "global" });
 }
